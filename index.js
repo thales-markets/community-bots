@@ -33,7 +33,7 @@ const updateCountdown = async () => {
 setInterval(function () {
     console.log("updateCountdown")
     updateCountdown();
-}, 60 * 1000);
+}, 360 * 1000);
 
 
 
