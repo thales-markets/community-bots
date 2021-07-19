@@ -1,0 +1,22 @@
+{
+  "name": "community-bots",
+  "version": "1.0.0",
+  "description": "Discord bot for displaying information as bot name",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mgajic/community-bots.git"
+  },
+  "author": "mgajic",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mgajic/community-bots/issues"
+  },
+  "homepage": "https://github.com/mgajic/community-bots#readme",
+  "dependencies": {
+    "discord.js": "^12.5.3"
+  }
+}
