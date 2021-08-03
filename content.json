@@ -1,0 +1,226 @@
+[
+  {
+    "number": 1,
+    "content": {
+      "title": "Question 1",
+      "description": "What are Binary Options?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "Binary options are financial options that come with one of two payoff options: a fixed amount or nothing at all.The binary options trader buys a call when bullish on the asset in question, or a put when bearish. For a call/put to make money, the market must trade above/below the strike price at the expiration time.\n\n📔 [More info on Binary Options](https://thalesmarket.medium.com/binary-options-101-6048a4227e8b)"
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 2,
+    "content": {
+      "title": "Question 2",
+      "description": "What is Thales?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "Thales is a non-custodial binary options platform that taps into the infinite liquidity of the Synthetix ecosystem. Thales allows you to create, trade, and exercise binary options on Ethereum.\n To try out the Thales dapp head over to: [thales.market/markets](thales.market/markets)\n To learn more about how Thales works, visit our docs: [docs.thales.market](https://docs.thales.market/)"
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 3,
+    "content": {
+      "title": "Question 3",
+      "description": "Who was Thales?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "Thales was an ancient Greek Chad. He was a philosopher, mathematician, astronomer and, most importantly, the person who exercised the first recorded options trade in western history.  \n\nℹ️ [More info](https://thalesmarket.medium.com/olive-oil-a-cornered-market-and-our-logo-421be0f2fc93)"
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 4,
+    "content": {
+      "title": "Question 4",
+      "description": "Is there a Thales token?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "Thales token is expected to be released by the end of Q3 2021.Thales token planned usecase is platform fee accrual and governance of the protocol.\nStay tuned for more information about the token launch and the tokenomics soon!"
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 5,
+    "content": {
+      "title": "Question 5",
+      "description": "Is there a Thales token airdrop?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "35% of the Thales token supply will be distributed to SNX stakers from past,present and future.This includes L2 and xsnx stakers. Past stakers will be able to claim a small part on token launch while the rest will be subjugated to vesting."
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 6,
+    "content": {
+      "title": "Question 6",
+      "description": "Will the platform be on L2?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer",
+          "value": "Thales is committed to rolling out on Optimism where the Synthetix debt pool will live. We expect to be live on L2 not long after the L1 MVP release."
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 7,
+    "content": {
+      "title": "Question 7",
+      "description": "What currency does Thales use as collateral?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "Thales uses sUSD, synthetic US dollar from the Synthetix protocol, as a settlement currency for its binary options.\n For more information about sUSD, visit: [docs.thales.market/binary-options/susd](https://docs.thales.market/binary-options/susd)"
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 8,
+    "content": {
+      "title": "Question 8",
+      "description": "From where does Thales pull its price feeds?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "Thales is integrating Chainlink price feeds on Ethereum as an oracle solution.\n\n For more information about the Chainlink integration, visit: [thalesmarket.medium.com](https://thalesmarket.medium.com/thales-will-integrate-chainlink-price-feeds-to-secure-binary-options-outcomes-d7137f3199e1)."
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 9,
+    "content": {
+      "title": "Question 9",
+      "description": "What order books is Thales using?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "Thales is integrating 0x protocol order books as a solution for trading Binary Options tokens on the platform.\n For more information about the 0x integration, visit: [first-0x-dao-grant-awarded](https://blog.0x.org/first-0x-dao-grant-awarded/)"
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 10,
+    "content": {
+      "title": "Question 10",
+      "description": "What is the current gas price?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "Gas prices currently not implemented."
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 11,
+    "content": {
+      "title": "Question 11",
+      "description": "How do I create a binary options market on the Thales marketplace?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "For a comprehensive and detailed guide on how to create your own Binary Options market on the Thales platform, visit: [market creation quide](https://docs.thales.market/using-thales/market-creation-guide )"
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 12,
+    "content": {
+      "title": "Question 12",
+      "description": "How do I trade Binary Options on the Thales marketplace?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "How do I trade Binary Options on the Thales marketplace?\n For a comprehensive and detailed guide on how to create your own Binary Options market on the Thales platform, visit: [trading](https://docs.thales.market/using-thales/trading)"
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 13,
+    "content": {
+      "title": "Question 13",
+      "description": "How do I exercise my options on the Thales marketplace?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "For a comprehensive and detailed guide on how to exercise your options on the Thales marketplace, visit: [exercising](https://docs.thales.market/using-thales/exercising)"
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 14,
+    "content": {
+      "title": "Question 14",
+      "description": "How does Market Making work on the Thales platform?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "A user who deposits sUSD into an existing market and mints new options is considered a Market Maker. There is a fixed 1% fee for Market Making, 0.5% goes to the pool creator and 0.5% goes to the protocol fee pool.\n For more information about how to mint options tokens, visit the Trade Module section of the Trading guide here: [trade-module](https://docs.thales.market/using-thales/trading#trade-module)"
+        }
+      ],
+      "footer": {
+      }
+    }
+  }
+]

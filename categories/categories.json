@@ -1,0 +1,35 @@
+[
+  {
+    "name": "General",
+    "desc": "General information about the project",
+    "questions": [
+      1,
+      2,
+      3,
+      4
+    ]
+  },
+  {
+    "name": "Thales Token",
+    "desc": "Token-related questions and information",
+    "questions": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ]
+  },
+  {
+    "name": "Thales Marketplace",
+    "desc": "Everything about Thales marketplace and platform",
+    "questions": [
+      12,
+      13,
+      14,
+      15
+    ]
+  }
+]
