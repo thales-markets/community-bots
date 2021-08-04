@@ -442,5 +442,21 @@
   {
     "number": 20,
     "alias": "is there a discussion forum?"
+  },
+  {
+    "number": 21,
+    "alias": "docs"
+  },
+  {
+    "number": 21,
+    "alias": "documentation"
+  },
+  {
+    "number": 21,
+    "alias": "whitepaper"
+  },
+  {
+    "number": 21,
+    "alias": "where can i find the thales docs?"
   }
 ]
