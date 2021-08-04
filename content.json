@@ -307,22 +307,6 @@
     "number": 20,
     "content": {
       "title": "Question 20",
-      "description": " ",
-      "color": "0099ff",
-      "fields": [
-        {
-          "title": "Answer:",
-          "value": " "
-        }
-      ],
-      "footer": {
-      }
-    }
-  },
-  {
-    "number": 21,
-    "content": {
-      "title": "Question 21",
       "description": "Is there a Thales research forum?",
       "color": "0099ff",
       "fields": [
