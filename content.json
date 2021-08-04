@@ -222,5 +222,117 @@
       "footer": {
       }
     }
-  }
+  },
+  {
+    "number": 15,
+    "content": {
+      "title": "Question 15",
+      "description": "What is the Thales Council?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "Thales council is a governing DAO composed of 4 members elected by the community of token holders. The council members operate during specific epochs and after each epoch the community conducts a new election via Snapshots IPFS infrastructure.\n Thales council's main responsibilities are conducting TIP reviews, interviewing the TIP proposers,  debating the implications of proposed changes and coordinating with the Protocol DAO regarding the technical implications and implementations."
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 16,
+    "content": {
+      "title": "Question 16",
+      "description": "What are TIPs?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "TIP is an abbreviation of Thales Improvement Proposal. TIPs are adapted from the EIP (Ethereum Improvement Proposal) and SIP (Synthetix Improvement Proposal) standards and they represent an artifact used to describe proposed changes to the core Thales protocol. A well designed TIP should feature the motivation, technical specifications and rationale behind design decisions relating to the proposed idea.\n More information about TIPs, their general purpose and guidelines can be found here:\n >> https://gov.thales.io/docs/tip-1 <<"
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 17,
+    "content": {
+      "title": "Question 17",
+      "description": "How is Thales governance structured?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "The Thales protocol governance is made out of three core DAOs: \n\n - Thales council\n\n - Protocol DAO\n\n - Thales DAO\n\n Each of the DAOs has its own set of responsibilities and all of them together share the same mission of enabling the most optimal, efficient and censorship-resistant way for the Thales community to be the main driving force of the project.\n For more information about Thales Council, type: **!faq Thales Council**\n For more information about Protocol DAO, type: **!faq Protocol Dao**\n For more information about Thales DAO, type: **!faq Thales DAO**"
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 18,
+    "content": {
+      "title": "Question 18",
+      "description": "What is the Protocol DAO?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "Thales Protocol DAO is a decentralized autonomous organization assigned to be the owner of the Thales protocol core smart contracts. Its main responsibilities are upgrading and releasing new contracts (on behalf of the Thales Council), implementation of TIPs and operational security."
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 19,
+    "content": {
+      "title": "Question 19",
+      "description": "What is the Thales DAO?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "Thales DAO is a DAO with the purpose of managing the treasury of the protocol. It is responsible for properly incentivizing the other governing bodies and to support further developments of the protocol. All of the DAO roles are paid a certain stipend by the Thales DAO."
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 20,
+    "content": {
+      "title": "Question 20",
+      "description": " ",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": " "
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 21,
+    "content": {
+      "title": "Question 21",
+      "description": "Is there a Thales research forum?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "Thales research forum can be found here:\n >> https://research.thales.io/ <<\n\n Thales research forum is the place for all focused discussions related to the Thales project where users can directly contribute their input to the project’s growth and development."
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
 ]
