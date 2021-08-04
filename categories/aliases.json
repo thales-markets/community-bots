@@ -128,211 +128,319 @@
     "alias": "susd"
   },
   {
-    "number": 8,
+    "number": 7,
     "alias": "What currency does Thales use as collateral"
   },
   {
-    "number": 8,
+    "number": 7,
     "alias": "what currency does thales use"
   },
   {
-    "number": 8,
+    "number": 7,
     "alias": "what currency does thales support"
   },
   {
-    "number": 8,
+    "number": 7,
     "alias": "what stablecoin does thales use"
   },
   {
-    "number": 9,
+    "number": 8,
     "alias": "chainlink"
   },
   {
-    "number": 9,
+    "number": 8,
     "alias": "how does thales pull its price feeds"
   },
   {
-    "number": 9,
+    "number": 8,
     "alias": "from where does thales pull its price feeds"
   },
   {
-    "number": 9,
+    "number": 8,
     "alias": "oracles"
   },
   {
-    "number": 9,
+    "number": 8,
     "alias": "oracle"
   },
   {
-    "number": 9,
+    "number": 8,
     "alias": "what does thales use as oracle"
   },
   {
-    "number": 10,
+    "number": 9,
     "alias": "order book"
   },
   {
-    "number": 10,
+    "number": 9,
     "alias": "order books"
   },
   {
-    "number": 10,
+    "number": 9,
     "alias": "0x protocol"
   },
   {
-    "number": 10,
+    "number": 9,
     "alias": "0x order books"
   },
   {
-    "number": 10,
+    "number": 9,
     "alias": "0x"
   },
   {
-    "number": 10,
+    "number": 9,
     "alias": "What order books is thales using"
   },
   {
-    "number": 11,
+    "number": 10,
     "alias": "gas"
   },
   {
-    "number": 11,
+    "number": 10,
     "alias": "current gas price"
   },
   {
-    "number": 11,
+    "number": 10,
     "alias": "gwei"
   },
   {
-    "number": 11,
+    "number": 10,
     "alias": "what is the gas price"
   },
   {
-    "number": 11,
+    "number": 10,
     "alias": "what is the current gas price"
   },
   {
-    "number": 11,
+    "number": 10,
     "alias": "gas price"
   },
   {
-    "number": 12,
+    "number": 11,
     "alias": "create market"
   },
   {
-    "number": 12,
+    "number": 11,
     "alias": "create"
   },
   {
-    "number": 12,
+    "number": 11,
     "alias": "market creation guide"
   },
   {
-    "number": 12,
+    "number": 11,
     "alias": "create market guide"
   },
   {
-    "number": 12,
+    "number": 11,
     "alias": "How do i create a market"
   },
   {
-    "number": 12,
+    "number": 11,
     "alias": "How to create a market"
   },
   {
-    "number": 12,
+    "number": 11,
     "alias": "Create market tutorial"
   },
   {
-    "number": 12,
+    "number": 11,
     "alias": "market creation tutorial"
   },
   {
-    "number": 12,
+    "number": 11,
     "alias": "how do i create a thales market"
   },
   {
-    "number": 12,
+    "number": 11,
     "alias": "create market help"
   },
   {
-    "number": 13,
+    "number": 12,
     "alias": "trading tutorial"
   },
   {
-    "number": 13,
+    "number": 12,
     "alias": "how to trade"
   },
   {
-    "number": 13,
+    "number": 12,
     "alias": "how do I trade binary options on thales"
   },
   {
-    "number": 13,
+    "number": 12,
     "alias": "trading guide"
   },
   {
-    "number": 13,
+    "number": 12,
     "alias": "trading help"
   },
   {
-    "number": 13,
+    "number": 12,
     "alias": "trading"
   },
   {
-    "number": 13,
+    "number": 12,
     "alias": "trade"
   },
   {
-    "number": 14,
+    "number": 13,
     "alias": "exercise"
   },
   {
-    "number": 14,
+    "number": 13,
     "alias": "exercise tutorial"
   },
   {
-    "number": 14,
+    "number": 13,
     "alias": "exercise guide"
   },
   {
-    "number": 14,
+    "number": 13,
     "alias": "exercise help"
   },
   {
-    "number": 14,
+    "number": 13,
     "alias": "how to exercise"
   },
   {
-    "number": 14,
+    "number": 13,
     "alias": "how to exercise options"
   },
   {
-    "number": 14,
+    "number": 13,
     "alias": "how do i exercise my options on thales"
   },
   {
-    "number": 14,
+    "number": 13,
     "alias": "how do i exercise my options"
   },
   {
-    "number": 15,
+    "number": 14,
     "alias": "market making"
   },
   {
-    "number": 16,
+    "number": 14,
     "alias": "mm"
   },
   {
-    "number": 16,
+    "number": 14,
     "alias": "how to be a market maker"
   },
   {
-    "number": 16,
+    "number": 14,
     "alias": "minting"
   },
   {
-    "number": 16,
+    "number": 14,
     "alias": "minting options"
-  }
+  },
+  {
+    "number": 15,
+    "alias": "What is the Thales Council?"
+  },
+  {
+    "number": 15,
+    "alias": "Thales Council"
+  },
+  {
+    "number": 15,
+    "alias": "Council"
+  },
+  {
+    "number": 15,
+    "alias": "the council"
+  },
+  {
+    "number": 16,
+    "alias": "what are tips?"
+  },
+  {
+    "number": 16,
+    "alias": "what are tips"
+  },
+  {
+    "number": 16,
+    "alias": "tips"
+  },
+  {
+    "number": 16,
+    "alias": "tip"
+  },
+  {
+    "number": 16,
+    "alias": "thales improvement proposal"
+  },
+  {
+    "number": 16,
+    "alias": "what does tip mean?"
+  },
+  {
+    "number": 17,
+    "alias": "how is thales governance structured?"
+  },
+  {
+    "number": 17,
+    "alias": "thales governance"
+  },
+  {
+    "number": 17,
+    "alias": "governance"
+  },
+  {
+    "number": 17,
+    "alias": "governance structure"
+  },
+  {
+    "number": 18,
+    "alias": "what is the protocol dao?"
+  },
+  {
+    "number": 18,
+    "alias": "protocol dao"
+  },
+  {
+    "number": 18,
+    "alias": "the protocol dao"
+  },
+  {
+    "number": 18,
+    "alias": "thales protocol dao"
+  },
+  {
+    "number": 19,
+    "alias": "what is the thales dao?"
+  },
+  {
+    "number": 19,
+    "alias": "thales dao"
+  },
+  {
+    "number": 19,
+    "alias": "the thales dao"
+  },
+  {
+    "number": 20,
+    "alias": "is there a thales research forum?"
+  },
+  {
+    "number": 20,
+    "alias": "forum"
+  },
+  {
+    "number": 20,
+    "alias": "research"
+  },
+  {
+    "number": 20,
+    "alias": "governance forum"
+  },
+  {
+    "number": 20,
+    "alias": "is there a thales forum?"
+  },
+  {
+    "number": 20,
+    "alias": "is there a discussion forum?"
+  },
 ]
