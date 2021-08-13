@@ -575,7 +575,7 @@ function sendMarketMessage(market) {
     clientNewListings.guilds.cache.forEach(function (guildValue, key) {
         const category = guildValue.channels.cache.find(channel => channel.name.toLowerCase().includes("transactions"));
         if (category) {
-            const channel = category.children.find(channel => channel.name.toLowerCase().includes('trades'));
+            const channel = category.children.find(channel => channel.name.toLowerCase().includes('new-markets'));
             if (channel) {
                 var message = new Discord.MessageEmbed()
                     .addFields(
