@@ -6,6 +6,9 @@ const client = new Discord.Client();
 let contentRaw = fs.readFileSync('content.json');
 let answersContent = JSON.parse(contentRaw);
 let qaMaps = new Map();
+const thalesData = require("thales-data");
+const SYNTH_USD_MAINNET = "0x57ab1ec28d129707052df4df418d58a2d46d5f51";
+const clientNewListings = new Discord.Client();
 answersContent.forEach(a => {
     qaMaps.set(a.number, a.content);
 })
@@ -551,5 +554,208 @@ client.on("message", msg => {
 
 client.login(process.env.BOT_TOKEN);
 
+clientNewListings.once('ready', () => {
+    console.log("initial new operations")
+    getThalesNewOperations();
+});
 
+
+setInterval(function () {
+    try {
+        console.log("starting new operations")
+        getThalesNewOperations();
+    } catch (e) {
+        console.log('problem with new operations' + e);
+    }
+}, 60 * 4.5 * 1000);
+
+let network = 1;
+
+function sendMarketMessage(market) {
+    clientNewListings.guilds.cache.forEach(function (guildValue, key) {
+        const category = guildValue.channels.cache.find(channel => channel.name.toLowerCase().includes("transactions"));
+        if (category) {
+            const channel = category.children.find(channel => channel.name.toLowerCase().includes('trades'));
+            if (channel) {
+                var message = new Discord.MessageEmbed()
+                    .addFields(
+                        {
+                            name: ':lock: New Thales Market created :lock:',
+                            value: "\u200b"
+                        },
+                        {
+                            name: ':link: URL:',
+                            value: "[" + market.address + "](https://etherscan.io/address/" + market.address + ")"
+                        },
+                        {
+                            name: ':coin: Token:',
+                            value: market.currencyKey
+                        },
+                        {
+                            name: ':classical_building: Creator:',
+                            value: "[" + market.creator + "](https://etherscan.io/address/" + market.creator + ")"
+                        },
+                        {
+                            name: ':dollar: Strike price:',
+                            value: market.strikePrice
+                        },
+                        {
+                            name: ':alarm_clock: Timestamp:',
+                            value: new Date(market.timestamp)
+                        }
+                    )
+                    .setColor("#0037ff")
+                channel.send(message);
+            }
+        }
+    });
+}
+
+
+function getNumberLabel(labelValue) {
+
+    // Nine Zeroes for Billions
+    return Math.abs(Number(labelValue)) >= 1.0e+9
+
+        ? Math.round(Math.abs(Number(labelValue)) / 1.0e+9) + "B"
+        // Six Zeroes for Millions
+        : Math.abs(Number(labelValue)) >= 1.0e+6
+
+            ? Math.round(Math.abs(Number(labelValue)) / 1.0e+6) + "M"
+            // Three Zeroes for Thousands
+            : Math.abs(Number(labelValue)) >= 1.0e+3
+
+                ? Math.round(Math.abs(Number(labelValue)) / 1.0e+3) + "K"
+
+                : Math.round(Math.abs(Number(labelValue)));
+
+}
+
+function sendNewTradeMessage(trade) {
+    clientNewListings.guilds.cache.forEach(function (guildValue, key) {
+        const category = guildValue.channels.cache.find(channel => channel.name.toLowerCase().includes("transactions"));
+        if (category) {
+            const channel = category.children.find(channel => channel.name.toLowerCase().includes('trades'));
+            if (channel) {
+                var message = new Discord.MessageEmbed()
+                    .addFields(
+                        {
+                            name: ':lock: New Thales Trade :lock:',
+                            value: "\u200b"
+                        },
+                        {
+                            name: ':link: Market address:',
+                            value: "[" + trade.transactionHash + "](https://etherscan.io/tx/" + trade.transactionHash + ")"
+                        },
+                        {
+                            name: ':coin: Maker token:',
+                            value: trade.makerToken
+                        },
+                        {
+                            name: ':coin: Taker token:',
+                            value: trade.takerToken
+                        },
+                        {
+                            name: ':classical_building: Maker:',
+                            value: "[" + trade.maker + "](https://etherscan.io/address/" + trade.maker + ")"
+                        },
+                        {
+                            name: ':dollar: Maker amount:',
+                            value: getNumberLabel(trade.makerAmount)
+                        },
+                        {
+                            name: ':dollar: Taker amount:',
+                            value: getNumberLabel(trade.takerAmount)
+                        },
+                        {
+                            name: ':alarm_clock: Timestamp:',
+                            value: new Date(trade.timestamp)
+                        }
+                    )
+                    .setColor("#0037ff")
+                channel.send(message);
+            }
+        }
+    });
+
+}
+
+async function getThalesNewOperations() {
+
+    thalesData.binaryOptions.markets({
+        max: Infinity,
+        network: 1,
+    }).then(markets => {
+            var startdate = new Date();
+            var durationInMinutes = 5;
+            startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
+            let startDateUnixTime = startdate.getTime();
+            for (const market of markets) {
+
+                if (startDateUnixTime < market.timestamp) {
+                    console.log("new market");
+                    sendMarketMessage(market);
+                }
+
+                thalesData.binaryOptions.trades({
+                    network: 1,
+                    makerToken: market.longAddress,
+                    takerToken: SYNTH_USD_MAINNET
+                }).then(trades => {
+                    //send messages
+                    if (trades.length > 0) {
+                        for (let trade of trades) {
+                            if (startDateUnixTime < trade.timestamp) {
+                                console.log("new trade message")
+                                sendNewTradeMessage(trade);
+                            }
+                        }
+                    }
+                });
+                thalesData.binaryOptions.trades({
+                    network: network,
+                    makerToken: SYNTH_USD_MAINNET,
+                    takerToken: market.longAddress,
+                }).then(trades => {
+                    if (trades.length > 0) {
+                        for (let trade of trades) {
+                            if (startDateUnixTime < trade.timestamp) {
+                                console.log("new trade message")
+                                sendNewTradeMessage(trade);
+                            }
+                        }
+                    }
+                });
+                thalesData.binaryOptions.trades({
+                    network: network,
+                    makerToken: market.shortAddress,
+                }).then(trades => {
+                    if (trades.length > 0) {
+                        for (let trade of trades) {
+                            if (startDateUnixTime < trade.timestamp) {
+                                console.log("new trade message")
+                                sendNewTradeMessage(trade);
+                            }
+                        }
+                    }
+                });
+                thalesData.binaryOptions.trades({
+                    network: network,
+                    makerToken: SYNTH_USD_MAINNET
+                }).then(trades => {
+                    if (trades.length > 0) {
+                        for (let trade of trades) {
+                            if (startDateUnixTime < trade.timestamp) {
+                                console.log("new trade message")
+                                sendNewTradeMessage(trade);
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    );
+}
+
+clientNewListings.login(process.env.BOT_TOKEN_LISTINGS);
 

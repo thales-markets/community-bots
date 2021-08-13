@@ -19,6 +19,7 @@
   "dependencies": {
     "discord.js": "^12.5.3",
     "dotenv": "^8.2.0",
-    "replace-string": "^3.1.0"
+    "replace-string": "^3.1.0",
+    "thales-data": "^0.0.15"
   }
 }
