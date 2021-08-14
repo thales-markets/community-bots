@@ -9,6 +9,7 @@ let qaMaps = new Map();
 const thalesData = require("thales-data");
 const SYNTH_USD_MAINNET = "0x57ab1ec28d129707052df4df418d58a2d46d5f51";
 const clientNewListings = new Discord.Client();
+let mapThalesTrades = new Map();
 answersContent.forEach(a => {
     qaMaps.set(a.number, a.content);
 })
@@ -644,7 +645,7 @@ function sendNewTradeMessage(trade) {
                             value: "\u200b"
                         },
                         {
-                            name: ':link: Market address:',
+                            name: ':link: Transaction:',
                             value: "[" + trade.transactionHash + "](https://etherscan.io/tx/" + trade.transactionHash + ")"
                         },
                         {
@@ -673,7 +674,7 @@ function sendNewTradeMessage(trade) {
                         }
                     )
                     .setColor("#0037ff")
-                channel.send(message);
+                mapThalesTrades.set(trade.transactionHash, message);
             }
         }
     });
@@ -756,6 +757,28 @@ async function getThalesNewOperations() {
         }
     );
 }
+
+setInterval(function () {
+    try {
+        if (mapThalesTrades.size > 0) {
+            clientNewListings.guilds.cache.forEach(function (guildValue, key) {
+                const category = guildValue.channels.cache.find(channel => channel.name.toLowerCase().includes("transactions"));
+                if (category) {
+                    const channel = category.children.find(channel => channel.name.toLowerCase().includes('trades'));
+                    if (channel) {
+                        for (const message of mapThalesTrades.values()) {
+                            channel.send(message);
+                        }
+                    }
+                }
+            });
+            mapThalesTrades = new Map();
+        }
+    } catch (e) {
+        console.log(e);
+    }
+}, 60 * 4.8 * 1000);
+
 
 clientNewListings.login(process.env.BOT_TOKEN_LISTINGS);
 
