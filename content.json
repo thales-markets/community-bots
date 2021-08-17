@@ -335,4 +335,36 @@
       }
     }
   }
+  {
+    "number": 22,
+    "content": {
+      "title": "Question 22",
+      "description": "Who are the Thales Titans?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "Θαλής τιτάνες\n\n**Thales Titans** is the name of the best community in the space: The Thales Community!"
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 23,
+    "content": {
+      "title": "Question 23",
+      "description": "What markets are currently available on Thales?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "You can see the markets currently live on Thales here:\n https://thales.market/markets#overview \n\n If you need help with trading on Thales, you should visit our **Thales trading guide**:\n https://docs.thales.market/using-thales/trading"
+        }
+      ],
+      "footer": {
+      }
+    }
+  }
 ]
