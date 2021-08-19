@@ -20,6 +20,10 @@
     "discord.js": "^12.5.3",
     "dotenv": "^8.2.0",
     "replace-string": "^3.1.0",
-    "thales-data": "^0.0.15"
+    "thales-data": "^0.0.15",
+    "axios": "^0.21.1",
+    "web3": "^1.3.0",
+    "web3-js": "^1.0.5-beta.26",
+    "web3-utils": "^1.3.1"
   }
 }

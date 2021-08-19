@@ -4,12 +4,20 @@ clientCountdown.login(process.env.BOT_TOKEN_COUNTDOWN);
 var fs = require('fs');
 const client = new Discord.Client();
 let contentRaw = fs.readFileSync('content.json');
+const axios = require('axios');
 let answersContent = JSON.parse(contentRaw);
 let qaMaps = new Map();
+let contractRaw = fs.readFileSync('contracts/Synthetix.json');
 const thalesData = require("thales-data");
 const SYNTH_USD_MAINNET = "0x57ab1ec28d129707052df4df418d58a2d46d5f51";
 const clientNewListings = new Discord.Client();
+
+const Web3 = require('web3');
+let contract = JSON.parse(contractRaw);
+const web3 = new Web3(new Web3.providers.HttpProvider("https://mainnet.infura.io/v3/2a1ba27ea6ea4b9683bd48100631ca1e"))
 let mapThalesTrades = new Map();
+let mapThalesAsks = new Map();
+let mapThalesBids = new Map();
 answersContent.forEach(a => {
     qaMaps.set(a.number, a.content);
 })
@@ -568,7 +576,7 @@ setInterval(function () {
     } catch (e) {
         console.log('problem with new operations' + e);
     }
-}, 60 * 4.5 * 1000);
+}, 60 * 4.8 * 1000);
 
 let network = 1;
 
@@ -633,52 +641,44 @@ function getNumberLabel(labelValue) {
 }
 
 function sendNewTradeMessage(trade) {
-    clientNewListings.guilds.cache.forEach(function (guildValue, key) {
-        const category = guildValue.channels.cache.find(channel => channel.name.toLowerCase().includes("transactions"));
-        if (category) {
-            const channel = category.children.find(channel => channel.name.toLowerCase().includes('trades'));
-            if (channel) {
-                var message = new Discord.MessageEmbed()
-                    .addFields(
-                        {
-                            name: ':lock: New Thales Trade :lock:',
-                            value: "\u200b"
-                        },
-                        {
-                            name: ':link: Transaction:',
-                            value: "[" + trade.transactionHash + "](https://etherscan.io/tx/" + trade.transactionHash + ")"
-                        },
-                        {
-                            name: ':coin: Maker token:',
-                            value: trade.makerToken
-                        },
-                        {
-                            name: ':coin: Taker token:',
-                            value: trade.takerToken
-                        },
-                        {
-                            name: ':classical_building: Maker:',
-                            value: "[" + trade.maker + "](https://etherscan.io/address/" + trade.maker + ")"
-                        },
-                        {
-                            name: ':dollar: Maker amount:',
-                            value: getNumberLabel(trade.makerAmount)
-                        },
-                        {
-                            name: ':dollar: Taker amount:',
-                            value: getNumberLabel(trade.takerAmount)
-                        },
-                        {
-                            name: ':alarm_clock: Timestamp:',
-                            value: new Date(trade.timestamp)
-                        }
-                    )
-                    .setColor("#0037ff")
-                mapThalesTrades.set(trade.transactionHash, message);
-            }
-        }
-    });
 
+    var message = new Discord.MessageEmbed()
+        .addFields(
+            {
+                name: ':lock: New Thales Trade :lock:',
+                value: "\u200b"
+            },
+            {
+                name: ':link: Transaction:',
+                value: "[" + trade.transactionHash + "](https://etherscan.io/tx/" + trade.transactionHash + ")"
+            },
+            {
+                name: ':coin: Maker token:',
+                value: trade.makerToken
+            },
+            {
+                name: ':coin: Taker token:',
+                value: trade.takerToken
+            },
+            {
+                name: ':classical_building: Maker:',
+                value: "[" + trade.maker + "](https://etherscan.io/address/" + trade.maker + ")"
+            },
+            {
+                name: ':dollar: Maker amount:',
+                value: getNumberLabel(trade.makerAmount)
+            },
+            {
+                name: ':dollar: Taker amount:',
+                value: getNumberLabel(trade.takerAmount)
+            },
+            {
+                name: ':alarm_clock: Timestamp:',
+                value: new Date(trade.timestamp)
+            }
+        )
+        .setColor("#0037ff")
+    mapThalesTrades.set(trade.transactionHash, message);
 }
 
 async function getThalesNewOperations() {
@@ -697,6 +697,8 @@ async function getThalesNewOperations() {
                     console.log("new market");
                     sendMarketMessage(market);
                 }
+
+                getThalesNewTrades(market, startDateUnixTime);
 
                 thalesData.binaryOptions.trades({
                     network: 1,
@@ -764,20 +766,135 @@ setInterval(function () {
             clientNewListings.guilds.cache.forEach(function (guildValue, key) {
                 const category = guildValue.channels.cache.find(channel => channel.name.toLowerCase().includes("transactions"));
                 if (category) {
-                    const channel = category.children.find(channel => channel.name.toLowerCase().includes('trades'));
-                    if (channel) {
+                    const channelTrades = category.children.find(channel => channel.name.toLowerCase().includes('trades'));
+                    const channelBuys = category.children.find(channel => channel.name.toLowerCase().includes('new-buy-orders'));
+                    const channelSells = category.children.find(channel => channel.name.toLowerCase().includes('new-sell-orders'));
+                    if (channelTrades) {
+
                         for (const message of mapThalesTrades.values()) {
-                            channel.send(message);
+
+                            channelTrades.send(message);
+                        }
+                    }
+                    if (channelBuys) {
+                        for (const message of mapThalesBids.values()) {
+                            channelBuys.send(message);
+                        }
+                    }
+                    if (channelSells) {
+                        for (const message of mapThalesAsks.values()) {
+                            channelSells.send(message);
                         }
                     }
                 }
             });
             mapThalesTrades = new Map();
+            mapThalesBids = new Map();
+            mapThalesAsks = new Map();
         }
     } catch (e) {
         console.log(e);
     }
-}, 60 * 4.8 * 1000);
+}, 60 * 5 * 1000);
+
+
+async function getThalesNewTrades(market, startDateUnixTime) {
+    try {
+        let baseUrl = "https://api.0x.org/sra/v4/";
+        var response = await axios.get(baseUrl + `orderbook?baseToken=` + market.longAddress + "&quoteToken=" + "0x57Ab1ec28D129707052df4dF418D58a2D46d5f51")
+        if (response.data) {
+            //check bids
+            for (const bid of response.data.bids.records) {
+                if (startDateUnixTime < new Date(bid.metaData.createdAt).getTime()) {
+                    const takerToken = new web3.eth.Contract(contract, bid.order.takerToken);
+                    const takerTokenName = await takerToken.methods.name().call();
+                    var shortLong = takerTokenName.toLowerCase().includes('long') ? " > " : " < ";
+                    var message = new Discord.MessageEmbed()
+                        .addFields(
+                            {
+                                name: ':lock: New Thales Buy order :lock:',
+                                value: "\u200b"
+                            },
+                            {
+                                name: ':classical_building: Market:',
+                                value: market.currencyKey + shortLong + Math.round(((market.strikePrice) + Number.EPSILON) * 1000) / 1000
+                            },
+                            {
+                                name: ':dollar: Amount :',
+                                value: "$" + Math.round(((bid.order.makerAmount / 1e18) + Number.EPSILON) * 1000) / 1000
+                            },
+                            {
+                                name: ':dollar: Price:',
+                                value: parseFloat(bid.order.makerAmount / bid.order.takerAmount).toFixed(3) + " sUSD"
+                            },
+                            {
+                                name: ':dollar: Amount of options:',
+                                value: Math.round(((bid.order.takerAmount / 1e18) + Number.EPSILON) * 1000) / 1000
+                            },
+                            {
+                                name: ':alarm_clock: Created at:',
+                                value: new Date(bid.metaData.createdAt).toISOString().replace(/T/, ' ').replace(/\..+/, '')
+                            },
+                            {
+                                name: ':alarm_clock: Expiries:',
+                                value: new Date(bid.order.expiry * 1000).toISOString().replace(/T/, ' ').replace(/\..+/, '')
+                            }
+                        )
+                        .setColor("#0037ff")
+                    mapThalesBids.set(bid.metaData.orderHash, message);
+                }
+            }
+            //check asks
+            for (const ask of response.data.asks.records) {
+                console.log(ask);
+                if (startDateUnixTime < new Date(ask.metaData.createdAt).getTime()) {
+                    //check and send messages here
+                    const makerToken = new web3.eth.Contract(contract, ask.order.makerToken);
+                    const makerTokenName = await makerToken.methods.name().call();
+                    var shortLong = makerTokenName.toLowerCase().includes('long') ? " > " : " < ";
+                    var message = new Discord.MessageEmbed()
+                        .addFields(
+                            {
+                                name: ':lock: New Thales Sell order :lock:',
+                                value: "\u200b"
+                            },
+                            {
+                                name: ':classical_building: Market:',
+                                value: market.currencyKey + shortLong + Math.round(((market.strikePrice) + Number.EPSILON) * 1000) / 1000
+                            },
+                            {
+                                name: ':dollar: Amount :',
+                                value: "$" + Math.round(((ask.order.takerAmount / 1e18) + Number.EPSILON) * 1000) / 1000
+                            },
+                            {
+                                name: ':dollar: Price:',
+                                value: parseFloat(ask.order.takerAmount / ask.order.makerAmount).toFixed(3) + " sUSD"
+                            },
+                            {
+                                name: ':dollar: Amount of options:',
+                                value: Math.round(((ask.order.makerAmount / 1e18) + Number.EPSILON) * 1000) / 1000
+                            }, {
+                                name: ':dollar: Return if win:',
+                                value: ((((ask.order.makerAmount - ask.order.takerAmount)) / ask.order.takerAmount) * 100).toFixed(2) + '%'
+                            },
+                            {
+                                name: ':alarm_clock: Created at:',
+                                value: new Date(ask.metaData.createdAt).toISOString().replace(/T/, ' ').replace(/\..+/, '')
+                            },
+                            {
+                                name: ':alarm_clock: Expiries:',
+                                value: new Date(ask.order.expiry * 1000).toISOString().replace(/T/, ' ').replace(/\..+/, '')
+                            }
+                        )
+                        .setColor("#0037ff")
+                    mapThalesAsks.set(ask.metaData.orderHash, message);
+                }
+            }
+        }
+    } catch (e) {
+        console.log("error while getting new trades " + e);
+    }
+}
 
 
 clientNewListings.login(process.env.BOT_TOKEN_LISTINGS);
