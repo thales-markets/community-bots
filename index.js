@@ -14,7 +14,7 @@ const clientNewListings = new Discord.Client();
 
 const Web3 = require('web3');
 let contract = JSON.parse(contractRaw);
-const web3 = new Web3(new Web3.providers.HttpProvider("https://mainnet.infura.io/v3/2a1ba27ea6ea4b9683bd48100631ca1e"))
+const web3 = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_URL))
 let mapThalesTrades = new Map();
 let mapThalesAsks = new Map();
 let mapThalesBids = new Map();
@@ -793,7 +793,7 @@ setInterval(function () {
             mapThalesAsks = new Map();
         }
     } catch (e) {
-        console.log(e);
+        console.log('sending messages error ' + e);
     }
 }, 60 * 5 * 1000);
 
@@ -846,7 +846,6 @@ async function getThalesNewTrades(market, startDateUnixTime) {
             }
             //check asks
             for (const ask of response.data.asks.records) {
-                console.log(ask);
                 if (startDateUnixTime < new Date(ask.metaData.createdAt).getTime()) {
                     //check and send messages here
                     const makerToken = new web3.eth.Contract(contract, ask.order.makerToken);
