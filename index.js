@@ -762,7 +762,7 @@ async function getThalesNewOperations() {
 
 setInterval(function () {
     try {
-        if (mapThalesTrades.size > 0) {
+        if (mapThalesTrades.size > 0 || mapThalesBids.size > 0 || mapThalesAsks.size > 0) {
             clientNewListings.guilds.cache.forEach(function (guildValue, key) {
                 const category = guildValue.channels.cache.find(channel => channel.name.toLowerCase().includes("transactions"));
                 if (category) {
@@ -806,8 +806,11 @@ async function getThalesNewTrades(market, startDateUnixTime) {
             //check bids
             for (const bid of response.data.bids.records) {
                 if (startDateUnixTime < new Date(bid.metaData.createdAt).getTime()) {
+                    console.log("web 3 " + web3);
+                    console.log("infura " + process.env.INFURA_URL);
                     const takerToken = new web3.eth.Contract(contract, bid.order.takerToken);
                     const takerTokenName = await takerToken.methods.name().call();
+                    console.log("token name is " + takerTokenName);
                     var shortLong = takerTokenName.toLowerCase().includes('long') ? " > " : " < ";
                     var message = new Discord.MessageEmbed()
                         .addFields(
@@ -848,8 +851,11 @@ async function getThalesNewTrades(market, startDateUnixTime) {
             for (const ask of response.data.asks.records) {
                 if (startDateUnixTime < new Date(ask.metaData.createdAt).getTime()) {
                     //check and send messages here
+                    console.log("web 3 " + web3);
+                    console.log("infura " + process.env.INFURA_URL);
                     const makerToken = new web3.eth.Contract(contract, ask.order.makerToken);
                     const makerTokenName = await makerToken.methods.name().call();
+                    console.log("m token name is " + makerTokenName);
                     var shortLong = makerTokenName.toLowerCase().includes('long') ? " > " : " < ";
                     var message = new Discord.MessageEmbed()
                         .addFields(
