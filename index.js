@@ -594,7 +594,7 @@ function sendMarketMessage(market) {
                         },
                         {
                             name: ':link: URL:',
-                            value: "[" + market.address + "](https://etherscan.io/address/" + market.address + ")"
+                            value: "[" + market.address + "](https://thales.market/markets/" + market.address + ")"
                         },
                         {
                             name: ':coin: Token:',
@@ -609,8 +609,8 @@ function sendMarketMessage(market) {
                             value: market.strikePrice
                         },
                         {
-                            name: ':alarm_clock: Timestamp:',
-                            value: new Date(market.timestamp)
+                            name: ':alarm_clock: When:',
+                            value: new Date(market.maturityDate)
                         }
                     )
                     .setColor("#0037ff")
@@ -640,7 +640,45 @@ function getNumberLabel(labelValue) {
 
 }
 
-function sendNewTradeMessage(trade) {
+async function sendNewTradeMessage(trade, market) {
+
+    var shortLong;
+    const makerToken = new web3.eth.Contract(contract, trade.makerToken);
+    const makerTokenName = await makerToken.methods.name().call();
+    const takerToken = new web3.eth.Contract(contract, trade.takerToken);
+    const takerTokenName = await takerToken.methods.name().call();
+    var amountUSD;
+    var amountShortLong;
+    var isLong = false;
+    var isBuy = false;
+    if (makerTokenName.toLowerCase().includes('long') || makerTokenName.toLowerCase().includes('short')) {
+        if (makerTokenName.toLowerCase().includes('long')) {
+            shortLong = " > ";
+            isLong = true;
+
+        } else {
+            shortLong = " < ";
+            isLong = false;
+        }
+        amountShortLong = getNumberLabel(trade.makerAmount);
+        amountUSD = getNumberLabel(trade.takerAmount);
+        isBuy = true;
+    } else {
+        if (takerTokenName.toLowerCase().includes('long')) {
+            shortLong = " > ";
+            isLong = true;
+        } else {
+            shortLong = " < ";
+            isLong = false;
+        }
+
+
+        amountUSD = getNumberLabel(trade.makerAmount);
+        amountShortLong = getNumberLabel(trade.takerAmount);
+        shortLong = takerTokenName.toLowerCase().includes('long') ? " > " : " < ";
+    }
+    var marketMessage = market.currencyKey + shortLong + Math.round(((market.strikePrice) + Number.EPSILON) * 1000) / 1000;
+    marketMessage = marketMessage + "@" + new Date(market.maturityDate).toISOString().slice(0, 10);
 
     var message = new Discord.MessageEmbed()
         .addFields(
@@ -653,24 +691,20 @@ function sendNewTradeMessage(trade) {
                 value: "[" + trade.transactionHash + "](https://etherscan.io/tx/" + trade.transactionHash + ")"
             },
             {
-                name: ':coin: Maker token:',
-                value: trade.makerToken
+                name: ':coin: Transaction type:',
+                value: isBuy ? "Buy" : "Sell"
             },
             {
-                name: ':coin: Taker token:',
-                value: trade.takerToken
+                name: ':classical_building: Market:',
+                value: marketMessage
             },
             {
-                name: ':classical_building: Maker:',
-                value: "[" + trade.maker + "](https://etherscan.io/address/" + trade.maker + ")"
+                name: isLong ? ':dollar: Amount (sLONG)' : ':dollar: Amount (sSHORT)',
+                value: amountShortLong
             },
             {
-                name: ':dollar: Maker amount:',
-                value: getNumberLabel(trade.makerAmount)
-            },
-            {
-                name: ':dollar: Taker amount:',
-                value: getNumberLabel(trade.takerAmount)
+                name: ':dollar: Total:',
+                value: amountUSD + " sUSD"
             },
             {
                 name: ':alarm_clock: Timestamp:',
@@ -710,7 +744,7 @@ async function getThalesNewOperations() {
                         for (let trade of trades) {
                             if (startDateUnixTime < trade.timestamp) {
                                 console.log("new trade message")
-                                sendNewTradeMessage(trade);
+                                sendNewTradeMessage(trade, market);
                             }
                         }
                     }
@@ -724,7 +758,7 @@ async function getThalesNewOperations() {
                         for (let trade of trades) {
                             if (startDateUnixTime < trade.timestamp) {
                                 console.log("new trade message")
-                                sendNewTradeMessage(trade);
+                                sendNewTradeMessage(trade, market);
                             }
                         }
                     }
@@ -737,7 +771,7 @@ async function getThalesNewOperations() {
                         for (let trade of trades) {
                             if (startDateUnixTime < trade.timestamp) {
                                 console.log("new trade message")
-                                sendNewTradeMessage(trade);
+                                sendNewTradeMessage(trade, market);
                             }
                         }
                     }
@@ -750,7 +784,7 @@ async function getThalesNewOperations() {
                         for (let trade of trades) {
                             if (startDateUnixTime < trade.timestamp) {
                                 console.log("new trade message")
-                                sendNewTradeMessage(trade);
+                                sendNewTradeMessage(trade, market);
                             }
                         }
                     }
