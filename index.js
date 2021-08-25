@@ -11,7 +11,7 @@ let contractRaw = fs.readFileSync('contracts/Synthetix.json');
 const thalesData = require("thales-data");
 const SYNTH_USD_MAINNET = "0x57ab1ec28d129707052df4df418d58a2d46d5f51";
 const clientNewListings = new Discord.Client();
-
+const clientETHBurned = new Discord.Client();
 const Web3 = require('web3');
 let contract = JSON.parse(contractRaw);
 const web3 = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_URL))
@@ -21,6 +21,11 @@ let mapThalesBids = new Map();
 answersContent.forEach(a => {
     qaMaps.set(a.number, a.content);
 })
+
+clientETHBurned.once('ready', () => {
+    console.log("updating ETH burned on ready");
+    getETHBurned();
+});
 
 clientCountdown.once('ready', () => {
     console.log("updateCountdown on ready");
@@ -55,7 +60,8 @@ const updateCountdown = async () => {
 
 
 setInterval(function () {
-    console.log("updateCountdown")
+    console.log("updateCountdown and eth burned")
+    getETHBurned();
     updateCountdown();
 }, 360 * 1000);
 
@@ -938,3 +944,16 @@ async function getThalesNewTrades(market, startDateUnixTime) {
 
 clientNewListings.login(process.env.BOT_TOKEN_LISTINGS);
 
+
+async function getETHBurned() {
+
+    try {
+        var response = await axios.get('https://ethburned.info/api/v1/burned');
+        clientETHBurned.user.setActivity(getNumberLabel(response.data.total), {type: 'WATCHING'});
+    } catch (e) {
+        console.log("error in eth burned", e);
+    }
+
+}
+
+clientETHBurned.login(process.env.BOT_TOKEN_ETH_BURNED);
