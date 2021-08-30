@@ -702,7 +702,7 @@ async function sendNewTradeMessage(trade, market) {
             },
             {
                 name: ':classical_building: Market:',
-                value: marketMessage
+                value: "[" + marketMessage + "](https://thales.market/markets/" + market.address + ")"
             },
             {
                 name: isLong ? ':dollar: Amount (sLONG)' : ':dollar: Amount (sSHORT)',
