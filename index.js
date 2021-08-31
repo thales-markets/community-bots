@@ -949,7 +949,15 @@ async function getETHBurned() {
 
     try {
         var response = await axios.get('https://ethburned.info/api/v1/burned');
-        clientETHBurned.user.setActivity(getNumberLabel(response.data.total), {type: 'WATCHING'});
+        clientETHBurned.guilds.cache.forEach(function (value, key) {
+            try {
+                console.log("Updating burning ETH");
+                value.members.cache.get(clientETHBurned.user.id).setNickname(getNumberLabel(response.data.total) + ' ETH burned');
+            } catch (e) {
+                console.log(e);
+            }
+        });
+        clientETHBurned.user.setActivity(getNumberLabel(response.data.totalUSD) + "$", {type: 'WATCHING'});
     } catch (e) {
         console.log("error in eth burned", e);
     }
