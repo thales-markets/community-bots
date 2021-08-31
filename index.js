@@ -18,9 +18,16 @@ const web3 = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_URL))
 let mapThalesTrades = new Map();
 let mapThalesAsks = new Map();
 let mapThalesBids = new Map();
-answersContent.forEach(a => {
-    qaMaps.set(a.number, a.content);
-})
+let bobeMM = '0xadcf4a36baa86882c06e259ea93c439e1ab191e2';
+let almaMM = '0x036b8c9f7C31713c3a47863afe0031630395FaCD';
+let rickMM = '0xc637dB6c413db9439944d0DFDA47172890A6e313';
+let mapBobeMM = new Map();
+let mapAlmaMM = new Map();
+let mapRickMM = new Map();
+answersContent
+    .forEach(a => {
+        qaMaps.set(a.number, a.content);
+    })
 
 clientETHBurned.once('ready', () => {
     console.log("updating ETH burned on ready");
@@ -719,6 +726,13 @@ async function sendNewTradeMessage(trade, market) {
         )
         .setColor("#0037ff")
     mapThalesTrades.set(trade.transactionHash, message);
+    if (bobeMM.toLowerCase() == trade.makerToken.toLowerCase() || bobeMM.toLowerCase() == trade.takerToken.toLowerCase()) {
+        mapBobeMM.set(trade.transactionHash, message);
+    } else if (almaMM.toLowerCase() == trade.makerToken.toLowerCase() || almaMM.toLowerCase() == trade.takerToken.toLowerCase()) {
+        mapAlmaMM.set(trade.transactionHash, message);
+    } else if (rickMM.toLowerCase() == trade.makerToken.toLowerCase() || rickMM.toLowerCase() == trade.takerToken.toLowerCase()) {
+        mapRickMM.set(trade.transactionHash, message);
+    }
 }
 
 async function getThalesNewOperations() {
@@ -809,8 +823,10 @@ setInterval(function () {
                     const channelTrades = category.children.find(channel => channel.name.toLowerCase().includes('trades'));
                     const channelBuys = category.children.find(channel => channel.name.toLowerCase().includes('new-buy-orders'));
                     const channelSells = category.children.find(channel => channel.name.toLowerCase().includes('new-sell-orders'));
+                    const channelBobe = category.children.find(channel => channel.name.toLowerCase().includes('bobe-mm'));
+                    const channelAlma = category.children.find(channel => channel.name.toLowerCase().includes('alma-mm'));
+                    const channelRick = category.children.find(channel => channel.name.toLowerCase().includes('rick-mm'));
                     if (channelTrades) {
-
                         for (const message of mapThalesTrades.values()) {
 
                             channelTrades.send(message);
@@ -826,11 +842,29 @@ setInterval(function () {
                             channelSells.send(message);
                         }
                     }
+                    if (channelBobe) {
+                        for (const message of mapBobeMM.values()) {
+                            channelBobe.send(message);
+                        }
+                    }
+                    if (channelAlma) {
+                        for (const message of mapAlmaMM.values()) {
+                            channelAlma.send(message);
+                        }
+                    }
+                    if (channelRick) {
+                        for (const message of mapRickMM.values()) {
+                            channelRick.send(message);
+                        }
+                    }
                 }
             });
             mapThalesTrades = new Map();
             mapThalesBids = new Map();
             mapThalesAsks = new Map();
+            mapRickMM = new Map();
+            mapAlmaMM = new Map();
+            mapBobeMM = new Map();
         }
     } catch (e) {
         console.log('sending messages error ' + e);
@@ -885,6 +919,13 @@ async function getThalesNewTrades(market, startDateUnixTime) {
                         )
                         .setColor("#0037ff")
                     mapThalesBids.set(bid.metaData.orderHash, message);
+                    if (bobeMM.toLowerCase() == bid.order.takerToken.toLowerCase() || bobeMM.toLowerCase() == bid.order.makerToken.toLowerCase()) {
+                        mapBobeMM.set(bid.metaData.orderHash, message);
+                    } else if (almaMM.toLowerCase() == bid.order.takerToken.toLowerCase() || almaMM.toLowerCase() == bid.order.makerToken.toLowerCase()) {
+                        mapAlmaMM.set(bid.metaData.orderHash, message);
+                    } else if (rickMM.toLowerCase() == bid.order.takerToken.toLowerCase() || rickMM.toLowerCase() == bid.order.makerToken.toLowerCase()) {
+                        mapRickMM.set(bid.metaData.orderHash, message);
+                    }
                 }
             }
             //check asks
@@ -933,6 +974,13 @@ async function getThalesNewTrades(market, startDateUnixTime) {
                         )
                         .setColor("#0037ff")
                     mapThalesAsks.set(ask.metaData.orderHash, message);
+                    if (bobeMM.toLowerCase() == ask.order.takerToken.toLowerCase() || bobeMM.toLowerCase() == ask.order.makerToken.toLowerCase()) {
+                        mapBobeMM.set(ask.metaData.orderHash, message);
+                    } else if (almaMM.toLowerCase() == ask.order.takerToken.toLowerCase() || almaMM.toLowerCase() == ask.order.makerToken.toLowerCase()) {
+                        mapAlmaMM.set(ask.metaData.orderHash, message);
+                    } else if (rickMM.toLowerCase() == ask.order.takerToken.toLowerCase() || rickMM.toLowerCase() == ask.order.makerToken.toLowerCase()) {
+                        mapRickMM.set(ask.metaData.orderHash, message);
+                    }
                 }
             }
         }
