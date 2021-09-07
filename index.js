@@ -21,6 +21,8 @@ let mapThalesBids = new Map();
 let bobeMM = '0xadcf4a36baa86882c06e259ea93c439e1ab191e2';
 let almaMM = '0x036b8c9f7C31713c3a47863afe0031630395FaCD';
 let rickMM = '0xc637dB6c413db9439944d0DFDA47172890A6e313';
+const thalesGraphURL =
+    'https://api.thegraph.com/subgraphs/name/thales-markets/thales-options';
 let mapBobeMM = new Map();
 let mapAlmaMM = new Map();
 let mapRickMM = new Map();
@@ -1008,6 +1010,111 @@ async function getETHBurned() {
         clientETHBurned.user.setActivity(getNumberLabel(response.data.totalUSD) + "$", {type: 'WATCHING'});
     } catch (e) {
         console.log("error in eth burned", e);
+    }
+
+}
+
+
+setInterval(function () {
+    try {
+        console.log("starting new mints")
+        getMintData();
+    } catch (e) {
+        console.log('starting new mints' + e);
+    }
+}, 60 * 4.8 * 1000);
+
+
+async function getMintData() {
+    const body = JSON.stringify({
+        query: `{
+  optionTransactions(first: 10, orderBy:timestamp,
+        orderDirection:desc, where: { type: mint }) {
+    id
+    timestamp
+    type
+    account
+    market
+    amount
+  }
+}`,
+        variables: null,
+    });
+    const response = await fetch(thalesGraphURL, {
+        method: 'POST',
+        body,
+    });
+    const json = await response.json();
+    let newMints = new Array();
+
+
+    let startdate = new Date();
+    let durationInMinutes = 5;
+    startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
+    let unixTimestamp = Math.floor(startdate / 1000);
+    var newMint = 0;
+    for (const mint of json.data.optionTransactions) {
+        if (unixTimestamp < mint.timestamp) {
+            newMints.push(mint);
+            newMint = 1;
+        }
+    }
+    let wantedMarket;
+    let markets;
+    if (newMint == 1) {
+        markets = await thalesData.binaryOptions.markets({
+            max: Infinity,
+            network: 1,
+        });
+    }
+
+    if (newMints.length > 0) {
+        clientNewListings.guilds.cache.forEach(function (guildValue, key) {
+            const category = guildValue.channels.cache.find(channel => channel.name.toLowerCase().includes("transactions"));
+            if (category) {
+                const channelMint = category.children.find(channel => channel.name.toLowerCase().includes('new-mints'));
+                if (channelMint) {
+                    for (const mint of newMints) {
+                        for (const market of markets) {
+                            if (market.address == mint.market) {
+                                wantedMarket = market;
+                                break;
+                            }
+                        }
+                        var marketMessage = wantedMarket.currencyKey + " > " + Math.round(((wantedMarket.strikePrice) + Number.EPSILON) * 1000) / 1000;
+                        marketMessage = marketMessage + "@" + new Date(wantedMarket.maturityDate).toISOString().slice(0, 10);
+
+                        var message = new Discord.MessageEmbed()
+                            .addFields(
+                                {
+                                    name: ':lock: New Thales Mint :lock:',
+                                    value: "\u200b"
+                                },
+                                {
+                                    name: ':classical_building: Market:',
+                                    value: "[" + marketMessage + "](https://thales.market/markets/" + mint.market + ")"
+                                },
+                                {
+                                    name: ':link: Account:',
+                                    value: "[" + mint.account + "]" +
+                                        "(https://etherscan.io/address/" + mint.account + ")"
+                                },
+                                {
+                                    name: ':dollar: Amount :',
+                                    value: "$" + getNumberLabel(mint.amount / 1e18)
+                                },
+                                {
+                                    name: ':alarm_clock: Timestamp:',
+                                    value: new Date(mint.timestamp * 1000).toISOString().replace(/T/, ' ').replace(/\..+/, '')
+                                }
+                            )
+                            .setColor("#0037ff");
+
+                        channelMint.send(message);
+                    }
+                }
+            }
+        });
     }
 
 }
