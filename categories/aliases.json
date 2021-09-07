@@ -530,5 +530,21 @@
   {
     "number": 23,
     "alias": "What markets are currently available on Thales"
+  },
+  {
+    "number": 24,
+    "alias": "distribution"
+  },
+  {
+    "number": 24,
+    "alias": "token distribution"
+  },
+  {
+    "number": 24,
+    "alias": "thales token distribution"
+  },
+  {
+    "number": 24,
+    "alias": "what is the thales token distribution?"
   }
 ]
