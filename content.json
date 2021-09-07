@@ -72,7 +72,7 @@
       "fields": [
         {
           "title": "Answer:",
-          "value": "2% of THALES tokens or 2,000,000 will be airdropped to anyone who has ever staked SNX for at least one snapshot and claimed rewards at least once. This includes:L1 stakers, L2 stakers, xSNX stakers and Yearn vault stakers. /n/n In addition this airdrop will include:/n Everyone who used minted or made a trade on thales until snapshot /n All the poap holders from first 3 community calls"
+          "value": "2% of THALES tokens or 2,000,000 will be airdropped to anyone who has ever staked SNX for at least one snapshot and claimed rewards at least once. This includes:L1 stakers, L2 stakers, xSNX stakers and Yearn vault stakers. \n\n In addition this airdrop will include:\n Everyone who used minted or made a trade on thales until snapshot \n All the poap holders from first 3 community calls"
         }
       ],
       "footer": {
@@ -361,6 +361,86 @@
         {
           "title": "Answer:",
           "value": "You can see the markets currently live on Thales here:\n https://thales.market/markets#overview \n\n If you need help with trading on Thales, you should visit our **Thales trading guide**:\n https://docs.thales.market/using-thales/trading"
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 24,
+    "content": {
+      "title": "Question 24",
+      "description": "What is the THALES token distribution?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "THALES token distribution:\n\n- 35% to SNX stakers:\n           - 2% Retro airdrop to anyone who ever staked SNX\n          - 15% Retro pro rata rewards (vesting)\n           - 18% Ongoing rewards (vesting)\n\n-  15% THALES staking rewards (ongoing for 3 years)\n\n-  30% Growth fund\n            -  9% Strategic round (2 year linear unlock)\n            -  2% Crowdpooling event\n            - 18% Thales DAO treasury (for ad-hoc incentives)\n            -  1% THALES/ETH LP rewards (ongoing for 20 weeks)\n\n- 20% Thales Core Contributors (1 year vesting and then 3 year linear unlocking)\n\nFor deeper dive into THALES tokenomics, please visit: \n**https://thalesmarket.medium.com/thales-tokenomics-introducing-thales-token-3aab321174e7**"
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 25,
+    "content": {
+      "title": "Question 25",
+      "description": "What is the THALES token total supply?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "THALES token total supply is:\n\n 100,000,000 tokens\n\n To see the THALES token distribution, type: !faq distribution\n To see the THALES Tokenomics, please visit: **https://thalesmarket.medium.com/thales-tokenomics-introducing-thales-token-3aab321174e7**"
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 26,
+    "content": {
+      "title": "Question 26",
+      "description": "How will THALES token be distributed to SNX stakers?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "To ensure long term alignment between Thales protocol and Synthetix protocol 35% of THALES tokens are to be distributed to the SNX stakers. The details of how the 35% will be distributed are explained below:\n\n**Retro airdrop**: 2% of THALES tokens or 2,000,000 will be airdropped to anyone who has ever staked SNX for at least one snapshot and claimed rewards at least once. This includes: L1 stakers, L2 stakers, xSNX stakers, Yearn vault stakers.\n\n **Retro pro rata distribution**: 15% of THALES tokens or 15,000,000 will be allocated to SNX stakers on a pro rata basis from the beginning of SNX staking in Q2 2019 until THALES token launch. Pro rata distribution is calculated on a weekly level and then aggregated. These rewards are unlocked linearly over 100 weeks, claimable weekly. \n\n **Ongoing distribution**: 18% of THALES tokens or 18,000,000 will be distributed on a pro rata weekly snapshot basis to SNX stakers. The first week will be the week after the THALES token launch. If an address has had claimable THALES in the last week but hasn't claimed them, that THALES is made available to the same address in the next week. In other words, **there is no pressure to claim weekly**"
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 27,
+    "content": {
+      "title": "Question 27",
+      "description": "What happens if I don't claim my THALES reward from SNX staking for current week?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "If an address has had claimable THALES in the last week but hasn't claimed them, that THALES is made available to the same address in the next week.\n In other words, **there is no pressure to claim weekly**."
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 28,
+    "content": {
+      "title": "Question 28",
+      "description": "Am I eligible for the THALES airdrop?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "If your address is on the airdrop eligibility sheet, you are eligible for the airdrop!\n\n This is the updated airdrop eligibility sheet: \n\n https://docs.google.com/spreadsheets/d/1naboaD-UzIMHwT2bq7jNKkglA34jXmBTa2SrbWBNScg/edit#gid=0"
         }
       ],
       "footer": {
