@@ -727,10 +727,13 @@ async function sendNewTradeMessage(trade, market) {
         .setColor("#0037ff")
     mapThalesTrades.set(trade.transactionHash, message);
     if (bobeMM.toLowerCase() == trade.makerToken.toLowerCase() || bobeMM.toLowerCase() == trade.takerToken.toLowerCase()) {
+        console.log("its bobe transaction");
         mapBobeMM.set(trade.transactionHash, message);
     } else if (almaMM.toLowerCase() == trade.makerToken.toLowerCase() || almaMM.toLowerCase() == trade.takerToken.toLowerCase()) {
+        console.log("its alma transaction");
         mapAlmaMM.set(trade.transactionHash, message);
     } else if (rickMM.toLowerCase() == trade.makerToken.toLowerCase() || rickMM.toLowerCase() == trade.takerToken.toLowerCase()) {
+        console.log("its rick transaction");
         mapRickMM.set(trade.transactionHash, message);
     }
 }
@@ -816,16 +819,13 @@ async function getThalesNewOperations() {
 
 setInterval(function () {
     try {
-        if (mapThalesTrades.size > 0 || mapThalesBids.size > 0 || mapThalesAsks.size > 0) {
+        if (mapThalesTrades.size > 0 || mapThalesBids.size > 0 || mapThalesAsks.size > 0 || mapBobeMM.size > 0 || mapRickMM.size > 0 || mapAlmaMM.size > 0) {
             clientNewListings.guilds.cache.forEach(function (guildValue, key) {
                 const category = guildValue.channels.cache.find(channel => channel.name.toLowerCase().includes("transactions"));
                 if (category) {
                     const channelTrades = category.children.find(channel => channel.name.toLowerCase().includes('trades'));
                     const channelBuys = category.children.find(channel => channel.name.toLowerCase().includes('new-buy-orders'));
                     const channelSells = category.children.find(channel => channel.name.toLowerCase().includes('new-sell-orders'));
-                    const channelBobe = category.children.find(channel => channel.name.toLowerCase().includes('bobe-mm'));
-                    const channelAlma = category.children.find(channel => channel.name.toLowerCase().includes('alma-mm'));
-                    const channelRick = category.children.find(channel => channel.name.toLowerCase().includes('rick-mm'));
                     if (channelTrades) {
                         for (const message of mapThalesTrades.values()) {
 
@@ -842,21 +842,21 @@ setInterval(function () {
                             channelSells.send(message);
                         }
                     }
-                    if (channelBobe) {
+                    clientNewListings.channels.fetch('882186211198914590').then(bobChannel => {
                         for (const message of mapBobeMM.values()) {
-                            channelBobe.send(message);
+                            bobChannel.send(message);
                         }
-                    }
-                    if (channelAlma) {
+                    });
+                    clientNewListings.channels.fetch('882186251913015307').then(almaChannel => {
                         for (const message of mapAlmaMM.values()) {
-                            channelAlma.send(message);
+                            almaChannel.send(message);
                         }
-                    }
-                    if (channelRick) {
+                    });
+                    clientNewListings.channels.fetch('882186413519564840').then(rickChannel => {
                         for (const message of mapRickMM.values()) {
-                            channelRick.send(message);
+                            rickChannel.send(message);
                         }
-                    }
+                    });
                 }
             });
             mapThalesTrades = new Map();
