@@ -376,7 +376,7 @@
       "fields": [
         {
           "title": "Answer:",
-          "value": "**THALES token distribution:**\n\n**- 35% to SNX stakers**:\n &nbsp;&nbsp;- 2% Retro airdrop to anyone who ever staked SNX\n &nbsp;&nbsp;- 15% Retro pro rata rewards (vesting)\n &nbsp;&nbsp;- 18% Ongoing rewards (vesting)\n\n**-  15% THALES staking rewards (ongoing for 3 years)**\n\n**-  30% Growth fund**\n &nbsp;&nbsp;-  9% Strategic round (2 year linear unlock)\n &nbsp;&nbsp;-  2% Crowdpooling event\n &nbsp;&nbsp;- 18% Thales DAO treasury (for ad-hoc incentives)\n &nbsp;&nbsp;-  1% THALES/ETH LP rewards (ongoing for 20 weeks)\n\n**- 20% Thales Core Contributors (1 year vesting and then 3 year linear unlocking)**\n\nFor deeper dive into THALES tokenomics, please visit: \n**https://thalesmarket.medium.com/thales-tokenomics-introducing-thales-token-3aab321174e7**\n"
+          "value": "**THALES token distribution:**\n\n**- 35% to SNX stakers**:\n - 2% Retro airdrop to anyone who ever staked SNX\n - 15% Retro pro rata rewards (vesting)\n - 18% Ongoing rewards (vesting)\n\n**-  15% THALES staking rewards (ongoing for 3 years)**\n\n**-  30% Growth fund**\n -  9% Strategic round (2 year linear unlock)\n -  2% Crowdpooling event\n - 18% Thales DAO treasury (for ad-hoc incentives)\n -  1% THALES/ETH LP rewards (ongoing for 20 weeks)\n\n**- 20% Thales Core Contributors (1 year cliff and 3 year linear unlocking)**\n\nFor deeper dive into THALES tokenomics, please visit: \n**https://thalesmarket.medium.com/thales-tokenomics-introducing-thales-token-3aab321174e7**\n"
         }
       ],
       "footer": {
@@ -387,6 +387,22 @@
     "number": 25,
     "content": {
       "title": "Question 25",
+      "description": "When will THALES token launch?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "THALES token will be launched on 13th September, 16:00 UTC with a DODO Crowdpooling event. \n\n More information about the crowdpooling event and how to participate can be found here:\n\n https://thalesmarket.medium.com/thales-dao-token-public-liquidity-offering-5c7621bbb678 \n"
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 26,
+    "content": {
+      "title": "Question 26",
       "description": "What is the THALES token total supply?",
       "color": "0099ff",
       "fields": [
@@ -400,9 +416,9 @@
     }
   },
   {
-    "number": 26,
+    "number": 27,
     "content": {
-      "title": "Question 26",
+      "title": "Question 27",
       "description": "How will THALES token be distributed to SNX stakers?",
       "color": "0099ff",
       "fields": [
@@ -416,9 +432,9 @@
     }
   },
   {
-    "number": 27,
+    "number": 28,
     "content": {
-      "title": "Question 27",
+      "title": "Question 28",
       "description": "What happens if I don't claim my THALES reward from SNX staking for current week?",
       "color": "0099ff",
       "fields": [
@@ -432,15 +448,79 @@
     }
   },
   {
-    "number": 28,
+    "number": 29,
     "content": {
-      "title": "Question 28",
-      "description": "Am I eligible for the THALES airdrop?",
+      "title": "Question 29",
+      "description": "How do I navigate to the THALES crowdpooling event?",
       "color": "0099ff",
       "fields": [
         {
           "title": "Answer:",
           "value": "If your address is on the airdrop eligibility sheet, you are eligible for the airdrop!\n\n This is the updated airdrop eligibility sheet: \n\n https://docs.google.com/spreadsheets/d/1naboaD-UzIMHwT2bq7jNKkglA34jXmBTa2SrbWBNScg/edit#gid=0 \n"
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 30,
+    "content": {
+      "title": "Question 30",
+      "description": "Am I eligible for the THALES airdrop?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "Link to THALES crowdpooling event: \n\n <crowdpool link here> \n\n On more information about the crowdpool and how to participate, visit this page:\nhttps://thalesmarket.medium.com/thales-dao-token-public-liquidity-offering-5c7621bbb678\n"
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 31,
+    "content": {
+      "title": "Question 31",
+      "description": "When can the airdrop be claimed?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "If you are eligible for the THALES airdrop, you can claim your ***137 THALES tokens*** on **Thursday-Friday, 16th-17th september, 2021**, soon after the Crowdpool has ended.\n\n We will announce where you can claim soon!\n"
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 32,
+    "content": {
+      "title": "Question 32",
+      "description": "When is the THALES inital liquidity offering happening?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "THALES initial liquidity offering is happening on **Monday, 13th September, 14:00 UTC**\n It will last for 48h with additional 12h of Cooling off period\n\n More details can be found here:/n >>>***https://thalesmarket.medium.com/thales-dao-token-public-liquidity-offering-5c7621bbb678***<<< \n"
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 33,
+    "content": {
+      "title": "Question 33",
+      "description": "How do I participate in the THALES crowdpooling event?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "You can find a detailed guide on how to participate in the THALES crowdpooling event here:/n/n >>> ***https://thalesmarket.medium.com/thales-dao-token-public-liquidity-offering-5c7621bbb678*** <<<"
         }
       ],
       "footer": {
