@@ -424,7 +424,7 @@
       "fields": [
         {
           "title": "Answer:",
-          "value": "To ensure long term alignment between Thales protocol and Synthetix protocol 35% of THALES tokens are to be distributed to the SNX stakers. The details of how the 35% will be distributed are explained below:\n\n**Retro airdrop**: 2% of THALES tokens or 2,000,000 will be airdropped to anyone who has ever staked SNX for at least one snapshot and claimed rewards at least once. This includes: L1 stakers, L2 stakers, xSNX stakers, Yearn vault stakers.\n\n **Retro pro rata distribution**: 15% of THALES tokens or 15,000,000 will be allocated to SNX stakers on a pro rata basis from the beginning of SNX staking in Q2 2019 until THALES token launch. Pro rata distribution is calculated on a weekly level and then aggregated. These rewards are unlocked linearly over 100 weeks, claimable weekly. \n\n **Ongoing distribution**: 18% of THALES tokens or 18,000,000 will be distributed on a pro rata weekly snapshot basis to SNX stakers. The first week will be the week after the THALES token launch. If an address has had claimable THALES in the last week but hasn't claimed them, that THALES is made available to the same address in the next week. In other words, **there is no pressure to claim weekly**"
+          "value": "\n To learn in detail how the THALES tokens will be distributed to SNX stakers, visit the following link:\n\n https://docs.thales.market/getting-started/thales-tokenomics#snx-stakers-distribution \n"
         }
       ],
       "footer": {
