@@ -851,25 +851,25 @@ setInterval(function () {
                         for (const message of mapBobeMM.values()) {
                             bobChannel.send(message);
                         }
+                        mapBobeMM = new Map();
                     });
                     clientNewListings.channels.fetch('882186251913015307').then(almaChannel => {
                         for (const message of mapAlmaMM.values()) {
                             almaChannel.send(message);
                         }
+                        mapAlmaMM = new Map();
                     });
                     clientNewListings.channels.fetch('882186413519564840').then(rickChannel => {
                         for (const message of mapRickMM.values()) {
                             rickChannel.send(message);
                         }
+                        mapRickMM = new Map();
                     });
                 }
             });
             mapThalesTrades = new Map();
             mapThalesBids = new Map();
             mapThalesAsks = new Map();
-            mapRickMM = new Map();
-            mapAlmaMM = new Map();
-            mapBobeMM = new Map();
         }
     } catch (e) {
         console.log('sending messages error ' + e);
