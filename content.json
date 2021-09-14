@@ -72,7 +72,7 @@
       "fields": [
         {
           "title": "Answer:",
-          "value": "2% of THALES tokens or 2,000,000 will be airdropped to anyone who has ever staked SNX for at least one snapshot and claimed rewards at least once. This includes:L1 stakers, L2 stakers, xSNX stakers and Yearn vault stakers. \n\n In addition this airdrop will include:\n Everyone who used minted or made a trade on thales until snapshot \n All the poap holders from first 3 community calls \n\n Snapshot for the airdrop was taken at 6th of September 10am UTC \n"
+          "value": "2% of THALES tokens or 2,000,000 will be airdropped to anyone who has ever staked SNX for at least one snapshot and claimed rewards at least once. This includes:L1 stakers, L2 stakers, xSNX stakers and Yearn vault stakers. \n\n In addition this airdrop will include:\n Everyone who used minted or made a trade on thales until snapshot \n All the POAP holders until the snapshot. \n\n Snapshot for the airdrop was taken at 6th of September 10am UTC \n"
         }
       ],
       "footer": {
@@ -456,7 +456,7 @@
       "fields": [
         {
           "title": "Answer:",
-          "value": "Link to THALES crowdpooling event: \n\n <crowdpool link here> \n\n On more information about the crowdpool and how to participate, visit this page:\nhttps://thalesmarket.medium.com/thales-dao-token-public-liquidity-offering-5c7621bbb678\n"
+          "value": "Link to THALES crowdpooling event: \n\n >>> ***https://app.dodoex.io/cp/join/0xfa64bc0f8097f81efb4a453d522ec64df8d12cc6?network=mainnet*** <<< \n\n For more information about the crowdpool and how to participate, visit this page:\nhttps://thalesmarket.medium.com/thales-dao-token-public-liquidity-offering-5c7621bbb678\n"
         }
       ],
       "footer": {
@@ -521,6 +521,38 @@
         {
           "title": "Answer:",
           "value": "You can find a detailed guide on how to participate in the THALES crowdpooling event here:\n\n >>> ***https://thalesmarket.medium.com/thales-dao-token-public-liquidity-offering-5c7621bbb678*** <<<"
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 34,
+    "content": {
+      "title": "Question 34",
+      "description": "How do I participate in the THALES crowdpooling event?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "Retroactive pro-rata rewards for SNX stakers are calculated retroactively on a weekly basis and then aggregated based on how long and how much SNX you staked until September 6th snapshot. in other words, it takes into account your part of the Synthetix global debt. This is why claiming rewards was required to qualify, as it demonstrates a healthy c-ratio maintenance.\n\nThese retro pro-rata rewards are unlocked on a weekly basis for 100 weeks.\n\n There is a floor set up for minimum amount, meaning that if your aggregated rewards end up being below 24 THALES, you are not eligible for the pro-rata distribution. Every SNX staker who claimed at least once will receive 137 THALES token as an airdrop to compensate for those whose SNX stack wasn't big enough compared to the total debt to grant them an ongoing distribution."
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 35,
+    "content": {
+      "title": "Question 35",
+      "description": "What is the list of addresses for the Retroactive pro-rata rewards for SNX stakers?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "Eligible addresses for the *Retroactive pro-rata rewards** and the total amounts of THALES allocated to them can be seen here \n\n **https://docs.google.com/spreadsheets/d/1CLHqFOsf2Pt2MZKP1VVU-M_IeddaFrNujaFcVb-K1RQ/edit#gid=0** \n\n" 
         }
       ],
       "footer": {
