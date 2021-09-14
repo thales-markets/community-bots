@@ -801,6 +801,7 @@ async function getThalesNewOperations() {
                     thalesData.binaryOptions.trades({
                         network: network,
                         makerToken: market.shortAddress,
+                        takerToken: SYNTH_USD_MAINNET
                     }).then(trades => {
                         if (trades.length > 0) {
                             for (let trade of trades) {
