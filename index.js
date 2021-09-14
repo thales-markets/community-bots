@@ -27,6 +27,7 @@ const thalesGraphURL =
 let mapBobeMM = new Map();
 let mapAlmaMM = new Map();
 let mapRickMM = new Map();
+let mapMint = new Map();
 answersContent
     .forEach(a => {
         qaMaps.set(a.number, a.content);
@@ -1057,7 +1058,6 @@ async function getMintData() {
         body,
     });
     const json = await response.json();
-    let newMints = new Array();
 
 
     let startdate = new Date();
@@ -1067,7 +1067,7 @@ async function getMintData() {
     var newMint = 0;
     for (const mint of json.data.optionTransactions) {
         if (unixTimestamp < mint.timestamp) {
-            newMints.push(mint);
+            mapMint.set(mint.timestamp, mint);
             newMint = 1;
         }
     }
@@ -1080,13 +1080,13 @@ async function getMintData() {
         });
     }
 
-    if (newMints.length > 0) {
+    if (mapMint.size > 0) {
         clientNewListings.guilds.cache.forEach(function (guildValue, key) {
             const category = guildValue.channels.cache.find(channel => channel.name.toLowerCase().includes("transactions"));
             if (category) {
                 const channelMint = category.children.find(channel => channel.name.toLowerCase().includes('new-mints'));
                 if (channelMint) {
-                    for (const mint of newMints) {
+                    for (const mint of mapMint.values()) {
                         for (const market of markets) {
                             if (market.address == mint.market) {
                                 wantedMarket = market;
