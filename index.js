@@ -579,6 +579,12 @@ client.on("message", msg => {
 
 client.login(process.env.BOT_TOKEN);
 
+function delay(time) {
+    return new Promise(function (resolve) {
+        setTimeout(resolve, time)
+    });
+}
+
 clientNewListings.once('ready', () => {
     console.log("initial new operations")
     getThalesNewOperations();
@@ -659,6 +665,7 @@ function getNumberLabel(labelValue) {
 async function sendNewTradeMessage(trade, market) {
 
     var shortLong;
+    await delay(1001)
     const makerToken = new web3.eth.Contract(contract, trade.makerToken);
     const makerTokenName = await makerToken.methods.name().call();
     const takerToken = new web3.eth.Contract(contract, trade.takerToken);
@@ -874,7 +881,7 @@ setInterval(function () {
     } catch (e) {
         console.log('sending messages error ' + e);
     }
-}, 60 * 5 * 1000);
+}, 60 * 5.2 * 1000);
 
 
 async function getThalesNewTrades(market, startDateUnixTime) {
@@ -887,6 +894,7 @@ async function getThalesNewTrades(market, startDateUnixTime) {
                 if (startDateUnixTime < new Date(bid.metaData.createdAt).getTime()) {
                     console.log("web 3 " + web3);
                     console.log("infura " + process.env.INFURA_URL);
+                    await delay(1001)
                     const takerToken = new web3.eth.Contract(contract, bid.order.takerToken);
                     const takerTokenName = await takerToken.methods.name().call();
                     console.log("token name is " + takerTokenName);
@@ -939,6 +947,7 @@ async function getThalesNewTrades(market, startDateUnixTime) {
                     //check and send messages here
                     console.log("web 3 " + web3);
                     console.log("infura " + process.env.INFURA_URL);
+                    await delay(1001)
                     const makerToken = new web3.eth.Contract(contract, ask.order.makerToken);
                     const makerTokenName = await makerToken.methods.name().call();
                     console.log("m token name is " + makerTokenName);
