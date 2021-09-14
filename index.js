@@ -813,7 +813,8 @@ async function getThalesNewOperations() {
                     });
                     thalesData.binaryOptions.trades({
                         network: network,
-                        makerToken: SYNTH_USD_MAINNET
+                        makerToken: SYNTH_USD_MAINNET,
+                        takerToken: market.shortAddress,
                     }).then(trades => {
                         if (trades.length > 0) {
                             for (let trade of trades) {
