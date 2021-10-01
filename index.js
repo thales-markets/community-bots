@@ -18,9 +18,9 @@ const web3 = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_URL))
 let mapThalesTrades = new Map();
 let mapThalesAsks = new Map();
 let mapThalesBids = new Map();
-let bobeMM = '0xadcf4a36baa86882c06e259ea93c439e1ab191e2';
+let bobeMM = '0xC0E554C1951c0193E020156F68Dce15064769937';
 let almaMM = '0x036b8c9f7C31713c3a47863afe0031630395FaCD';
-let rickMM = '0xc637dB6c413db9439944d0DFDA47172890A6e313';
+let rickMM = '0x71C5a24F6eDe7861A32A5f81AF5b1B70Ff250B80';
 const fetch = require("node-fetch");
 const thalesGraphURL =
     'https://api.thegraph.com/subgraphs/name/thales-markets/thales-options';
