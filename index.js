@@ -24,6 +24,15 @@ let rickMM = '0x71C5a24F6eDe7861A32A5f81AF5b1B70Ff250B80';
 const fetch = require("node-fetch");
 const thalesGraphURL =
     'https://api.thegraph.com/subgraphs/name/thales-markets/thales-options';
+const ethers = require("ethers");
+const provider = ethers.getDefaultProvider();
+let walletTest = new ethers.Wallet(ethers.Wallet.createRandom().privateKey, provider);
+const stakingThalesABI = require('./contracts/StakingThales.js');
+const stakingContract = new ethers.Contract(
+    "0x883D651429B0829BC045A94F288f3b514021B8C1",
+    stakingThalesABI.stakingthales.abi,
+    walletTest
+);
 let mapBobeMM = new Map();
 let mapAlmaMM = new Map();
 let mapRickMM = new Map();
@@ -49,6 +58,17 @@ client.on("ready", () => {
 })
 
 const updateCountdown = async () => {
+    let lastPeriodTimeStamp = (
+        await stakingContract.lastPeriodTimeStamp()
+    ).toString();
+
+    let durationPeriod = (await stakingContract.durationPeriod()).toString();
+    let closingDate = new Date(
+        lastPeriodTimeStamp * 1000.0 + durationPeriod * 1000.0
+    );
+    console.log('lastPeriodTS', lastPeriodTimeStamp);
+    console.log('durationPeriod', durationPeriod);
+    console.log('closingDate', closingDate.getTime());
     if (clientCountdown) {
         clientCountdown.guilds.cache.forEach(function (value, key) {
             try {
@@ -58,7 +78,7 @@ const updateCountdown = async () => {
             }
         });
     }
-    let endDateUTC = new Date("Jul 28, 2021 12:00:00 UTC")
+    let endDateUTC = new Date(closingDate.toUTCString())
     let currentDate = new Date(new Date().toUTCString());
     var distance = endDateUTC.getTime() - currentDate.getTime();
     var days = Math.floor(distance / (1000 * 60 * 60 * 24));
@@ -66,7 +86,6 @@ const updateCountdown = async () => {
     var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
     var seconds = Math.floor((distance % (1000 * 60)) / 1000);
     clientCountdown.user.setActivity(days + "D:" + hours + "H:" + minutes + "M", {type: 'WATCHING'});
-
 };
 
 
