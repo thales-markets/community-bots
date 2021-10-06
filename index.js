@@ -37,6 +37,7 @@ let mapBobeMM = new Map();
 let mapAlmaMM = new Map();
 let mapRickMM = new Map();
 let mapMint = new Map();
+let setConcludedTradesPastHour = new Set();
 answersContent
     .forEach(a => {
         qaMaps.set(a.number, a.content);
@@ -683,90 +684,207 @@ function getNumberLabel(labelValue) {
 }
 
 async function sendNewTradeMessage(trade, market) {
+    try {
+        var shortLong;
+        await delay(1001)
+        const makerToken = new web3.eth.Contract(contract, trade.makerToken);
+        const makerTokenName = await makerToken.methods.name().call();
+        const takerToken = new web3.eth.Contract(contract, trade.takerToken);
+        const takerTokenName = await takerToken.methods.name().call();
+        var amountUSD;
+        var amountShortLong;
+        var isLong = false;
+        var isBuy = false;
+        if (makerTokenName.toLowerCase().includes('long') || makerTokenName.toLowerCase().includes('short')) {
+            if (makerTokenName.toLowerCase().includes('long')) {
+                shortLong = " > ";
+                isLong = true;
 
-    var shortLong;
-    await delay(1001)
-    const makerToken = new web3.eth.Contract(contract, trade.makerToken);
-    const makerTokenName = await makerToken.methods.name().call();
-    const takerToken = new web3.eth.Contract(contract, trade.takerToken);
-    const takerTokenName = await takerToken.methods.name().call();
-    var amountUSD;
-    var amountShortLong;
-    var isLong = false;
-    var isBuy = false;
-    if (makerTokenName.toLowerCase().includes('long') || makerTokenName.toLowerCase().includes('short')) {
-        if (makerTokenName.toLowerCase().includes('long')) {
-            shortLong = " > ";
-            isLong = true;
-
-        } else {
-            shortLong = " < ";
-            isLong = false;
-        }
-        amountShortLong = getNumberLabel(trade.makerAmount);
-        amountUSD = getNumberLabel(trade.takerAmount);
-        isBuy = true;
-    } else {
-        if (takerTokenName.toLowerCase().includes('long')) {
-            shortLong = " > ";
-            isLong = true;
-        } else {
-            shortLong = " < ";
-            isLong = false;
-        }
-
-
-        amountUSD = getNumberLabel(trade.makerAmount);
-        amountShortLong = getNumberLabel(trade.takerAmount);
-        shortLong = takerTokenName.toLowerCase().includes('long') ? " > " : " < ";
-    }
-    var marketMessage = market.currencyKey + shortLong + Math.round(((market.strikePrice) + Number.EPSILON) * 1000) / 1000;
-    marketMessage = marketMessage + "@" + new Date(market.maturityDate).toISOString().slice(0, 10);
-
-    var message = new Discord.MessageEmbed()
-        .addFields(
-            {
-                name: ':lock: New Thales Trade :lock:',
-                value: "\u200b"
-            },
-            {
-                name: ':link: Transaction:',
-                value: "[" + trade.transactionHash + "](https://etherscan.io/tx/" + trade.transactionHash + ")"
-            },
-            {
-                name: ':coin: Transaction type:',
-                value: isBuy ? "Buy" : "Sell"
-            },
-            {
-                name: ':classical_building: Market:',
-                value: "[" + marketMessage + "](https://thales.market/markets/" + market.address + ")"
-            },
-            {
-                name: isLong ? ':dollar: Amount (sLONG)' : ':dollar: Amount (sSHORT)',
-                value: amountShortLong
-            },
-            {
-                name: ':dollar: Total:',
-                value: amountUSD + " sUSD"
-            },
-            {
-                name: ':alarm_clock: Timestamp:',
-                value: new Date(trade.timestamp)
+            } else {
+                shortLong = " < ";
+                isLong = false;
             }
-        )
-        .setColor("#0037ff")
-    mapThalesTrades.set(trade.transactionHash, message);
-    if (bobeMM.toLowerCase() == trade.maker.toLowerCase() || bobeMM.toLowerCase() == trade.taker.toLowerCase()) {
-        console.log("its bobe transaction");
-        mapBobeMM.set(trade.transactionHash, message);
-    } else if (almaMM.toLowerCase() == trade.maker.toLowerCase() || almaMM.toLowerCase() == trade.taker.toLowerCase()) {
-        console.log("its alma transaction");
-        mapAlmaMM.set(trade.transactionHash, message);
-    } else if (rickMM.toLowerCase() == trade.maker.toLowerCase() || rickMM.toLowerCase() == trade.taker.toLowerCase()) {
-        console.log("its rick transaction");
-        mapRickMM.set(trade.transactionHash, message);
+            amountShortLong = getNumberLabel(trade.makerAmount);
+            amountUSD = getNumberLabel(trade.takerAmount);
+            isBuy = true;
+        } else {
+            if (takerTokenName.toLowerCase().includes('long')) {
+                shortLong = " > ";
+                isLong = true;
+            } else {
+                shortLong = " < ";
+                isLong = false;
+            }
+
+
+            amountUSD = getNumberLabel(trade.makerAmount);
+            amountShortLong = getNumberLabel(trade.takerAmount);
+            shortLong = takerTokenName.toLowerCase().includes('long') ? " > " : " < ";
+        }
+        var marketMessage = market.currencyKey + shortLong + Math.round(((market.strikePrice) + Number.EPSILON) * 1000) / 1000;
+        marketMessage = marketMessage + "@" + new Date(market.maturityDate).toISOString().slice(0, 10);
+
+        var message = new Discord.MessageEmbed()
+            .addFields(
+                {
+                    name: ':lock: New Thales Trade :lock:',
+                    value: "\u200b"
+                },
+                {
+                    name: ':link: Transaction:',
+                    value: "[" + trade.transactionHash + "](https://etherscan.io/tx/" + trade.transactionHash + ")"
+                },
+                {
+                    name: ':coin: Transaction type:',
+                    value: isBuy ? "Buy" : "Sell"
+                },
+                {
+                    name: ':classical_building: Market:',
+                    value: "[" + marketMessage + "](https://thales.market/markets/" + market.address + ")"
+                },
+                {
+                    name: isLong ? ':dollar: Amount (sLONG)' : ':dollar: Amount (sSHORT)',
+                    value: amountShortLong
+                },
+                {
+                    name: ':dollar: Total:',
+                    value: amountUSD + " sUSD"
+                },
+                {
+                    name: ':alarm_clock: Timestamp:',
+                    value: new Date(trade.timestamp)
+                }
+            )
+            .setColor("#0037ff")
+        mapThalesTrades.set(trade.transactionHash, message);
+        setConcludedTradesPastHour.add(trade.transactionHash);
+        if (bobeMM.toLowerCase() == trade.maker.toLowerCase() || bobeMM.toLowerCase() == trade.taker.toLowerCase()) {
+            console.log("its bobe transaction");
+            mapBobeMM.set(trade.transactionHash, message);
+        } else if (almaMM.toLowerCase() == trade.maker.toLowerCase() || almaMM.toLowerCase() == trade.taker.toLowerCase()) {
+            console.log("its alma transaction");
+            mapAlmaMM.set(trade.transactionHash, message);
+        } else if (rickMM.toLowerCase() == trade.maker.toLowerCase() || rickMM.toLowerCase() == trade.taker.toLowerCase()) {
+            console.log("its rick transaction");
+            mapRickMM.set(trade.transactionHash, message);
+        }
+    } catch (e) {
+        console.log('Problem while getting new trades' + e);
     }
 }
+
+let checkDurationInMinutes = 0;
+
+
+setInterval(function () {
+    try {
+        console.log("checking unsent trades")
+        checkUnsentTrades();
+    } catch (e) {
+        console.log('error checking unsent trades' + e);
+        checkDurationInMinutes = 60;
+    }
+}, 60 * 60 * 1000);
+
+
+async function checkUnsentTrades() {
+    thalesData.binaryOptions.markets({
+        max: Infinity,
+        network: 1,
+    }).then(markets => {
+            var startdate = new Date();
+            checkDurationInMinutes = checkDurationInMinutes + 60;
+            startdate.setMinutes(startdate.getMinutes() - checkDurationInMinutes);
+            checkDurationInMinutes = 0;
+            let startDateUnixTime = startdate.getTime();
+            for (const market of markets) {
+                try {
+                    thalesData.binaryOptions.trades({
+                        network: 1,
+                        makerToken: market.longAddress,
+                        takerToken: SYNTH_USD_MAINNET
+                    }).then(trades => {
+                        //send messages
+                        if (trades.length > 0) {
+                            for (let trade of trades) {
+                                if (startDateUnixTime < trade.timestamp && !setConcludedTradesPastHour.has(trade.transactionHash)) {
+                                    console.log("new trade message")
+                                    try {
+                                        sendNewTradeMessage(trade, market);
+                                    } catch (e) {
+                                        console.log('error checking unsent trades' + e);
+                                        checkDurationInMinutes = 60;
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    thalesData.binaryOptions.trades({
+                        network: network,
+                        makerToken: SYNTH_USD_MAINNET,
+                        takerToken: market.longAddress,
+                    }).then(trades => {
+                        if (trades.length > 0) {
+                            for (let trade of trades) {
+                                if (startDateUnixTime < trade.timestamp && !setConcludedTradesPastHour.has(trade.transactionHash)) {
+                                    console.log("new trade message")
+                                    try {
+                                        sendNewTradeMessage(trade, market);
+                                    } catch (e) {
+                                        console.log('error checking unsent trades' + e);
+                                        checkDurationInMinutes = 60;
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    thalesData.binaryOptions.trades({
+                        network: network,
+                        makerToken: market.shortAddress,
+                        takerToken: SYNTH_USD_MAINNET
+                    }).then(trades => {
+                        if (trades.length > 0) {
+                            for (let trade of trades) {
+                                if (startDateUnixTime < trade.timestamp && !setConcludedTradesPastHour.has(trade.transactionHash)) {
+                                    console.log("new trade message")
+                                    try {
+                                        sendNewTradeMessage(trade, market);
+                                    } catch (e) {
+                                        console.log('error checking unsent trades' + e);
+                                        checkDurationInMinutes = 60;
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    thalesData.binaryOptions.trades({
+                        network: network,
+                        makerToken: SYNTH_USD_MAINNET,
+                        takerToken: market.shortAddress,
+                    }).then(trades => {
+                        if (trades.length > 0) {
+                            for (let trade of trades) {
+                                if (startDateUnixTime < trade.timestamp && !setConcludedTradesPastHour.has(trade.transactionHash)) {
+                                    console.log("new trade message")
+                                    try {
+                                        sendNewTradeMessage(trade, market);
+                                    } catch (e) {
+                                        console.log('error checking unsent trades' + e);
+                                        checkDurationInMinutes = 60;
+                                    }
+                                }
+                            }
+                        }
+                    });
+                } catch (e) {
+                    console.log('error checking unsent trades' + e);
+                    checkDurationInMinutes = 60;
+                }
+            }
+        }
+    );
+}
+
 
 async function getThalesNewOperations() {
 
