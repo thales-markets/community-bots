@@ -558,5 +558,37 @@
       "footer": {
       }
     }
+  },
+  {
+    "number": 36,
+    "content": {
+      "title": "Question 36",
+      "description": "How do I register for Thales trading competition?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "To participate in the Thales trading competition, you have to register your (**at least 3 month old**) twitter profile using this link: \n\nhttps://thales.market/markets/leaderboard\n *God speed, competitor!*\n" 
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 37,
+    "content": {
+      "title": "Question 37",
+      "description": "Thales trading competition cheat sheet",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": " - *Registration for the competition*: https://thales.market/markets/leaderboard (twitter profile needs to be at least 3 months old) \n - *Start of the competition*: Monday, October 11th at 10:00AM UTC \n - *End of the competition*: Monday, November 1st at 10:00AM UTC \n - *Markets for the competition*: **Amount of ETH burned**,  **ETH/BTC market cap ratio**, **ETH/USD**, **BTC/USD** and **SNX/USD** markets. (links for dedicated competition markets to be shared on start of the competition) \n -  *Total prize pool to be distributed*: 25,000 THALES and 1,500 SNX. \n - *Results calculation*: One leaderboard for **NET PROFIT** and one leaderboard for **GAIN PERCENTAGE** \n - *Thales Trading Guide*: https://docs.thales.market/using-thales/trading \n\n" 
+        }
+      ],
+      "footer": {
+      }
+    }
   }
 ]
