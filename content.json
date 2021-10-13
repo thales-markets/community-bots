@@ -184,7 +184,7 @@
       "fields": [
         {
           "title": "Answer:",
-          "value": "How do I trade Binary Options on the Thales marketplace?\n For a comprehensive and detailed guide on how to create your own Binary Options market on the Thales platform, visit: [trading](https://docs.thales.market/using-thales/trading)"
+          "value": "For a comprehensive and detailed guide on how to trade Binary Options on the Thales marketplace, visit:\n\n **https://docs.thales.market/using-thales/trading**"
         }
       ],
       "footer": {
@@ -585,6 +585,38 @@
         {
           "title": "Answer:",
           "value": " - *Registration for the competition*: https://thales.market/markets/leaderboard (twitter profile needs to be at least 3 months old) \n - *Start of the competition*: Monday, October 11th at 10:00AM UTC \n - *End of the competition*: Monday, November 1st at 10:00AM UTC \n - *Markets for the competition*: **Amount of ETH burned**,  **ETH/BTC market cap ratio**, **ETH/USD**, **BTC/USD** and **SNX/USD** markets. (links for dedicated competition markets to be shared on start of the competition) \n -  *Total prize pool to be distributed*: 25,000 THALES and 1,500 SNX. \n - *Results calculation*: One leaderboard for **NET PROFIT** and one leaderboard for **GAIN PERCENTAGE** \n - *Thales Trading Guide*: https://docs.thales.market/using-thales/trading \n\n" 
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 38,
+    "content": {
+      "title": "Question 38",
+      "description": "Thales trading competition guide",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "All the important information and a guide on how to participate in the Thales' first trading competition can be found here: \n\n https://docs.thales.market/using-thales/guide-for-thales-first-trading-competition.\n" 
+        }
+      ],
+      "footer": {
+      }
+    }
+  },
+  {
+    "number": 39,
+    "content": {
+      "title": "Question 39",
+      "description": "THALES staking guide",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "For all the relevant information and a comprehensive guide for THALES staking, visit this link: \n\n **https://docs.thales.market/using-thales/thales-staking-guide**\n" 
         }
       ],
       "footer": {
