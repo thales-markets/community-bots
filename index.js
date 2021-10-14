@@ -896,6 +896,20 @@ async function getThalesNewOperations() {
             var durationInMinutes = 5;
             startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
             let startDateUnixTime = startdate.getTime();
+            waitAndDo(markets.length)
+
+            function waitAndDo(times) {
+                if (times < 1) {
+                    return;
+                }
+                setTimeout(function () {
+                    console.log('Doing a request market ' + times);
+                    getThalesNewTrades(markets[times - 1], startDateUnixTime);
+                    waitAndDo(times - 1);
+                }, 1000);
+
+            }
+
             for (const market of markets) {
 
                 if (startDateUnixTime < market.timestamp) {
@@ -903,7 +917,6 @@ async function getThalesNewOperations() {
                     sendMarketMessage(market);
                 }
 
-                getThalesNewTrades(market, startDateUnixTime);
 
                 thalesData.binaryOptions.trades({
                     network: 1,
@@ -1019,12 +1032,14 @@ setInterval(function () {
     } catch (e) {
         console.log('sending messages error ' + e);
     }
-}, 60 * 5.2 * 1000);
+}, 60 * 6 * 1000);
 
 
 async function getThalesNewTrades(market, startDateUnixTime) {
     try {
+
         let baseUrl = "https://api.0x.org/sra/v4/";
+        console.log("calling " + market.longAddress);
         var response = await axios.get(baseUrl + `orderbook?baseToken=` + market.longAddress + "&quoteToken=" + "0x57Ab1ec28D129707052df4dF418D58a2D46d5f51")
         if (response.data) {
             //check bids
@@ -1032,7 +1047,6 @@ async function getThalesNewTrades(market, startDateUnixTime) {
                 if (startDateUnixTime < new Date(bid.metaData.createdAt).getTime()) {
                     console.log("web 3 " + web3);
                     console.log("infura " + process.env.INFURA_URL);
-                    await delay(1001)
                     const takerToken = new web3.eth.Contract(contract, bid.order.takerToken);
                     const takerTokenName = await takerToken.methods.name().call();
                     console.log("token name is " + takerTokenName);
