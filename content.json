@@ -622,5 +622,21 @@
       "footer": {
       }
     }
+  },
+  {
+    "number": 40,
+    "content": {
+      "title": "Question 40",
+      "description": "How does THALES staking work?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "Thales staking contract is a contract in which users lock their THALES to receive voting power on the protocol. THALES staked balances will be used to determine voting power for governance votes. To incentivize staking 50,000 THALES tokens will be distributed weekly to THALES stakers over a course of 150 weeks, and additional 50,000 tokens weekly to L2 stakers when the token migrates to Optimism layer 2. \n\n - Rewards are distributed on a **pro rata weekly snapshot basis.** \n - If an address has had claimable THALES in the last week but hasn't claimed them, that THALES is made available to the same address in the next week together with that weeks new rewards. **In other words, there is no pressure to claim weekly**. \n\n - THALES staking page: https://thales.market/token?tab=staking \n - Guide for staking THALES: https://docs.thales.market/using-thales/thales-staking-guide \n\n " 
+        }
+      ],
+      "footer": {
+      }
+    }
   }
 ]
