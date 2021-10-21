@@ -435,12 +435,12 @@
     "number": 28,
     "content": {
       "title": "Question 28",
-      "description": "What happens if I don't claim my THALES reward from SNX staking for current week?",
+      "description": "What happens if I don't claim my THALES staking reward for current week?",
       "color": "0099ff",
       "fields": [
         {
           "title": "Answer:",
-          "value": "If an address has had claimable THALES in the last week but hasn't claimed them, that THALES is made available to the same address in the next week.\n In other words, **there is no pressure to claim weekly**."
+          "value": "If an address has had claimable THALES in the last week but hasn't claimed them, that THALES is made available to the same address in the next week.\n In other words, **there is no pressure to claim weekly**.\n\n **However, there are benefits of regularly claiming rewards, as claimed THALES rewards that are vesting are considered staked and accruing rewards.** "
         }
       ],
       "footer": {
