@@ -1067,6 +1067,7 @@ async function getThalesNewTrades(market, startDateUnixTime) {
                     const takerTokenName = await takerToken.methods.name().call();
                     console.log("token name is " + takerTokenName);
                     var shortLong = takerTokenName.toLowerCase().includes('long') ? " > " : " < ";
+                    let marketMessage = market.currencyKey + shortLong + Math.round(((market.strikePrice) + Number.EPSILON) * 1000) / 1000;
                     var message = new Discord.MessageEmbed()
                         .addFields(
                             {
@@ -1075,7 +1076,7 @@ async function getThalesNewTrades(market, startDateUnixTime) {
                             },
                             {
                                 name: ':classical_building: Market:',
-                                value: market.currencyKey + shortLong + Math.round(((market.strikePrice) + Number.EPSILON) * 1000) / 1000
+                                value: "[" + marketMessage + "](https://thales.market/markets/" + market.address + ")"
                             },
                             {
                                 name: ':dollar: Amount :',
@@ -1088,6 +1089,14 @@ async function getThalesNewTrades(market, startDateUnixTime) {
                             {
                                 name: ':dollar: Amount of options:',
                                 value: Math.round(((bid.order.takerAmount / 1e18) + Number.EPSILON) * 1000) / 1000
+                            },
+                            {
+                                name: ':link: Order taker:',
+                                value: bid.order.taker
+                            },
+                            {
+                                name: ':link: Order maker:',
+                                value: bid.order.maker
                             },
                             {
                                 name: ':alarm_clock: Created at:',
@@ -1107,7 +1116,7 @@ async function getThalesNewTrades(market, startDateUnixTime) {
                     } else if (rickMM.toLowerCase() == bid.order.taker.toLowerCase() || rickMM.toLowerCase() == bid.order.maker.toLowerCase()) {
                         mapRickMM.set(bid.metaData.orderHash, message);
                     }
-                    if (nonMMordersList.includes(bid.order.taker.toLowerCase()) || nonMMordersList.includes(bid.order.maker.toLowerCase())) {
+                    if (!nonMMordersList.includes(bid.order.taker.toLowerCase()) && !nonMMordersList.includes(bid.order.maker.toLowerCase())) {
                         nonMMOrdersMap.set(bid.metaData.orderHash, message);
                     }
                 }
@@ -1123,6 +1132,7 @@ async function getThalesNewTrades(market, startDateUnixTime) {
                     const makerTokenName = await makerToken.methods.name().call();
                     console.log("m token name is " + makerTokenName);
                     var shortLong = makerTokenName.toLowerCase().includes('long') ? " > " : " < ";
+                    let marketMessage = market.currencyKey + shortLong + Math.round(((market.strikePrice) + Number.EPSILON) * 1000) / 1000;
                     var message = new Discord.MessageEmbed()
                         .addFields(
                             {
@@ -1131,7 +1141,7 @@ async function getThalesNewTrades(market, startDateUnixTime) {
                             },
                             {
                                 name: ':classical_building: Market:',
-                                value: market.currencyKey + shortLong + Math.round(((market.strikePrice) + Number.EPSILON) * 1000) / 1000
+                                value: "[" + marketMessage + "](https://thales.market/markets/" + market.address + ")"
                             },
                             {
                                 name: ':dollar: Amount :',
@@ -1147,6 +1157,14 @@ async function getThalesNewTrades(market, startDateUnixTime) {
                             }, {
                                 name: ':dollar: Return if win:',
                                 value: ((((ask.order.makerAmount - ask.order.takerAmount)) / ask.order.takerAmount) * 100).toFixed(2) + '%'
+                            },
+                            {
+                                name: ':link: Order taker:',
+                                value: ask.order.taker
+                            },
+                            {
+                                name: ':link: Order maker:',
+                                value: ask.order.maker
                             },
                             {
                                 name: ':alarm_clock: Created at:',
@@ -1166,7 +1184,7 @@ async function getThalesNewTrades(market, startDateUnixTime) {
                     } else if (rickMM.toLowerCase() == ask.order.taker.toLowerCase() || rickMM.toLowerCase() == ask.order.maker.toLowerCase()) {
                         mapRickMM.set(ask.metaData.orderHash, message);
                     }
-                    if (nonMMordersList.includes(ask.order.taker.toLowerCase()) || nonMMordersList.includes(ask.order.maker.toLowerCase())) {
+                    if (!nonMMordersList.includes(ask.order.taker.toLowerCase()) && !nonMMordersList.includes(ask.order.maker.toLowerCase())) {
                         nonMMOrdersMap.set(ask.metaData.orderHash, message);
                     }
                 }
