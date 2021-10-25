@@ -21,6 +21,15 @@ let mapThalesBids = new Map();
 let bobeMM = '0xC0E554C1951c0193E020156F68Dce15064769937';
 let almaMM = '0x036b8c9f7C31713c3a47863afe0031630395FaCD';
 let rickMM = '0x71C5a24F6eDe7861A32A5f81AF5b1B70Ff250B80';
+let nonMMordersList = new Array();
+nonMMordersList.push(
+    "0x6eb3f5d9b8f83fef7411709e0dfb42da9d4a85da",
+    "0xd558914fa43581584b460bba220f25175bbcf67a",
+    "0xd76224d26b01e9733a0e67209929b2eadff67d36",
+    "0x924ef47993be036ebe72be1449d8bef627cd30a2",
+    "0x036b8c9f7c31713c3a47863afe0031630395facd",
+    "0xc0e554c1951c0193e020156f68dce15064769937",
+    "0x71c5a24f6ede7861a32a5f81af5b1b70ff250b80");
 const fetch = require("node-fetch");
 const thalesGraphURL =
     'https://api.thegraph.com/subgraphs/name/thales-markets/thales-options';
@@ -37,6 +46,7 @@ let mapBobeMM = new Map();
 let mapAlmaMM = new Map();
 let mapRickMM = new Map();
 let mapMint = new Map();
+let nonMMOrdersMap = new Map();
 let setConcludedTradesPastHour = new Set();
 answersContent
     .forEach(a => {
@@ -982,7 +992,7 @@ async function getThalesNewOperations() {
 
 setInterval(function () {
     try {
-        if (mapThalesTrades.size > 0 || mapThalesBids.size > 0 || mapThalesAsks.size > 0 || mapBobeMM.size > 0 || mapRickMM.size > 0 || mapAlmaMM.size > 0) {
+        if (mapThalesTrades.size > 0 || mapThalesBids.size > 0 || mapThalesAsks.size > 0 || mapBobeMM.size > 0 || mapRickMM.size > 0 || mapAlmaMM.size > 0 || nonMMOrdersMap.size > 0) {
             clientNewListings.guilds.cache.forEach(function (guildValue, key) {
                 const category = guildValue.channels.cache.find(channel => channel.name.toLowerCase().includes("transactions"));
                 if (category) {
@@ -1022,6 +1032,12 @@ setInterval(function () {
                             rickChannel.send(message);
                         }
                         mapRickMM = new Map();
+                    });
+                    clientNewListings.channels.fetch('902159052426051626').then(nonMMchannel => {
+                        for (const message of nonMMOrdersMap.values()) {
+                            nonMMchannel.send(message);
+                        }
+                        nonMMOrdersMap = new Map();
                     });
                 }
             });
@@ -1091,6 +1107,9 @@ async function getThalesNewTrades(market, startDateUnixTime) {
                     } else if (rickMM.toLowerCase() == bid.order.taker.toLowerCase() || rickMM.toLowerCase() == bid.order.maker.toLowerCase()) {
                         mapRickMM.set(bid.metaData.orderHash, message);
                     }
+                    if (nonMMordersList.includes(bid.order.taker.toLowerCase()) || nonMMordersList.includes(bid.order.maker.toLowerCase())) {
+                        nonMMOrdersMap.set(bid.metaData.orderHash, message);
+                    }
                 }
             }
             //check asks
@@ -1146,6 +1165,9 @@ async function getThalesNewTrades(market, startDateUnixTime) {
                         mapAlmaMM.set(ask.metaData.orderHash, message);
                     } else if (rickMM.toLowerCase() == ask.order.taker.toLowerCase() || rickMM.toLowerCase() == ask.order.maker.toLowerCase()) {
                         mapRickMM.set(ask.metaData.orderHash, message);
+                    }
+                    if (nonMMordersList.includes(ask.order.taker.toLowerCase()) || nonMMordersList.includes(ask.order.maker.toLowerCase())) {
+                        nonMMOrdersMap.set(ask.metaData.orderHash, message);
                     }
                 }
             }
