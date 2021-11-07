@@ -13,15 +13,17 @@ const thalesData = require("thales-data");
 const SYNTH_USD_MAINNET = "0x57ab1ec28d129707052df4df418d58a2d46d5f51";
 const clientNewListings = new Discord.Client();
 const clientETHBurned = new Discord.Client();
+const clientCountdownChannel = new Discord.Client();
+clientCountdownChannel.login(process.env.BOT_TOKEN_COUNTDOWN_CHANNEL);
 const Web3 = require("web3");
 let contract = JSON.parse(contractRaw);
 const web3 = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_URL));
 let mapThalesTrades = new Map();
 let mapThalesAsks = new Map();
 let mapThalesBids = new Map();
-let bobeMM = "0xC0E554C1951c0193E020156F68Dce15064769937";
+let deckardMM = "0xC0E554C1951c0193E020156F68Dce15064769937";
 let almaMM = "0x036b8c9f7C31713c3a47863afe0031630395FaCD";
-let rickMM = "0x71C5a24F6eDe7861A32A5f81AF5b1B70Ff250B80";
+let sladeMM = "0x71C5a24F6eDe7861A32A5f81AF5b1B70Ff250B80";
 let nonMMordersList = new Array();
 nonMMordersList.push(
     "0x6eb3f5d9b8f83fef7411709e0dfb42da9d4a85da",
@@ -47,9 +49,9 @@ const stakingContract = new ethers.Contract(
     stakingThalesABI.stakingthales.abi,
     walletTest
 );
-let mapBobeMM = new Map();
+let mapSladeMM = new Map();
 let mapAlmaMM = new Map();
-let mapRickMM = new Map();
+let mapDeckardMM = new Map();
 let mapMint = new Map();
 let nonMMOrdersMap = new Map();
 let setConcludedTradesPastHour = new Set();
@@ -933,11 +935,11 @@ async function sendNewTradeMessage(trade, market) {
         mapThalesTrades.set(trade.transactionHash, message);
         setConcludedTradesPastHour.add(trade.transactionHash);
         if (
-            bobeMM.toLowerCase() == trade.maker.toLowerCase() ||
-            bobeMM.toLowerCase() == trade.taker.toLowerCase()
+            deckardMM.toLowerCase() == trade.maker.toLowerCase() ||
+            deckardMM.toLowerCase() == trade.taker.toLowerCase()
         ) {
             console.log("its bobe transaction");
-            mapBobeMM.set(trade.transactionHash, message);
+            mapDeckardMM.set(trade.transactionHash, message);
         } else if (
             almaMM.toLowerCase() == trade.maker.toLowerCase() ||
             almaMM.toLowerCase() == trade.taker.toLowerCase()
@@ -945,11 +947,11 @@ async function sendNewTradeMessage(trade, market) {
             console.log("its alma transaction");
             mapAlmaMM.set(trade.transactionHash, message);
         } else if (
-            rickMM.toLowerCase() == trade.maker.toLowerCase() ||
-            rickMM.toLowerCase() == trade.taker.toLowerCase()
+            sladeMM.toLowerCase() == trade.maker.toLowerCase() ||
+            sladeMM.toLowerCase() == trade.taker.toLowerCase()
         ) {
             console.log("its rick transaction");
-            mapRickMM.set(trade.transactionHash, message);
+            mapSladeMM.set(trade.transactionHash, message);
         }
     } catch (e) {
         console.log("Problem while getting new trades" + e);
@@ -1192,8 +1194,8 @@ setInterval(function () {
             mapThalesTrades.size > 0 ||
             mapThalesBids.size > 0 ||
             mapThalesAsks.size > 0 ||
-            mapBobeMM.size > 0 ||
-            mapRickMM.size > 0 ||
+            mapSladeMM.size > 0 ||
+            mapDeckardMM.size > 0 ||
             mapAlmaMM.size > 0 ||
             nonMMOrdersMap.size > 0
         ) {
@@ -1229,10 +1231,10 @@ setInterval(function () {
                     clientNewListings.channels
                         .fetch("906873236208369674")
                         .then((bobChannel) => {
-                            for (const message of mapBobeMM.values()) {
+                            for (const message of mapSladeMM.values()) {
                                 bobChannel.send(message);
                             }
-                            mapBobeMM = new Map();
+                            mapSladeMM = new Map();
                         });
                     clientNewListings.channels
                         .fetch("906873110366650369")
@@ -1245,10 +1247,10 @@ setInterval(function () {
                     clientNewListings.channels
                         .fetch("906873194697334784")
                         .then((rickChannel) => {
-                            for (const message of mapRickMM.values()) {
+                            for (const message of mapDeckardMM.values()) {
                                 rickChannel.send(message);
                             }
-                            mapRickMM = new Map();
+                            mapDeckardMM = new Map();
                         });
                     clientNewListings.channels
                         .fetch("906873072496300033")
@@ -1363,20 +1365,20 @@ async function getThalesNewTrades(market, startDateUnixTime) {
                         .setColor("#0037ff");
                     mapThalesBids.set(bid.metaData.orderHash, message);
                     if (
-                        bobeMM.toLowerCase() == bid.order.taker.toLowerCase() ||
-                        bobeMM.toLowerCase() == bid.order.maker.toLowerCase()
+                        deckardMM.toLowerCase() == bid.order.taker.toLowerCase() ||
+                        deckardMM.toLowerCase() == bid.order.maker.toLowerCase()
                     ) {
-                        mapBobeMM.set(bid.metaData.orderHash, message);
+                        mapSladeMM.set(bid.metaData.orderHash, message);
                     } else if (
                         almaMM.toLowerCase() == bid.order.taker.toLowerCase() ||
                         almaMM.toLowerCase() == bid.order.maker.toLowerCase()
                     ) {
                         mapAlmaMM.set(bid.metaData.orderHash, message);
                     } else if (
-                        rickMM.toLowerCase() == bid.order.taker.toLowerCase() ||
-                        rickMM.toLowerCase() == bid.order.maker.toLowerCase()
+                        sladeMM.toLowerCase() == bid.order.taker.toLowerCase() ||
+                        sladeMM.toLowerCase() == bid.order.maker.toLowerCase()
                     ) {
-                        mapRickMM.set(bid.metaData.orderHash, message);
+                        mapDeckardMM.set(bid.metaData.orderHash, message);
                     }
                     if (
                         !nonMMordersList.includes(bid.order.taker.toLowerCase()) &&
@@ -1479,20 +1481,20 @@ async function getThalesNewTrades(market, startDateUnixTime) {
                         .setColor("#0037ff");
                     mapThalesAsks.set(ask.metaData.orderHash, message);
                     if (
-                        bobeMM.toLowerCase() == ask.order.taker.toLowerCase() ||
-                        bobeMM.toLowerCase() == ask.order.maker.toLowerCase()
+                        deckardMM.toLowerCase() == ask.order.taker.toLowerCase() ||
+                        deckardMM.toLowerCase() == ask.order.maker.toLowerCase()
                     ) {
-                        mapBobeMM.set(ask.metaData.orderHash, message);
+                        mapSladeMM.set(ask.metaData.orderHash, message);
                     } else if (
                         almaMM.toLowerCase() == ask.order.taker.toLowerCase() ||
                         almaMM.toLowerCase() == ask.order.maker.toLowerCase()
                     ) {
                         mapAlmaMM.set(ask.metaData.orderHash, message);
                     } else if (
-                        rickMM.toLowerCase() == ask.order.taker.toLowerCase() ||
-                        rickMM.toLowerCase() == ask.order.maker.toLowerCase()
+                        sladeMM.toLowerCase() == ask.order.taker.toLowerCase() ||
+                        sladeMM.toLowerCase() == ask.order.maker.toLowerCase()
                     ) {
-                        mapRickMM.set(ask.metaData.orderHash, message);
+                        mapDeckardMM.set(ask.metaData.orderHash, message);
                     }
                     if (
                         !nonMMordersList.includes(ask.order.taker.toLowerCase()) &&
@@ -1540,6 +1542,16 @@ setInterval(function () {
         console.log("starting new mints" + e);
     }
 }, 60 * 4.8 * 1000);
+
+setInterval(function () {
+    try {
+        console.log("starting update countdown");
+        updateCountdownChannel();
+    } catch (e) {
+        console.log("starting countdown" + e);
+    }
+}, 60 * 6 * 1000);
+
 
 async function getMintData() {
     const body = JSON.stringify({
@@ -1754,3 +1766,111 @@ client.on("message", async (msg) => {
         msg.channel.send("Unknown error, ping the botmaster to look into it!");
     }
 });
+
+
+let currentChannelName;
+let currentWantedTime;
+let currentGoalName;
+
+clientCountdownChannel.on("message", msg => {
+    if (msg.content.toLowerCase().startsWith("!countdown")) {
+        const args = msg.content.slice(`!countdown`.length).trim().split(" ");
+        const dateTime = args.shift();
+        var channelName = "";
+        while (args.length > 0) {
+            channelName = channelName + args.shift() + " ";
+        }
+        console.log(channelName);
+
+        var wantedDate = new Date(dateTime);
+        currentWantedTime = wantedDate;
+        var today = new Date();
+        var difference = wantedDate.getTime() - today.getTime();
+        var seconds = Math.floor(difference / 1000);
+        var minutes = Math.floor(seconds / 60);
+        var hours = Math.floor(minutes / 60);
+        var days = Math.floor(hours / 24);
+        hours %= 24;
+        minutes %= 60;
+        seconds %= 60;
+        var channelMessage;
+        if (days < 1) {
+            channelMessage = channelName + hours + "H:" + minutes + "M";
+        } else {
+            channelMessage = channelName + days + "D:" + hours + "H:" + minutes + "M";
+        }
+        currentChannelName = channelName;
+        redisClient.set('currentChannelName', channelName, function (err, reply) {
+            console.log(reply); // OK
+        });
+        redisClient.set('currentWantedTime', wantedDate, function (err, reply) {
+            console.log(reply); // OK
+        });
+        console.log(days + "D:" + hours + "H:" + minutes + "M");
+        clientCountdownChannel.channels.fetch('907012352623403018').then(channel => {
+            channel.setName(channelMessage)
+                .catch(console.error);
+        });
+    } else if (msg.content.toLowerCase().startsWith("!goalname")) {
+        const args = msg.content.slice(`!goalname`.length).trim().split(" ");
+        var goalname = "";
+        while (args.length > 0) {
+            goalname = goalname + args.shift() + " ";
+        }
+        currentGoalName = goalname;
+        redisClient.set('currentGoalName', goalname, function (err, reply) {
+            console.log(reply); // OK
+        });
+        console.log(currentGoalName);
+    }
+
+});
+
+async function updateCountdownChannel() {
+
+    await redisClient.get("currentGoalName", function (err, obj) {
+        console.log("1redis " + obj);
+        currentGoalName = obj;
+    });
+    await redisClient.get("currentChannelName", function (err, obj) {
+        console.log("2redis " + obj);
+        currentChannelName = obj;
+    });
+    await redisClient.get("currentWantedTime", function (err, obj) {
+        console.log("3redis " + obj);
+        currentWantedTime = obj;
+    });
+
+    if (currentChannelName && currentWantedTime) {
+        var today = new Date();
+        var difference = currentWantedTime.getTime() - today.getTime();
+        var seconds = Math.floor(difference / 1000);
+        var minutes = Math.floor(seconds / 60);
+        var hours = Math.floor(minutes / 60);
+        var days = Math.floor(hours / 24);
+        hours %= 24;
+        minutes %= 60;
+        seconds %= 60;
+        var channelMessage;
+        if (currentWantedTime.getTime() < today.getTime()) {
+            console.log("goal is reached")
+            if (currentGoalName) {
+                channelMessage = currentGoalName;
+            } else {
+                channelMessage = "goal reached"
+            }
+        } else {
+            if (days < 1) {
+                channelMessage = currentChannelName + hours + "H:" + minutes + "M";
+            } else {
+                channelMessage = currentChannelName + days + "D:" + hours + "H:" + minutes + "M";
+            }
+        }
+        console.log(days + "D:" + hours + "H:" + minutes + "M");
+        clientCountdownChannel.channels.fetch('907012352623403018').then(channel => {
+            channel.setName(channelMessage)
+                .catch(console.error);
+        });
+    }
+}
+
