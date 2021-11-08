@@ -21,9 +21,9 @@ const web3 = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_URL));
 let mapThalesTrades = new Map();
 let mapThalesAsks = new Map();
 let mapThalesBids = new Map();
-let deckardMM = "0xC0E554C1951c0193E020156F68Dce15064769937";
+let deckardMM = "0x71C5a24F6eDe7861A32A5f81AF5b1B70Ff250B80";
 let almaMM = "0x036b8c9f7C31713c3a47863afe0031630395FaCD";
-let sladeMM = "0x71C5a24F6eDe7861A32A5f81AF5b1B70Ff250B80";
+let sladeMM = "0xC0E554C1951c0193E020156F68Dce15064769937";
 let nonMMordersList = new Array();
 nonMMordersList.push(
     "0x6eb3f5d9b8f83fef7411709e0dfb42da9d4a85da",
@@ -1867,6 +1867,14 @@ async function updateCountdownChannel() {
             }
         }
         console.log(days + "D:" + hours + "H:" + minutes + "M");
+
+        await redisClient.set('currentChannelName', currentChannelName, function (err, reply) {
+            console.log(reply); // OK
+        });
+        await redisClient.set('currentWantedTime', currentWantedTime, function (err, reply) {
+            console.log(reply); // OK
+        });
+
         clientCountdownChannel.channels.fetch('907012352623403018').then(channel => {
             channel.setName(channelMessage)
                 .catch(console.error);
