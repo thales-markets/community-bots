@@ -1713,8 +1713,8 @@ client.on("message", async (msg) => {
                     createdDaysAgo = createdDaysAgo / 1000 / 60 / 60 / 24;
                     createdDaysAgo =
                         Math.round((createdDaysAgo + Number.EPSILON) * 100) / 100;
-                    if (createdDaysAgo < 90) {
-                        msg.channel.send("Account not at least 3 months old!");
+          if (createdDaysAgo < 7) {
+            msg.channel.send("Account not at least 7 days old!");
                         return;
                     }
 
