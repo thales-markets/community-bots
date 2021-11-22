@@ -971,221 +971,274 @@ setInterval(function () {
 }, 60 * 60 * 1000);
 
 async function checkUnsentTrades() {
-    thalesData.binaryOptions
-        .markets({
-            max: Infinity,
-            network: 1,
-        })
-        .then((markets) => {
-            var startdate = new Date();
-            checkDurationInMinutes = checkDurationInMinutes + 60;
-            startdate.setMinutes(startdate.getMinutes() - checkDurationInMinutes);
-            checkDurationInMinutes = 0;
-            let startDateUnixTime = startdate.getTime();
-            for (const market of markets) {
-                try {
-                    thalesData.binaryOptions
-                        .trades({
-                            network: 1,
-                            makerToken: market.longAddress,
-                            takerToken: SYNTH_USD_MAINNET,
-                        })
-                        .then((trades) => {
-                            //send messages
-                            if (trades.length > 0) {
-                                for (let trade of trades) {
-                                    if (
-                                        startDateUnixTime < trade.timestamp &&
-                                        !setConcludedTradesPastHour.has(trade.transactionHash)
-                                    ) {
-                                        console.log("new trade message");
-                                        try {
-                                            sendNewTradeMessage(trade, market);
-                                        } catch (e) {
-                                            console.log("error checking unsent trades" + e);
-                                            checkDurationInMinutes = 60;
-                                        }
-                                    }
+    const body = JSON.stringify({
+        query: `{
+      markets(
+        orderBy:timestamp,
+        orderDirection:desc,
+      )
+      {
+        id
+        timestamp
+        creator
+        currencyKey
+        strikePrice
+        maturityDate
+        expiryDate
+        isOpen
+        poolSize
+        longAddress
+        shortAddress
+        result
+        customMarket
+        customOracle
+      }
+    }`,
+        variables: null,
+    });
+
+    const response = await fetch('https://api.thegraph.com/subgraphs/name/thales-markets/thales-options', {
+        method: 'POST',
+        body,
+    });
+
+    const json = await response.json();
+    const markets = json.data.markets;
+    var startdate = new Date();
+    checkDurationInMinutes = checkDurationInMinutes + 60;
+    startdate.setMinutes(startdate.getMinutes() - checkDurationInMinutes);
+    checkDurationInMinutes = 0;
+    let startDateUnixTime = startdate.getTime();
+    for (const market of markets) {
+        try {
+            thalesData.binaryOptions
+                .trades({
+                    network: 1,
+                    makerToken: market.longAddress,
+                    takerToken: SYNTH_USD_MAINNET,
+                })
+                .then((trades) => {
+                    //send messages
+                    if (trades.length > 0) {
+                        for (let trade of trades) {
+                            if (
+                                startDateUnixTime < trade.timestamp &&
+                                !setConcludedTradesPastHour.has(trade.transactionHash)
+                            ) {
+                                console.log("new trade message");
+                                try {
+                                    sendNewTradeMessage(trade, market);
+                                } catch (e) {
+                                    console.log("error checking unsent trades" + e);
+                                    checkDurationInMinutes = 60;
                                 }
                             }
-                        });
-                    thalesData.binaryOptions
-                        .trades({
-                            network: network,
-                            makerToken: SYNTH_USD_MAINNET,
-                            takerToken: market.longAddress,
-                        })
-                        .then((trades) => {
-                            if (trades.length > 0) {
-                                for (let trade of trades) {
-                                    if (
-                                        startDateUnixTime < trade.timestamp &&
-                                        !setConcludedTradesPastHour.has(trade.transactionHash)
-                                    ) {
-                                        console.log("new trade message");
-                                        try {
-                                            sendNewTradeMessage(trade, market);
-                                        } catch (e) {
-                                            console.log("error checking unsent trades" + e);
-                                            checkDurationInMinutes = 60;
-                                        }
-                                    }
+                        }
+                    }
+                });
+            thalesData.binaryOptions
+                .trades({
+                    network: network,
+                    makerToken: SYNTH_USD_MAINNET,
+                    takerToken: market.longAddress,
+                })
+                .then((trades) => {
+                    if (trades.length > 0) {
+                        for (let trade of trades) {
+                            if (
+                                startDateUnixTime < trade.timestamp &&
+                                !setConcludedTradesPastHour.has(trade.transactionHash)
+                            ) {
+                                console.log("new trade message");
+                                try {
+                                    sendNewTradeMessage(trade, market);
+                                } catch (e) {
+                                    console.log("error checking unsent trades" + e);
+                                    checkDurationInMinutes = 60;
                                 }
                             }
-                        });
-                    thalesData.binaryOptions
-                        .trades({
-                            network: network,
-                            makerToken: market.shortAddress,
-                            takerToken: SYNTH_USD_MAINNET,
-                        })
-                        .then((trades) => {
-                            if (trades.length > 0) {
-                                for (let trade of trades) {
-                                    if (
-                                        startDateUnixTime < trade.timestamp &&
-                                        !setConcludedTradesPastHour.has(trade.transactionHash)
-                                    ) {
-                                        console.log("new trade message");
-                                        try {
-                                            sendNewTradeMessage(trade, market);
-                                        } catch (e) {
-                                            console.log("error checking unsent trades" + e);
-                                            checkDurationInMinutes = 60;
-                                        }
-                                    }
+                        }
+                    }
+                });
+            thalesData.binaryOptions
+                .trades({
+                    network: network,
+                    makerToken: market.shortAddress,
+                    takerToken: SYNTH_USD_MAINNET,
+                })
+                .then((trades) => {
+                    if (trades.length > 0) {
+                        for (let trade of trades) {
+                            if (
+                                startDateUnixTime < trade.timestamp &&
+                                !setConcludedTradesPastHour.has(trade.transactionHash)
+                            ) {
+                                console.log("new trade message");
+                                try {
+                                    sendNewTradeMessage(trade, market);
+                                } catch (e) {
+                                    console.log("error checking unsent trades" + e);
+                                    checkDurationInMinutes = 60;
                                 }
                             }
-                        });
-                    thalesData.binaryOptions
-                        .trades({
-                            network: network,
-                            makerToken: SYNTH_USD_MAINNET,
-                            takerToken: market.shortAddress,
-                        })
-                        .then((trades) => {
-                            if (trades.length > 0) {
-                                for (let trade of trades) {
-                                    if (
-                                        startDateUnixTime < trade.timestamp &&
-                                        !setConcludedTradesPastHour.has(trade.transactionHash)
-                                    ) {
-                                        console.log("new trade message");
-                                        try {
-                                            sendNewTradeMessage(trade, market);
-                                        } catch (e) {
-                                            console.log("error checking unsent trades" + e);
-                                            checkDurationInMinutes = 60;
-                                        }
-                                    }
+                        }
+                    }
+                });
+            thalesData.binaryOptions
+                .trades({
+                    network: network,
+                    makerToken: SYNTH_USD_MAINNET,
+                    takerToken: market.shortAddress,
+                })
+                .then((trades) => {
+                    if (trades.length > 0) {
+                        for (let trade of trades) {
+                            if (
+                                startDateUnixTime < trade.timestamp &&
+                                !setConcludedTradesPastHour.has(trade.transactionHash)
+                            ) {
+                                console.log("new trade message");
+                                try {
+                                    sendNewTradeMessage(trade, market);
+                                } catch (e) {
+                                    console.log("error checking unsent trades" + e);
+                                    checkDurationInMinutes = 60;
                                 }
                             }
-                        });
-                } catch (e) {
-                    console.log("error checking unsent trades" + e);
-                    checkDurationInMinutes = 60;
-                }
-            }
-        });
+                        }
+                    }
+                });
+        } catch (e) {
+            console.log("error checking unsent trades" + e);
+            checkDurationInMinutes = 60;
+        }
+    }
 }
 
 async function getThalesNewOperations() {
-    thalesData.binaryOptions
-        .markets({
-            max: Infinity,
-            network: 1,
-        })
-        .then((markets) => {
-            var startdate = new Date();
-            var durationInMinutes = 5;
-            startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
-            let startDateUnixTime = startdate.getTime();
-            waitAndDo(markets.length);
+    const body = JSON.stringify({
+        query: `{
+      markets(
+        orderBy:timestamp,
+        orderDirection:desc,
+      )
+      {
+        id
+        timestamp
+        creator
+        currencyKey
+        strikePrice
+        maturityDate
+        expiryDate
+        isOpen
+        poolSize
+        longAddress
+        shortAddress
+        result
+        customMarket
+        customOracle
+      }
+    }`,
+        variables: null,
+    });
 
-            function waitAndDo(times) {
-                if (times < 1) {
-                    return;
+    const response = await fetch('https://api.thegraph.com/subgraphs/name/thales-markets/thales-options', {
+        method: 'POST',
+        body,
+    });
+
+    const json = await response.json();
+    const markets = json.data.markets;
+
+    var startdate = new Date();
+    var durationInMinutes = 5;
+    startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
+    let startDateUnixTime = startdate.getTime();
+    waitAndDo(markets.length);
+
+    function waitAndDo(times) {
+        if (times < 1) {
+            return;
+        }
+        setTimeout(function () {
+            // console.log("Doing a request market " + times);
+            getThalesNewTrades(markets[times - 1], startDateUnixTime);
+            waitAndDo(times - 1);
+        }, 1000);
+    }
+
+    for (const market of markets) {
+        if (startDateUnixTime < market.timestamp) {
+            console.log("new market");
+            sendMarketMessage(market);
+        }
+
+        thalesData.binaryOptions
+            .trades({
+                network: 1,
+                makerToken: market.longAddress,
+                takerToken: SYNTH_USD_MAINNET,
+            })
+            .then((trades) => {
+                //send messages
+                if (trades.length > 0) {
+                    for (let trade of trades) {
+                        if (startDateUnixTime < trade.timestamp) {
+                            console.log("new trade message");
+                            sendNewTradeMessage(trade, market);
+                        }
+                    }
                 }
-                setTimeout(function () {
-                    // console.log("Doing a request market " + times);
-                    getThalesNewTrades(markets[times - 1], startDateUnixTime);
-                    waitAndDo(times - 1);
-                }, 1000);
-            }
-
-            for (const market of markets) {
-                if (startDateUnixTime < market.timestamp) {
-                    console.log("new market");
-                    sendMarketMessage(market);
+            });
+        thalesData.binaryOptions
+            .trades({
+                network: network,
+                makerToken: SYNTH_USD_MAINNET,
+                takerToken: market.longAddress,
+            })
+            .then((trades) => {
+                if (trades.length > 0) {
+                    for (let trade of trades) {
+                        if (startDateUnixTime < trade.timestamp) {
+                            console.log("new trade message");
+                            sendNewTradeMessage(trade, market);
+                        }
+                    }
                 }
-
-                thalesData.binaryOptions
-                    .trades({
-                        network: 1,
-                        makerToken: market.longAddress,
-                        takerToken: SYNTH_USD_MAINNET,
-                    })
-                    .then((trades) => {
-                        //send messages
-                        if (trades.length > 0) {
-                            for (let trade of trades) {
-                                if (startDateUnixTime < trade.timestamp) {
-                                    console.log("new trade message");
-                                    sendNewTradeMessage(trade, market);
-                                }
-                            }
+            });
+        thalesData.binaryOptions
+            .trades({
+                network: network,
+                makerToken: market.shortAddress,
+                takerToken: SYNTH_USD_MAINNET,
+            })
+            .then((trades) => {
+                if (trades.length > 0) {
+                    for (let trade of trades) {
+                        if (startDateUnixTime < trade.timestamp) {
+                            console.log("new trade message");
+                            sendNewTradeMessage(trade, market);
                         }
-                    });
-                thalesData.binaryOptions
-                    .trades({
-                        network: network,
-                        makerToken: SYNTH_USD_MAINNET,
-                        takerToken: market.longAddress,
-                    })
-                    .then((trades) => {
-                        if (trades.length > 0) {
-                            for (let trade of trades) {
-                                if (startDateUnixTime < trade.timestamp) {
-                                    console.log("new trade message");
-                                    sendNewTradeMessage(trade, market);
-                                }
-                            }
+                    }
+                }
+            });
+        thalesData.binaryOptions
+            .trades({
+                network: network,
+                makerToken: SYNTH_USD_MAINNET,
+                takerToken: market.shortAddress,
+            })
+            .then((trades) => {
+                if (trades.length > 0) {
+                    for (let trade of trades) {
+                        if (startDateUnixTime < trade.timestamp) {
+                            console.log("new trade message");
+                            sendNewTradeMessage(trade, market);
                         }
-                    });
-                thalesData.binaryOptions
-                    .trades({
-                        network: network,
-                        makerToken: market.shortAddress,
-                        takerToken: SYNTH_USD_MAINNET,
-                    })
-                    .then((trades) => {
-                        if (trades.length > 0) {
-                            for (let trade of trades) {
-                                if (startDateUnixTime < trade.timestamp) {
-                                    console.log("new trade message");
-                                    sendNewTradeMessage(trade, market);
-                                }
-                            }
-                        }
-                    });
-                thalesData.binaryOptions
-                    .trades({
-                        network: network,
-                        makerToken: SYNTH_USD_MAINNET,
-                        takerToken: market.shortAddress,
-                    })
-                    .then((trades) => {
-                        if (trades.length > 0) {
-                            for (let trade of trades) {
-                                if (startDateUnixTime < trade.timestamp) {
-                                    console.log("new trade message");
-                                    sendNewTradeMessage(trade, market);
-                                }
-                            }
-                        }
-                    });
-            }
-        });
+                    }
+                }
+            });
+    }
 }
 
 setInterval(function () {
@@ -1588,10 +1641,39 @@ async function getMintData() {
     let wantedMarket;
     let markets;
     if (newMint == 1) {
-        markets = await thalesData.binaryOptions.markets({
-            max: Infinity,
-            network: 1,
+        const body = JSON.stringify({
+            query: `{
+      markets(
+        orderBy:timestamp,
+        orderDirection:desc,
+      )
+      {
+        id
+        timestamp
+        creator
+        currencyKey
+        strikePrice
+        maturityDate
+        expiryDate
+        isOpen
+        poolSize
+        longAddress
+        shortAddress
+        result
+        customMarket
+        customOracle
+      }
+    }`,
+            variables: null,
         });
+
+        const response = await fetch('https://api.thegraph.com/subgraphs/name/thales-markets/thales-options', {
+            method: 'POST',
+            body,
+        });
+
+        const json = await response.json();
+        markets = json.data.markets;
     }
 
     if (mapMint.size > 0) {
@@ -1807,10 +1889,10 @@ clientCountdownChannel.on("message", msg => {
             console.log(reply); // OK
         });
         console.log(days + "D:" + hours + "H:" + minutes + "M");
-        clientCountdownChannel.channels.fetch('907012352623403018').then(channel => {
-            channel.setName(channelMessage)
-                .catch(console.error);
-        });
+        /* clientCountdownChannel.channels.fetch('907012352623403018').then(channel => {
+             channel.setName(channelMessage)
+                 .catch(console.error);
+         });*/
     } else if (msg.content.toLowerCase().startsWith("!goalname")) {
         const args = msg.content.slice(`!goalname`.length).trim().split(" ");
         var goalname = "";
@@ -1875,10 +1957,10 @@ async function updateCountdownChannel() {
             console.log(reply); // OK
         });
 
-        clientCountdownChannel.channels.fetch('907012352623403018').then(channel => {
+        /*clientCountdownChannel.channels.fetch('907012352623403018').then(channel => {
             channel.setName(channelMessage)
                 .catch(console.error);
-        });
+        });*/
     }
 }
 
