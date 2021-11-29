@@ -874,5 +874,9 @@
   {
     "number": 40,
     "alias": "staking rewards"
+  },
+  {
+    "number": 41,
+    "alias": "thales royale guide"
   }
 ]
