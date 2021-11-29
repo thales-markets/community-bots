@@ -1816,14 +1816,15 @@ client.on("message", async (msg) => {
           }
 
           let found = false;
+          let foundKey = "";
           verifiedUsersMap.forEach(function (value, key) {
             if (value.id == msg.author.id) {
-              msg.channel.send("You already registered an address!");
               found = true;
+              foundKey = key;
             }
           });
           if (found) {
-            return;
+            verifiedUsersMap.delete(foundKey);
           }
 
           if (!address.startsWith("0x") || address.length != 42) {
@@ -1846,9 +1847,13 @@ client.on("message", async (msg) => {
             );
           }
           let discordUser = "<@!" + msg.author.id + ">";
-          msg.channel.send(
-            discordUser + " verified. May the odds be with you!"
-          );
+          if (found) {
+            msg.channel.send(discordUser + " updated your address!");
+          } else {
+            msg.channel.send(
+              discordUser + " verified. May the odds be with you!"
+            );
+          }
         }
       }
     }
@@ -1864,7 +1869,12 @@ function pollVerifiedUsers() {
       client.guilds.cache.forEach(function (value, key) {
         try {
           if (value.name.toLowerCase().includes("thales")) {
+            let roleToAssign = null;
+            value.roles.fetch("912740968929841152").then((r) => {
+              roleToAssign = r;
+            });
             value.members.fetch(memberObject.id).then((m) => {
+              m.roles.add(roleToAssign);
               memberObject.name = m.user.username;
               memberObject.avatar = m.user.avatarURL();
               verifiedUsersMap.set(key, memberObject);
@@ -1892,7 +1902,7 @@ setTimeout(function () {
 
 setInterval(function () {
   pollVerifiedUsers();
-}, 1000 * 60 * 30);
+}, 1000 * 60 * 2);
 
 let currentChannelName;
 let currentWantedTime;
