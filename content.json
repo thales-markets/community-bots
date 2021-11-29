@@ -670,5 +670,21 @@
       "footer": {
       }
     }
+  },
+  {
+    "number": 43,
+    "content": {
+      "title": "Question 43",
+      "description": "How do I Sign Up for Thales Royale?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "**Step 1:** Enter the **#thales-royale-verify** channel and type a message: !verify <insert your Ethereum address or ENS name here>\n\n **Step 2:** Enter Thales Royale page on the dapp (https://thalesmarket.io/royale) and click on the **Sign Up** button and confirm the transaction.\n\n :RedLight: ***Important disclaimer: If you do not click the Sign Up button until the first round starts, you will not be able to participate in Thales Royale.***:RedLight: " 
+        }
+      ],
+      "footer": {
+      }
+    }
   }
 ]
