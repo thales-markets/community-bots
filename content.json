@@ -638,5 +638,21 @@
       "footer": {
       }
     }
+  },
+  {
+    "number": 41,
+    "content": {
+      "title": "Question 41",
+      "description": "Thales Royale Guide",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "All the important information and a guide on how to participate in the first Thales Royale can be found here: \n\n **https://docs.thalesmarket.io/using-thales/thales-royale-guide\n**" 
+        }
+      ],
+      "footer": {
+      }
+    }
   }
 ]
