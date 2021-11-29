@@ -654,5 +654,21 @@
       "footer": {
       }
     }
+  },
+  {
+    "number": 42,
+    "content": {
+      "title": "Question 42",
+      "description": "I am getting a *Failed Transaction 67 error* while trying to Sign Up for Thales Royale",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "If you are getting a *Failed Transaction 67 error* while trying to **Sign Up** for Thales Royale, you need to reset your Kovan Optimism wallet nonce. The cause of this issue is that your wallets old nonce got cached after the latest Optimism Regenesis and your wallet is trying to send transactions with nonces that are too high.\n\n **Solution:**\n On your Metamask settings, go to *Advanced* -> *Reset Account* to reset your nonce and get Metamask working again." 
+        }
+      ],
+      "footer": {
+      }
+    }
   }
 ]
