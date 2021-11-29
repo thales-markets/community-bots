@@ -1908,7 +1908,7 @@ let currentChannelName;
 let currentWantedTime;
 let currentGoalName;
 
-clientCountdownChannel.on("message", (msg) => {
+clientCountdownChannel.on("message", msg => {
   if (msg.content.toLowerCase().startsWith("!countdown")) {
     const args = msg.content.slice(`!countdown`.length).trim().split(" ");
     const dateTime = args.shift();
@@ -1936,17 +1936,17 @@ clientCountdownChannel.on("message", (msg) => {
       channelMessage = channelName + days + "D:" + hours + "H:" + minutes + "M";
     }
     currentChannelName = channelName;
-    redisClient.set("currentChannelName", channelName, function (err, reply) {
+    redisClient.set('currentChannelName', channelName, function (err, reply) {
       console.log(reply); // OK
     });
-    redisClient.set("currentWantedTime", wantedDate, function (err, reply) {
+    redisClient.set('currentWantedTime', wantedDate, function (err, reply) {
       console.log(reply); // OK
     });
     console.log(days + "D:" + hours + "H:" + minutes + "M");
-    /* clientCountdownChannel.channels.fetch('907012352623403018').then(channel => {
-             channel.setName(channelMessage)
-                 .catch(console.error);
-         });*/
+    clientCountdownChannel.channels.fetch("907012352623403018").then(channel => {
+      channel.setName(channelMessage)
+          .catch(console.error);
+    });
   } else if (msg.content.toLowerCase().startsWith("!goalname")) {
     const args = msg.content.slice(`!goalname`.length).trim().split(" ");
     var goalname = "";
@@ -1954,11 +1954,12 @@ clientCountdownChannel.on("message", (msg) => {
       goalname = goalname + args.shift() + " ";
     }
     currentGoalName = goalname;
-    redisClient.set("currentGoalName", goalname, function (err, reply) {
+    redisClient.set('currentGoalName', goalname, function (err, reply) {
       console.log(reply); // OK
     });
     console.log(currentGoalName);
   }
+
 });
 
 async function updateCountdownChannel() {
@@ -1972,7 +1973,7 @@ async function updateCountdownChannel() {
   });
   await redisClient.get("currentWantedTime", function (err, obj) {
     console.log("3redis " + obj);
-    currentWantedTime = obj;
+    currentWantedTime = new Date(obj);
   });
 
   if (currentChannelName && currentWantedTime) {
@@ -1987,40 +1988,31 @@ async function updateCountdownChannel() {
     seconds %= 60;
     var channelMessage;
     if (currentWantedTime.getTime() < today.getTime()) {
-      console.log("goal is reached");
+      console.log("goal is reached")
       if (currentGoalName) {
         channelMessage = currentGoalName;
       } else {
-        channelMessage = "goal reached";
+        channelMessage = "goal reached"
       }
     } else {
       if (days < 1) {
         channelMessage = currentChannelName + hours + "H:" + minutes + "M";
       } else {
-        channelMessage =
-          currentChannelName + days + "D:" + hours + "H:" + minutes + "M";
+        channelMessage = currentChannelName + days + "D:" + hours + "H:" + minutes + "M";
       }
     }
+
+    await redisClient.set('currentChannelName', currentChannelName, function (err, reply) {
+      console.log(reply); // OK
+    });
+    await redisClient.set('currentWantedTime', currentWantedTime, function (err, reply) {
+      console.log(reply); // OK
+    });
+
     console.log(days + "D:" + hours + "H:" + minutes + "M");
-
-    await redisClient.set(
-      "currentChannelName",
-      currentChannelName,
-      function (err, reply) {
-        console.log(reply); // OK
-      }
-    );
-    await redisClient.set(
-      "currentWantedTime",
-      currentWantedTime,
-      function (err, reply) {
-        console.log(reply); // OK
-      }
-    );
-
-    /*clientCountdownChannel.channels.fetch('907012352623403018').then(channel => {
-            channel.setName(channelMessage)
-                .catch(console.error);
-        });*/
+    clientCountdownChannel.channels.fetch("907012352623403018").then(channel => {
+      channel.setName(channelMessage)
+          .catch(console.error);
+    });
   }
 }
