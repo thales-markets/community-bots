@@ -1943,10 +1943,14 @@ clientCountdownChannel.on("message", msg => {
       console.log(reply); // OK
     });
     console.log(days + "D:" + hours + "H:" + minutes + "M");
+    try{
     clientCountdownChannel.channels.fetch("907012352623403018").then(channel => {
       channel.setName(channelMessage)
           .catch(console.error);
     });
+    }catch (e) {
+      console.log("error while fetching channel with  id 907012352623403018")
+    }
   } else if (msg.content.toLowerCase().startsWith("!goalname")) {
     const args = msg.content.slice(`!goalname`.length).trim().split(" ");
     var goalname = "";
@@ -2010,9 +2014,14 @@ async function updateCountdownChannel() {
     });
 
     console.log(days + "D:" + hours + "H:" + minutes + "M");
+    try{
     clientCountdownChannel.channels.fetch("907012352623403018").then(channel => {
       channel.setName(channelMessage)
           .catch(console.error);
     });
+    }catch (e) {
+      console.log("error while fetching channel with  id 907012352623403018")
+    }
+
   }
 }
