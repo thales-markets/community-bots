@@ -67,13 +67,13 @@ client.on("ready", () => {
           roleToAssign = r;
         });
         value.members
-            .fetch("907585090815676486")
-            .then((m) => {
-              m.roles.add(roleToAssign);
-            })
-            .catch((e) => {
-              console.log(memberObject.id);
-            });
+          .fetch("907585090815676486")
+          .then((m) => {
+            m.roles.add(roleToAssign);
+          })
+          .catch((e) => {
+            console.log(memberObject.id);
+          });
       }
     } catch (e) {
       console.log(e);
@@ -81,4 +81,26 @@ client.on("ready", () => {
   });
 });
 
-
+let allowedChannel = "912724043747192874";
+client.on("message", async (msg) => {
+  try {
+    if (!msg.author.username.toLowerCase().includes("counselor")) {
+      if (!(msg.channel.type == "dm")) {
+        if (msg.content.toLowerCase().startsWith("!verify")) {
+          if (allowedChannel.includes(msg.channel.id)) {
+            console.log("correct channel");
+          } else {
+            msg.channel.send(
+              "Please use " +
+                msg.guild.channels.cache.get(allowedChannel).toString() +
+                "!"
+            );
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.log(e);
+    msg.channel.send("Unknown error, ping the botmaster to look into it!");
+  }
+});
