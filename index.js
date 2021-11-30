@@ -1793,11 +1793,15 @@ app.get("/verified", function (req, res) {
 var ENS = require("ethereum-ens");
 var ens = new ENS(new Web3.providers.HttpProvider(process.env.INFURA_URL));
 
+let allowedChannel = "912724043747192874";
 client.on("message", async (msg) => {
   try {
     if (!msg.author.username.toLowerCase().includes("counselor")) {
       if (!(msg.channel.type == "dm")) {
-        if (msg.content.toLowerCase().startsWith("!verify")) {
+        if (
+          msg.content.toLowerCase().startsWith("!verify") &&
+          allowedChannel.includes(msg.channel.id)
+        ) {
           let createdTimestamp = msg.author.createdTimestamp;
           let createdDaysAgo = Date.now() - createdTimestamp;
           createdDaysAgo = createdDaysAgo / 1000 / 60 / 60 / 24;
@@ -1873,19 +1877,24 @@ function pollVerifiedUsers() {
             value.roles.fetch("912740968929841152").then((r) => {
               roleToAssign = r;
             });
-            value.members.fetch(memberObject.id).then((m) => {
-              m.roles.add(roleToAssign);
-              memberObject.name = m.user.username;
-              memberObject.avatar = m.user.avatarURL();
-              verifiedUsersMap.set(key, memberObject);
-              if (process.env.REDIS_URL) {
-                redisClient.set(
-                  "verifiedUsersMap",
-                  JSON.stringify([...verifiedUsersMap]),
-                  function () {}
-                );
-              }
-            });
+            value.members
+              .fetch(memberObject.id)
+              .then((m) => {
+                m.roles.add(roleToAssign);
+                memberObject.name = m.user.username;
+                memberObject.avatar = m.user.avatarURL();
+                verifiedUsersMap.set(key, memberObject);
+                if (process.env.REDIS_URL) {
+                  redisClient.set(
+                    "verifiedUsersMap",
+                    JSON.stringify([...verifiedUsersMap]),
+                    function () {}
+                  );
+                }
+              })
+              .catch((e) => {
+                verifiedUsersMap.delete(memberObject.id);
+              });
           }
         } catch (e) {
           console.log(e);
