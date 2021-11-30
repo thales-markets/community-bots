@@ -1858,9 +1858,9 @@ client.on("message", async (msg) => {
             }
           } else {
             msg.channel.send(
-              "Please use " +
+              "Please use the  " +
                 msg.guild.channels.cache.get(allowedChannel).toString() +
-                "!"
+                " channel to verify your address for the Thales Royale competition! If unverified and you cannot see the channel, please check direct messages."
             );
           }
         }
