@@ -1873,7 +1873,11 @@ client.on("message", async (msg) => {
 });
 
 function pollVerifiedUsers() {
+  console.log("Started polling verified users");
+  let vi = 0;
   verifiedUsersMap.forEach(function (memberObject, keyMap) {
+    console.log("Veryfing user " + memberObject.name + " which is " + vi);
+    vi = vi + 1;
     try {
       client.guilds.cache.forEach(function (value, key) {
         try {
@@ -1885,7 +1889,10 @@ function pollVerifiedUsers() {
             value.members
               .fetch(memberObject.id)
               .then((m) => {
-                m.roles.add(roleToAssign);
+                m.roles
+                  .add(roleToAssign)
+                  .then(console.log("role added"))
+                  .catch(console.error("error on adding role"));
                 memberObject.name = m.user.username;
                 memberObject.avatar = m.user.avatarURL();
                 verifiedUsersMap.set(key, memberObject);
@@ -1927,7 +1934,7 @@ setTimeout(function () {
 
 setInterval(function () {
   pollVerifiedUsers();
-}, 1000 * 60 * 2);
+}, 1000 * 60 * 20);
 
 let currentChannelName;
 let currentWantedTime;

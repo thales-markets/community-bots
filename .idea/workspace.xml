@@ -18,8 +18,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/index.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="199">
-              <caret line="1862" column="159" lean-forward="true" selection-start-line="1862" selection-start-column="159" selection-end-line="1862" selection-end-column="159" />
+            <state relative-caret-position="233">
+              <caret line="1880" column="9" lean-forward="true" selection-start-line="1880" selection-start-column="9" selection-end-line="1880" selection-end-column="9" />
             </state>
           </provider>
         </entry>
@@ -36,8 +36,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/node_modules/discord.js/typings/index.d.ts">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="488">
-              <caret line="1537" column="20" selection-start-line="1537" selection-start-column="11" selection-end-line="1537" selection-end-column="20" />
+            <state relative-caret-position="182">
+              <caret line="1955" column="11" selection-start-line="1955" selection-start-column="11" selection-end-line="1955" selection-end-column="11" />
             </state>
           </provider>
         </entry>
@@ -94,6 +94,7 @@
       <find>delete</find>
       <find>please use</find>
       <find>!verify</find>
+      <find>pollVerifiedUsers</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -119,7 +120,7 @@
     </option>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="1912" />
+    <option name="x" value="-8" />
     <option name="y" value="-8" />
     <option name="width" value="1936" />
     <option name="height" value="1056" />
@@ -224,10 +225,10 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="23306000" />
+    <option name="totallyTimeSpent" value="24332000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="1912" y="-8" width="1936" height="1056" extended-state="6" />
+    <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.26066098" />
@@ -359,10 +360,17 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/node_modules/discord.js/typings/index.d.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="182">
+          <caret line="1955" column="11" selection-start-line="1955" selection-start-column="11" selection-end-line="1955" selection-end-column="11" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/index.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="199">
-          <caret line="1862" column="159" lean-forward="true" selection-start-line="1862" selection-start-column="159" selection-end-line="1862" selection-end-column="159" />
+        <state relative-caret-position="233">
+          <caret line="1880" column="9" lean-forward="true" selection-start-line="1880" selection-start-column="9" selection-end-line="1880" selection-end-column="9" />
         </state>
       </provider>
     </entry>
