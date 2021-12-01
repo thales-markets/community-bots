@@ -1875,24 +1875,31 @@ client.on("message", async (msg) => {
 function pollVerifiedUsers() {
   console.log("Started polling verified users");
   let vi = 0;
-  verifiedUsersMap.forEach(function (memberObject, keyMap) {
-    console.log("Veryfing user " + memberObject.name + " which is " + vi);
-    vi = vi + 1;
+  client.guilds.cache.forEach(function (value, key) {
+    let roleToAssign = null;
+    value.roles.fetch("912740968929841152").then((r) => {
+      roleToAssign = r;
+    });
     try {
-      client.guilds.cache.forEach(function (value, key) {
-        try {
-          if (value.name.toLowerCase().includes("thales")) {
-            let roleToAssign = null;
-            value.roles.fetch("912740968929841152").then((r) => {
-              roleToAssign = r;
-            });
+      if (value.name.toLowerCase().includes("thales")) {
+        verifiedUsersMap.forEach(function (memberObject, keyMap) {
+          try {
+            console.log(
+              "Veryfing user " + memberObject.name + " which is " + vi
+            );
+            vi = vi + 1;
+
             value.members
               .fetch(memberObject.id)
               .then((m) => {
-                m.roles
-                  .add(roleToAssign)
-                  .then(console.log("role added"))
-                  .catch(console.error("error on adding role"));
+                if (!m.roles.cache.some((role) => role.id == roleToAssign.id)) {
+                  m.roles
+                    .add(roleToAssign)
+                    .then(console.log("role added"))
+                    .catch((e) => console.error("error on adding role " + e));
+                } else {
+                  console.log(memberObject.name + " already has the role");
+                }
                 memberObject.name = m.user.username;
                 memberObject.avatar = m.user.avatarURL();
                 verifiedUsersMap.set(key, memberObject);
@@ -1918,11 +1925,11 @@ function pollVerifiedUsers() {
                   );
                 }
               });
+          } catch (e) {
+            console.log(e);
           }
-        } catch (e) {
-          console.log(e);
-        }
-      });
+        });
+      }
     } catch (e) {
       console.log(e);
     }
