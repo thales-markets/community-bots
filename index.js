@@ -150,9 +150,9 @@ client.on("messageReactionAdd", (reaction, user) => {
 });
 
 function doInnerQuestion(command, doReply, msg) {
+  let discordUserFAQ = "<@!" + msg.author.id + ">";
   try {
     let answer = qaMaps.get(command * 1.0);
-
     const exampleEmbed = new Discord.MessageEmbed();
     exampleEmbed.setColor(answer.color);
     exampleEmbed.setTitle(answer.title);
@@ -195,11 +195,11 @@ function doInnerQuestion(command, doReply, msg) {
   } catch (e) {
     if (doReply) {
       msg.reply(
-        "Oops, there seems to be something wrong there. \nChoose your question with ***question questionNumber***, e.g. **question 1**\nYou can get the question number via **list**"
+          discordUserFAQ+ " Oops, there seems to be something wrong there. \nChoose your question with ***question questionNumber***, e.g. **question 1**\nYou can get the question number via **list**"
       );
     } else {
       msg.reply(
-        "Oops, there seems to be something wrong there. \nChoose your question with ***!FAQ question questionNumber***, e.g. **question 1**\nYou can get the question number if you send me **list** in DM"
+          discordUserFAQ+ " Oops, there seems to be something wrong there. \nChoose your question with ***!FAQ question questionNumber***, e.g. **question 1**\nYou can get the question number if you send me **list** in DM"
       );
     }
   }
@@ -209,13 +209,15 @@ client.on("message", (msg) => {
   if (!msg.author.username.toLowerCase().includes("counselor")) {
     if (!(msg.channel.type == "dm")) {
       // this is logic for channels
+      let discordUserFAQ = "<@!" + msg.author.id + ">";
+
       if (msg.content.toLowerCase().trim() == "!faq") {
         msg.reply(
-          "Hi, I am Thales FAQ bot. I will be very happy to assist you, just ask me for **help** in DM."
+          "Hi "+discordUserFAQ +", I am Thales FAQ bot. I will be very happy to assist you, just ask me for **help** in DM."
         );
       } else if (msg.content.toLowerCase().trim() == "!faq help") {
         msg.reply(
-          "I can only answer a predefined question by its number or by alias in a channel, e.g. **question 1**, or **how do binary options work?**. \n For more commands and options send me **help** in DM"
+            discordUserFAQ+" I can only answer a predefined question by its number or by alias in a channel, e.g. **question 1**, or **how do binary options work?**. \n For more commands and options send me **help** in DM"
         );
       } else if (
         msg.content
@@ -254,7 +256,7 @@ client.on("message", (msg) => {
         let found = checkAliasMatching(false);
         if (!found) {
           let notFoundMessage =
-            "Oops, I don't know that one. DM me ***list*** or ***aliases*** to see which questions and commands I know.";
+            discordUserFAQ+" Oops, I don't know that one. DM me ***list*** or ***aliases*** to see which questions and commands I know.";
           msg.channel
             .send(notFoundMessage)
             .then(function (message) {
@@ -1820,6 +1822,7 @@ var ens = new ENS(new Web3.providers.HttpProvider(process.env.INFURA_URL));
 
 let allowedChannel = "915979901373395045";
 client.on("message", async (msg) => {
+  let discordUser = "<@!" + msg.author.id + ">";
   try {
     if (!msg.author.username.toLowerCase().includes("counselor")) {
       if (!(msg.channel.type == "dm")) {
@@ -1831,14 +1834,14 @@ client.on("message", async (msg) => {
             createdDaysAgo =
               Math.round((createdDaysAgo + Number.EPSILON) * 100) / 100;
             if (createdDaysAgo < 7) {
-              msg.channel.send("Account not at least 7 days old!");
+              msg.channel.send(discordUser+" Account not at least 7 days old!");
               return;
             }
 
             let address = msg.content.toLowerCase().substring(7).trim();
 
             if (verifiedUsersMap.has(address)) {
-              msg.channel.send("Address already used for verification");
+              msg.channel.send(discordUser+" Address already used for verification");
               return;
             }
 
@@ -1857,7 +1860,7 @@ client.on("message", async (msg) => {
             if (!address.startsWith("0x") || address.length != 42) {
               address = await ens.resolver(address).addr();
               if (!address.startsWith("0x") || address.length != 42) {
-                msg.channel.send("Invalid address!");
+                msg.channel.send(discordUser+" Invalid address!");
                 return;
               }
             }
@@ -1873,7 +1876,7 @@ client.on("message", async (msg) => {
                 function () {}
               );
             }
-            let discordUser = "<@!" + msg.author.id + ">";
+
             if (found) {
               msg.channel.send(discordUser + " updated your address!");
             } else {
@@ -1882,14 +1885,14 @@ client.on("message", async (msg) => {
               );
             }
           } else {
-            msg.channel.send("Signup ended!");
+            msg.channel.send(discordUser+" Signup ended!");
           }
         }
       }
     }
   } catch (e) {
     console.log(e);
-    msg.channel.send("Unknown error, ping the botmaster to look into it!");
+    msg.channel.send(discordUser+" Unknown error, ping the botmaster to look into it!");
   }
 });
 
