@@ -1602,6 +1602,15 @@ setInterval(function () {
   }
 }, 60 * 4.8 * 1000);
 
+clientCountdownChannel.once("ready", () => {
+    try {
+        console.log("starting update countdown");
+        updateCountdownChannel();
+    } catch (e) {
+        console.log("starting countdown" + e);
+    }
+});
+
 setInterval(function () {
   try {
     console.log("starting update countdown");
@@ -1981,6 +1990,7 @@ async function updateCountdownChannel() {
   });
 
   if (currentChannelName && currentWantedTime) {
+    console.log("channel name found and time")
     var today = new Date();
     var difference = currentWantedTime.getTime() - today.getTime();
     var seconds = Math.floor(difference / 1000);
@@ -2015,10 +2025,10 @@ async function updateCountdownChannel() {
 
     console.log(days + "D:" + hours + "H:" + minutes + "M");
     try{
-    clientCountdownChannel.channels.fetch("907012352623403018").then(channel => {
-      channel.setName(channelMessage)
-          .catch(console.error);
-    });
+
+   let channelForChanging =  await clientCountdownChannel.channels.fetch("907012352623403018");
+   console.log("found the channel for chaning "+channelForChanging+" and setting the name: "+channelMessage);
+   channelForChanging.setName(channelMessage);
     }catch (e) {
       console.log("error while fetching channel with  id 907012352623403018")
     }
