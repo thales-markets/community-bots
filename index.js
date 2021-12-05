@@ -1799,10 +1799,8 @@ if (process.env.REDIS_URL) {
 
   redisClient.get("verifiedUsersMap", function (err, obj) {
     let verifiedUsersMapRaw = obj;
-    console.log("verifiedUsersMapRaw:" + verifiedUsersMapRaw);
     if (verifiedUsersMapRaw) {
       verifiedUsersMap = new Map(JSON.parse(verifiedUsersMapRaw));
-      console.log("verifiedUsersMap:" + verifiedUsersMap);
     }
   });
 }
@@ -1907,9 +1905,6 @@ function pollVerifiedUsers() {
       if (value.name.toLowerCase().includes("thales")) {
         verifiedUsersMap.forEach(function (memberObject, keyMap) {
           try {
-            console.log(
-              "Veryfing user " + memberObject.name + " which is " + vi
-            );
             vi = vi + 1;
 
             value.members
@@ -1921,7 +1916,6 @@ function pollVerifiedUsers() {
                     .then(console.log("role added"))
                     .catch((e) => console.error("error on adding role " + e));
                 } else {
-                  console.log(memberObject.name + " already has the role");
                 }
                 memberObject.name = m.user.username;
                 memberObject.avatar = m.user.avatarURL();
