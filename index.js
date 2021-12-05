@@ -842,6 +842,25 @@ function getNumberLabel(labelValue) {
     : Math.round(Math.abs(Number(labelValue)));
 }
 
+function getNumberLabelDecimals(labelValue) {
+
+  // Nine Zeroes for Billions
+  return Math.abs(Number(labelValue)) >= 1.0e+9
+
+      ? Math.round(Math.abs(Number(labelValue)) / 1.0e+9) + "B"
+      // Six Zeroes for Millions
+      : Math.abs(Number(labelValue)) >= 1.0e+6
+
+          ? Math.round((Math.abs(Number(labelValue)) / 1.0e+6) * 100) / 100 + "M"
+          // Three Zeroes for Thousands
+          : Math.abs(Number(labelValue)) >= 1.0e+3
+
+              ? Math.round(Math.abs(Number(labelValue)) / 1.0e+3) + "K"
+
+              : Math.abs(Number(labelValue));
+
+}
+
 async function sendNewTradeMessage(trade, market) {
   try {
     var shortLong;
@@ -1576,10 +1595,9 @@ async function getETHBurned() {
     var response = await axios.get("https://ethburned.info/api/v1/burned");
     clientETHBurned.guilds.cache.forEach(function (value, key) {
       try {
-        // console.log("Updating burning ETH");
         value.members.cache
           .get(clientETHBurned.user.id)
-          .setNickname(getNumberLabel(response.data.total) + " ETH burned");
+          .setNickname(getNumberLabelDecimals(response.data.total) + " ETH burned");
       } catch (e) {
         console.log(e);
       }
