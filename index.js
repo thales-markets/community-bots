@@ -1802,66 +1802,71 @@ app.get("/verified", function (req, res) {
 var ENS = require("ethereum-ens");
 var ens = new ENS(new Web3.providers.HttpProvider(process.env.INFURA_URL));
 
+let allowedChannel = "915979901373395045";
 client.on("message", async (msg) => {
   try {
     if (!msg.author.username.toLowerCase().includes("counselor")) {
       if (!(msg.channel.type == "dm")) {
         if (msg.content.toLowerCase().startsWith("!verify")) {
-          let createdTimestamp = msg.author.createdTimestamp;
-          let createdDaysAgo = Date.now() - createdTimestamp;
-          createdDaysAgo = createdDaysAgo / 1000 / 60 / 60 / 24;
-          createdDaysAgo =
-            Math.round((createdDaysAgo + Number.EPSILON) * 100) / 100;
-          if (createdDaysAgo < 7) {
-            msg.channel.send("Account not at least 7 days old!");
-            return;
-          }
-
-          let address = msg.content.toLowerCase().substring(7).trim();
-
-          if (verifiedUsersMap.has(address)) {
-            msg.channel.send("Address already used for verification");
-            return;
-          }
-
-          let found = false;
-          let foundKey = "";
-          verifiedUsersMap.forEach(function (value, key) {
-            if (value.id == msg.author.id) {
-              found = true;
-              foundKey = key;
-            }
-          });
-          if (found) {
-            verifiedUsersMap.delete(foundKey);
-          }
-
-          if (!address.startsWith("0x") || address.length != 42) {
-            address = await ens.resolver(address).addr();
-            if (!address.startsWith("0x") || address.length != 42) {
-              msg.channel.send("Invalid address!");
+          if (allowedChannel.includes(msg.channel.id)) {
+            let createdTimestamp = msg.author.createdTimestamp;
+            let createdDaysAgo = Date.now() - createdTimestamp;
+            createdDaysAgo = createdDaysAgo / 1000 / 60 / 60 / 24;
+            createdDaysAgo =
+              Math.round((createdDaysAgo + Number.EPSILON) * 100) / 100;
+            if (createdDaysAgo < 7) {
+              msg.channel.send("Account not at least 7 days old!");
               return;
             }
-          }
-          let verifiedObject = {};
-          verifiedObject.id = msg.author.id;
-          verifiedObject.name = msg.author.username;
-          verifiedObject.avatar = msg.author.avatarURL();
-          verifiedUsersMap.set(address, verifiedObject);
-          if (process.env.REDIS_URL) {
-            redisClient.set(
-              "verifiedUsersMap",
-              JSON.stringify([...verifiedUsersMap]),
-              function () {}
-            );
-          }
-          let discordUser = "<@!" + msg.author.id + ">";
-          if (found) {
-            msg.channel.send(discordUser + " updated your address!");
+
+            let address = msg.content.toLowerCase().substring(7).trim();
+
+            if (verifiedUsersMap.has(address)) {
+              msg.channel.send("Address already used for verification");
+              return;
+            }
+
+            let found = false;
+            let foundKey = "";
+            verifiedUsersMap.forEach(function (value, key) {
+              if (value.id == msg.author.id) {
+                found = true;
+                foundKey = key;
+              }
+            });
+            if (found) {
+              verifiedUsersMap.delete(foundKey);
+            }
+
+            if (!address.startsWith("0x") || address.length != 42) {
+              address = await ens.resolver(address).addr();
+              if (!address.startsWith("0x") || address.length != 42) {
+                msg.channel.send("Invalid address!");
+                return;
+              }
+            }
+            let verifiedObject = {};
+            verifiedObject.id = msg.author.id;
+            verifiedObject.name = msg.author.username;
+            verifiedObject.avatar = msg.author.avatarURL();
+            verifiedUsersMap.set(address, verifiedObject);
+            if (process.env.REDIS_URL) {
+              redisClient.set(
+                "verifiedUsersMap",
+                JSON.stringify([...verifiedUsersMap]),
+                function () {}
+              );
+            }
+            let discordUser = "<@!" + msg.author.id + ">";
+            if (found) {
+              msg.channel.send(discordUser + " updated your address!");
+            } else {
+              msg.channel.send(
+                discordUser + " verified. May the odds be with you!"
+              );
+            }
           } else {
-            msg.channel.send(
-              discordUser + " verified. May the odds be with you!"
-            );
+            msg.channel.send("Signup ended!");
           }
         }
       }
@@ -1873,33 +1878,63 @@ client.on("message", async (msg) => {
 });
 
 function pollVerifiedUsers() {
-  verifiedUsersMap.forEach(function (memberObject, key) {
+  console.log("Started polling verified users");
+  let vi = 0;
+  client.guilds.cache.forEach(function (value, key) {
+    let roleToAssign = null;
+    value.roles.fetch("912740968929841152").then((r) => {
+      roleToAssign = r;
+    });
     try {
-      client.guilds.cache.forEach(function (value, key) {
-        try {
-          if (value.name.toLowerCase().includes("thales")) {
-            let roleToAssign = null;
-            value.roles.fetch("912740968929841152").then((r) => {
-              roleToAssign = r;
-            });
-            value.members.fetch(memberObject.id).then((m) => {
-              m.roles.add(roleToAssign);
-              memberObject.name = m.user.username;
-              memberObject.avatar = m.user.avatarURL();
-              verifiedUsersMap.set(key, memberObject);
-              if (process.env.REDIS_URL) {
-                redisClient.set(
-                  "verifiedUsersMap",
-                  JSON.stringify([...verifiedUsersMap]),
-                  function () {}
+      if (value.name.toLowerCase().includes("thales")) {
+        verifiedUsersMap.forEach(function (memberObject, keyMap) {
+          try {
+            console.log(
+              "Veryfing user " + memberObject.name + " which is " + vi
+            );
+            vi = vi + 1;
+
+            value.members
+              .fetch(memberObject.id)
+              .then((m) => {
+                if (!m.roles.cache.some((role) => role.id == roleToAssign.id)) {
+                  m.roles
+                    .add(roleToAssign)
+                    .then(console.log("role added"))
+                    .catch((e) => console.error("error on adding role " + e));
+                } else {
+                  console.log(memberObject.name + " already has the role");
+                }
+                memberObject.name = m.user.username;
+                memberObject.avatar = m.user.avatarURL();
+                verifiedUsersMap.set(key, memberObject);
+                if (process.env.REDIS_URL) {
+                  redisClient.set(
+                    "verifiedUsersMap",
+                    JSON.stringify([...verifiedUsersMap]),
+                    function () {}
+                  );
+                }
+              })
+              .catch((e) => {
+                console.log(
+                  "Removing user from verification list as he was banned " +
+                    memberObject.id
                 );
-              }
-            });
+                verifiedUsersMap.delete(keyMap);
+                if (process.env.REDIS_URL) {
+                  redisClient.set(
+                    "verifiedUsersMap",
+                    JSON.stringify([...verifiedUsersMap]),
+                    function () {}
+                  );
+                }
+              });
+          } catch (e) {
+            console.log(e);
           }
-        } catch (e) {
-          console.log(e);
-        }
-      });
+        });
+      }
     } catch (e) {
       console.log(e);
     }
@@ -1911,13 +1946,13 @@ setTimeout(function () {
 
 setInterval(function () {
   pollVerifiedUsers();
-}, 1000 * 60 * 2);
+}, 1000 * 60 * 20);
 
 let currentChannelName;
 let currentWantedTime;
 let currentGoalName;
 
-clientCountdownChannel.on("message", msg => {
+clientCountdownChannel.on("message", (msg) => {
   if (msg.content.toLowerCase().startsWith("!countdown")) {
     const args = msg.content.slice(`!countdown`.length).trim().split(" ");
     const dateTime = args.shift();
@@ -1945,20 +1980,21 @@ clientCountdownChannel.on("message", msg => {
       channelMessage = channelName + days + "D:" + hours + "H:" + minutes + "M";
     }
     currentChannelName = channelName;
-    redisClient.set('currentChannelName', channelName, function (err, reply) {
+    redisClient.set("currentChannelName", channelName, function (err, reply) {
       console.log(reply); // OK
     });
-    redisClient.set('currentWantedTime', wantedDate, function (err, reply) {
+    redisClient.set("currentWantedTime", wantedDate, function (err, reply) {
       console.log(reply); // OK
     });
     console.log(days + "D:" + hours + "H:" + minutes + "M");
-    try{
-    clientCountdownChannel.channels.fetch("907012352623403018").then(channel => {
-      channel.setName(channelMessage)
-          .catch(console.error);
-    });
-    }catch (e) {
-      console.log("error while fetching channel with  id 907012352623403018")
+    try {
+      clientCountdownChannel.channels
+        .fetch("907012352623403018")
+        .then((channel) => {
+          channel.setName(channelMessage).catch(console.error);
+        });
+    } catch (e) {
+      console.log("error while fetching channel with  id 907012352623403018");
     }
   } else if (msg.content.toLowerCase().startsWith("!goalname")) {
     const args = msg.content.slice(`!goalname`.length).trim().split(" ");
@@ -1967,12 +2003,11 @@ clientCountdownChannel.on("message", msg => {
       goalname = goalname + args.shift() + " ";
     }
     currentGoalName = goalname;
-    redisClient.set('currentGoalName', goalname, function (err, reply) {
+    redisClient.set("currentGoalName", goalname, function (err, reply) {
       console.log(reply); // OK
     });
     console.log(currentGoalName);
   }
-
 });
 
 async function updateCountdownChannel() {
@@ -2002,36 +2037,45 @@ async function updateCountdownChannel() {
     seconds %= 60;
     var channelMessage;
     if (currentWantedTime.getTime() < today.getTime()) {
-      console.log("goal is reached")
+      console.log("goal is reached");
       if (currentGoalName) {
         channelMessage = currentGoalName;
       } else {
-        channelMessage = "goal reached"
+        channelMessage = "goal reached";
       }
     } else {
       if (days < 1) {
         channelMessage = currentChannelName + hours + "H:" + minutes + "M";
       } else {
-        channelMessage = currentChannelName + days + "D:" + hours + "H:" + minutes + "M";
+        channelMessage =
+          currentChannelName + days + "D:" + hours + "H:" + minutes + "M";
       }
     }
 
-    await redisClient.set('currentChannelName', currentChannelName, function (err, reply) {
-      console.log(reply); // OK
-    });
-    await redisClient.set('currentWantedTime', currentWantedTime, function (err, reply) {
-      console.log(reply); // OK
-    });
+    await redisClient.set(
+      "currentChannelName",
+      currentChannelName,
+      function (err, reply) {
+        console.log(reply); // OK
+      }
+    );
+    await redisClient.set(
+      "currentWantedTime",
+      currentWantedTime,
+      function (err, reply) {
+        console.log(reply); // OK
+      }
+    );
 
     console.log(days + "D:" + hours + "H:" + minutes + "M");
-    try{
-
-   let channelForChanging =  await clientCountdownChannel.channels.fetch("907012352623403018");
-   console.log("found the channel for chaning "+channelForChanging+" and setting the name: "+channelMessage);
-   channelForChanging.setName(channelMessage);
-    }catch (e) {
-      console.log("error while fetching channel with  id 907012352623403018")
+    try {
+      clientCountdownChannel.channels
+        .fetch("907012352623403018")
+        .then((channel) => {
+          channel.setName(channelMessage).catch(console.error);
+        });
+    } catch (e) {
+      console.log("error while fetching channel with  id 907012352623403018");
     }
-
   }
 }
