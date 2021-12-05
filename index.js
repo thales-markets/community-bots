@@ -1793,7 +1793,7 @@ app.get("/verified", function (req, res) {
 var ENS = require("ethereum-ens");
 var ens = new ENS(new Web3.providers.HttpProvider(process.env.INFURA_URL));
 
-let allowedChannel = "912724043747192874";
+let allowedChannel = "915979901373395045";
 client.on("message", async (msg) => {
   try {
     if (!msg.author.username.toLowerCase().includes("counselor")) {
@@ -1857,11 +1857,7 @@ client.on("message", async (msg) => {
               );
             }
           } else {
-            msg.channel.send(
-              "Please use the  " +
-                msg.guild.channels.cache.get(allowedChannel).toString() +
-                " channel to verify your address for the Thales Royale competition! If unverified and you cannot see the channel, please check direct messages."
-            );
+            msg.channel.send("Signup ended!");
           }
         }
       }
