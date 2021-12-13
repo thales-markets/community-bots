@@ -798,7 +798,7 @@ function sendMarketMessage(market) {
               value:
                 "[" +
                 market.address +
-                "](https://thales.market/markets/" +
+                "](https://thalesmarket.io/markets/" +
                 market.address +
                 ")",
             },
@@ -935,7 +935,7 @@ async function sendNewTradeMessage(trade, market) {
           value:
             "[" +
             marketMessage +
-            "](https://thales.market/markets/" +
+            "](https://thalesmarket.io/markets/" +
             market.address +
             ")",
         },
@@ -1392,7 +1392,7 @@ async function getThalesNewTrades(market, startDateUnixTime) {
                 value:
                   "[" +
                   marketMessage +
-                  "](https://thales.market/markets/" +
+                  "](https://thalesmarket.io/markets/" +
                   market.address +
                   ")",
               },
@@ -1499,7 +1499,7 @@ async function getThalesNewTrades(market, startDateUnixTime) {
                 value:
                   "[" +
                   marketMessage +
-                  "](https://thales.market/markets/" +
+                  "](https://thalesmarket.io/markets/" +
                   market.address +
                   ")",
               },
@@ -1751,7 +1751,7 @@ async function getMintData() {
                   value:
                     "[" +
                     marketMessage +
-                    "](https://thales.market/markets/" +
+                    "](https://thalesmarket.io/markets/" +
                     mint.market +
                     ")",
                 },
