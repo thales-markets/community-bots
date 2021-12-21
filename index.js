@@ -14,7 +14,9 @@ const SYNTH_USD_MAINNET = "0x57ab1ec28d129707052df4df418d58a2d46d5f51";
 const clientNewListings = new Discord.Client();
 const clientETHBurned = new Discord.Client();
 const clientCountdownChannel = new Discord.Client();
+const clientTotalL2Trades = new Discord.Client();
 clientCountdownChannel.login(process.env.BOT_TOKEN_COUNTDOWN_CHANNEL);
+clientTotalL2Trades.login(process.env.BOT_TOKEN_TOTAL_L2);
 const Web3 = require("web3");
 let contract = JSON.parse(contractRaw);
 const web3 = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_URL));
@@ -1798,6 +1800,7 @@ clientETHBurned.login(process.env.BOT_TOKEN_ETH_BURNED);
 const redis = require("redis");
 let redisClient = null;
 let L2tradesKey = "L2Trades";
+let totalAmountOfTradesL2 = 107637;
 let writenL2Trades = [];
 let verifiedUsersMap = new Map();
 if (process.env.REDIS_URL) {
@@ -1813,6 +1816,11 @@ if (process.env.REDIS_URL) {
     }
   });
 
+  redisClient.get("totalAmountOfTradesL2", function (err, obj) {
+    if(obj){
+      totalAmountOfTradesL2 = Number(obj);
+    }
+  });
 
     redisClient.lrange(L2tradesKey, 0, -1, function (err, l2Trades) {
       writenL2Trades = l2Trades;
@@ -2110,6 +2118,7 @@ async function updateCountdownChannel() {
 
 let ammTradeAddress="0x5ae7454827d83526261f3871c1029792644ef1b1";
 
+
 async function  getMarketL2(tradeL2) {
 
   const body = JSON.stringify({
@@ -2205,7 +2214,7 @@ async function getL2Trades() {
             shortLong = " < ";
             isLong = false;
           }
-          amountShortLong = getNumberLabel(tradeL2.makerAmount/1e18);
+          amountShortLong = tradeL2.makerAmount/1e18;
           amountUSD = getNumberLabel(tradeL2.takerAmount / 1e18);
           isBuy = true;
         } else {
@@ -2218,7 +2227,7 @@ async function getL2Trades() {
           }
 
           amountUSD = getNumberLabel(tradeL2.makerAmount / 1e18);
-          amountShortLong = getNumberLabel(tradeL2.takerAmount / 1e18);
+          amountShortLong = tradeL2.takerAmount / 1e18;
           shortLong = takerTokenName.toLowerCase().includes("long") ? " > " : " < ";
         }
 
@@ -2276,7 +2285,7 @@ async function getL2Trades() {
                 },
                 {
                   name: isLong ? ":dollar: Amount (sLONG)" : ":dollar: Amount (sSHORT)",
-                  value: amountShortLong,
+                  value: getNumberLabel(amountShortLong),
                 },
                 {
                   name: ":dollar: Total:",
@@ -2306,6 +2315,10 @@ async function getL2Trades() {
 
       writenL2Trades.push(tradeL2.transactionHash);
       redisClient.lpush(L2tradesKey, tradeL2.transactionHash);
+      totalAmountOfTradesL2 = totalAmountOfTradesL2 + amountShortLong;
+      redisClient.set("totalAmountOfTradesL2", totalAmountOfTradesL2, function (err, reply) {
+          console.log(reply); // OK
+      });
       }catch (e) {
         console.log("error in l2 trades "+e);
       }
@@ -2313,3 +2326,36 @@ async function getL2Trades() {
   }
 
 }
+
+async function updateTotalL2Trades() {
+
+  try {
+
+    clientTotalL2Trades.guilds.cache.forEach(function (value, key) {
+      try {
+        value.members.cache
+            .get(clientTotalL2Trades.user.id)
+            .setNickname("$"+getNumberLabelDecimals(totalAmountOfTradesL2));
+      } catch (e) {
+        console.log(e);
+      }
+    });
+    clientTotalL2Trades.user.setActivity(
+        "L2 Total amount traded",
+        { type: "WATCHING" }
+    );
+  }catch (e) {
+    console.log("there was an error while updating total l2");
+  }
+
+}
+
+clientTotalL2Trades.once("ready", () => {
+  console.log("totalL2 on ready");
+  updateTotalL2Trades();
+});
+
+setInterval(function () {
+  console.log("update l2 trades");
+  updateTotalL2Trades
+}, 360 * 1000);
