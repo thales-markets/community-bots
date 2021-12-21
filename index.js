@@ -8,7 +8,7 @@ let contentRaw = fs.readFileSync("content.json");
 const axios = require("axios");
 let answersContent = JSON.parse(contentRaw);
 let qaMaps = new Map();
-let contractRaw = fs.readFileSync("contracts/Synthetix.json");
+let contractRaw = fs.readFileSync("contracts/erc20Contract.json");
 const thalesData = require("thales-data");
 const SYNTH_USD_MAINNET = "0x57ab1ec28d129707052df4df418d58a2d46d5f51";
 const clientNewListings = new Discord.Client();
@@ -18,6 +18,7 @@ clientCountdownChannel.login(process.env.BOT_TOKEN_COUNTDOWN_CHANNEL);
 const Web3 = require("web3");
 let contract = JSON.parse(contractRaw);
 const web3 = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_URL));
+const web3L2 = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_L2_URL));
 let mapThalesTrades = new Map();
 let mapThalesAsks = new Map();
 let mapThalesBids = new Map();
@@ -113,6 +114,11 @@ setInterval(function () {
   getETHBurned();
   updateCountdown();
 }, 360 * 1000);
+
+setInterval(function () {
+  console.log("get L2 trades");
+  getL2Trades();
+}, 2 * 60 * 1000);
 
 client.on("guildMemberAdd", function (member) {
   const exampleEmbed = new Discord.MessageEmbed()
@@ -1791,7 +1797,8 @@ clientETHBurned.login(process.env.BOT_TOKEN_ETH_BURNED);
 
 const redis = require("redis");
 let redisClient = null;
-
+let L2tradesKey = "L2Trades";
+let writenL2Trades = [];
 let verifiedUsersMap = new Map();
 if (process.env.REDIS_URL) {
   redisClient = redis.createClient(process.env.REDIS_URL);
@@ -1805,6 +1812,12 @@ if (process.env.REDIS_URL) {
       verifiedUsersMap = new Map(JSON.parse(verifiedUsersMapRaw));
     }
   });
+
+
+    redisClient.lrange(L2tradesKey, 0, -1, function (err, l2Trades) {
+      writenL2Trades = l2Trades;
+    });
+
 }
 
 var express = require("express");
@@ -2093,4 +2106,210 @@ async function updateCountdownChannel() {
       console.log("error while fetching channel with  id 907012352623403018");
     }
   }
+}
+
+let ammTradeAddress="0x5ae7454827d83526261f3871c1029792644ef1b1";
+
+async function  getMarketL2(tradeL2) {
+
+  const body = JSON.stringify({
+    query: `{markets(where:{
+    id: "${tradeL2.market}"
+  }) {
+    id
+    timestamp
+    creator
+    currencyKey
+    maturityDate
+    strikePrice
+  }}`,
+    variables: null,
+  });
+
+  const response = await fetch(
+      "https://api.thegraph.com/subgraphs/name/thales-markets/thales-optimism",
+      {
+        method: "POST",
+        body,
+      }
+  );
+
+  const json = await response.json();
+  const markets = json.data.markets;
+
+  return markets[0];
+}
+
+async function getL2Trades() {
+
+  const body = JSON.stringify({
+    query: `{
+      trades(
+        orderBy:timestamp,
+        orderDirection:desc,
+      ) {
+    id
+    timestamp
+    transactionHash
+    orderHash
+    maker
+    taker
+    makerToken
+    takerToken
+    makerAmount
+    takerAmount
+    market
+    optionSide
+    orderSide
+  }
+}`,
+    variables: null,
+  });
+
+  const response = await fetch(
+      "https://api.thegraph.com/subgraphs/name/thales-markets/thales-optimism",
+      {
+        method: "POST",
+        body,
+      }
+  );
+
+  const json = await response.json();
+  const tradesL2 = json.data.trades;
+
+  var startdate = new Date();
+  var durationInMinutes = 30;
+  startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
+  let startDateUnixTime = Math.floor(startdate.getTime()/1000);
+  for (const tradeL2 of tradesL2) {
+    if (startDateUnixTime < Number(tradeL2.timestamp) && !writenL2Trades.includes(tradeL2.transactionHash)) {
+      try{
+        console.log("new trade l2");
+        var shortLong;
+        const makerToken = new web3L2.eth.Contract(contract, tradeL2.makerToken);
+        const makerTokenName = await makerToken.methods.name().call();
+        const takerToken = new web3L2.eth.Contract(contract, tradeL2.takerToken);
+        const takerTokenName = await takerToken.methods.name().call();
+        var amountUSD;
+        var amountShortLong;
+        var isLong = false;
+        var isBuy = false;
+        if (
+            makerTokenName.toLowerCase().includes("long") ||
+            makerTokenName.toLowerCase().includes("short")
+        ) {
+          if (makerTokenName.toLowerCase().includes("long")) {
+            shortLong = " > ";
+            isLong = true;
+          } else {
+            shortLong = " < ";
+            isLong = false;
+          }
+          amountShortLong = getNumberLabel(tradeL2.makerAmount/1e18);
+          amountUSD = getNumberLabel(tradeL2.takerAmount / 1e18);
+          isBuy = true;
+        } else {
+          if (takerTokenName.toLowerCase().includes("long")) {
+            shortLong = " > ";
+            isLong = true;
+          } else {
+            shortLong = " < ";
+            isLong = false;
+          }
+
+          amountUSD = getNumberLabel(tradeL2.makerAmount / 1e18);
+          amountShortLong = getNumberLabel(tradeL2.takerAmount / 1e18);
+          shortLong = takerTokenName.toLowerCase().includes("long") ? " > " : " < ";
+        }
+
+        let market = await  getMarketL2(tradeL2);
+
+        var marketMessage =
+            web3.utils.hexToAscii(market.currencyKey).replace(/\0/g, '') +
+            shortLong +
+            Math.round(((market.strikePrice/1e18) + Number.EPSILON) * 1000) / 1000;
+        marketMessage =
+            marketMessage +
+            "@" +
+            new Date(market.maturityDate*1000).toISOString().slice(0, 10);
+
+        let isAmmTrade = false;
+        let messageTitle;
+        if (
+            ammTradeAddress == tradeL2.maker.toLowerCase() ||
+            ammTradeAddress.toLowerCase() == tradeL2.taker.toLowerCase()
+        ) {
+          isAmmTrade = true;
+          messageTitle = ":lock: New Amm Thales Trade :lock:"
+        } else{
+          messageTitle = ":lock: New Orderbook Thales Trade :lock:"
+        }
+
+
+        var message = new Discord.MessageEmbed()
+            .addFields(
+                {
+                  name: messageTitle,
+                  value: "\u200b",
+                },
+                {
+                  name: ":link: Transaction:",
+                  value:
+                      "[" +
+                      tradeL2.transactionHash +
+                      "](https://optimistic.etherscan.io/tx/" +
+                      tradeL2.transactionHash +
+                      ")",
+                },
+                {
+                  name: ":coin: Transaction type:",
+                  value: isBuy ? "Buy" : "Sell",
+                },
+                {
+                  name: ":classical_building: Market:",
+                  value:
+                      "[" +
+                      marketMessage +
+                      "](https://thalesmarket.io/markets/" +
+                      tradeL2.market +
+                      ")",
+                },
+                {
+                  name: isLong ? ":dollar: Amount (sLONG)" : ":dollar: Amount (sSHORT)",
+                  value: amountShortLong,
+                },
+                {
+                  name: ":dollar: Total:",
+                  value: amountUSD + " sUSD",
+                },
+                {
+                  name: ":alarm_clock: Timestamp:",
+                  value: new Date(tradeL2.timestamp*1000),
+                }
+            )
+            .setColor("#0037ff");
+        if (
+           isAmmTrade
+        ) {
+          clientNewListings.channels
+              .fetch("922816179276488736")
+              .then((ammTradesChannel) => {
+                ammTradesChannel.send(message);
+              });
+        }else {
+          clientNewListings.channels
+              .fetch("906872836235362306")
+              .then((orderBookChannel) => {
+                orderBookChannel.send(message);
+              });
+        }
+
+      writenL2Trades.push(tradeL2.transactionHash);
+      redisClient.lpush(L2tradesKey, tradeL2.transactionHash);
+      }catch (e) {
+        console.log("error in l2 trades "+e);
+      }
+    }
+  }
+
 }
