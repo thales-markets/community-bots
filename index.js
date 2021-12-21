@@ -1800,7 +1800,7 @@ clientETHBurned.login(process.env.BOT_TOKEN_ETH_BURNED);
 const redis = require("redis");
 let redisClient = null;
 let L2tradesKey = "L2Trades";
-let totalAmountOfTradesL2 = 107637;
+let totalAmountOfTradesL2 = 0;
 let writenL2Trades = [];
 let verifiedUsersMap = new Map();
 if (process.env.REDIS_URL) {
@@ -2149,6 +2149,8 @@ async function  getMarketL2(tradeL2) {
   return markets[0];
 }
 
+let l2ReleaseDate = 1640181600;
+
 async function getL2Trades() {
 
   const body = JSON.stringify({
@@ -2214,8 +2216,8 @@ async function getL2Trades() {
             shortLong = " < ";
             isLong = false;
           }
-          amountShortLong = tradeL2.makerAmount/1e18;
-          amountUSD = getNumberLabel(tradeL2.takerAmount / 1e18);
+          amountShortLong = parseFloat((tradeL2.makerAmount/1e18).toFixed(3));
+          amountUSD = parseFloat((tradeL2.takerAmount / 1e18)).toFixed(3);
           isBuy = true;
         } else {
           if (takerTokenName.toLowerCase().includes("long")) {
@@ -2226,8 +2228,8 @@ async function getL2Trades() {
             isLong = false;
           }
 
-          amountUSD = getNumberLabel(tradeL2.makerAmount / 1e18);
-          amountShortLong = tradeL2.takerAmount / 1e18;
+          amountUSD = parseFloat((tradeL2.makerAmount / 1e18).toFixed(3));
+          amountShortLong = parseFloat((tradeL2.takerAmount / 1e18).toFixed(3));
           shortLong = takerTokenName.toLowerCase().includes("long") ? " > " : " < ";
         }
 
@@ -2315,10 +2317,12 @@ async function getL2Trades() {
 
       writenL2Trades.push(tradeL2.transactionHash);
       redisClient.lpush(L2tradesKey, tradeL2.transactionHash);
-      totalAmountOfTradesL2 = totalAmountOfTradesL2 + amountShortLong;
-      redisClient.set("totalAmountOfTradesL2", totalAmountOfTradesL2, function (err, reply) {
-          console.log(reply); // OK
-      });
+        if(l2ReleaseDate<(tradeL2.timestamp*1000)){
+          totalAmountOfTradesL2 = totalAmountOfTradesL2 + amountShortLong;
+          redisClient.set("totalAmountOfTradesL2", totalAmountOfTradesL2, function (err, reply) {
+            console.log(reply); // OK
+          });
+        }
       }catch (e) {
         console.log("error in l2 trades "+e);
       }
