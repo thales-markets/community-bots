@@ -2345,7 +2345,7 @@ async function updateTotalL2Trades() {
       }
     });
     clientTotalL2Trades.user.setActivity(
-        "L2 Total amount traded",
+        "L2 Volume traded",
         { type: "WATCHING" }
     );
   }catch (e) {
