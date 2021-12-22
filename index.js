@@ -1800,7 +1800,8 @@ clientETHBurned.login(process.env.BOT_TOKEN_ETH_BURNED);
 const redis = require("redis");
 let redisClient = null;
 let L2tradesKey = "L2Trades";
-let totalAmountOfTradesL2 = 0;
+let totalAmountOfTradesL2 = 5929;
+let numberOfTradesL2 = 35;
 let writenL2Trades = [];
 let verifiedUsersMap = new Map();
 if (process.env.REDIS_URL) {
@@ -1816,10 +1817,16 @@ if (process.env.REDIS_URL) {
     }
   });*/
 
-  redisClient.get("totalVolumeOfTradesL2", function (err, obj) {
+  redisClient.get("totalAmountL2", function (err, obj) {
     if(obj){
       console.log("setting object "+obj);
       totalAmountOfTradesL2 = Number(obj);
+    }
+  });
+  redisClient.get("totalTradesL2", function (err, obj) {
+    if(obj){
+      console.log("setting object "+obj);
+      numberOfTradesL2 = Number(obj);
     }
   });
 
@@ -2217,8 +2224,8 @@ async function getL2Trades() {
             shortLong = " < ";
             isLong = false;
           }
-          amountShortLong = parseFloat((tradeL2.makerAmount/1e18).toFixed(3));
-          amountUSD = parseFloat((tradeL2.takerAmount / 1e18)).toFixed(3);
+          amountShortLong = tradeL2.makerAmount/1e18;
+          amountUSD = tradeL2.takerAmount / 1e18;
           isBuy = true;
         } else {
           if (takerTokenName.toLowerCase().includes("long")) {
@@ -2229,8 +2236,8 @@ async function getL2Trades() {
             isLong = false;
           }
 
-          amountUSD = parseFloat((tradeL2.makerAmount / 1e18).toFixed(3));
-          amountShortLong = parseFloat((tradeL2.takerAmount / 1e18).toFixed(3));
+          amountUSD =tradeL2.makerAmount / 1e18;
+          amountShortLong = tradeL2.takerAmount / 1e18;
           shortLong = takerTokenName.toLowerCase().includes("long") ? " > " : " < ";
         }
 
@@ -2292,7 +2299,7 @@ async function getL2Trades() {
                 },
                 {
                   name: ":dollar: Total:",
-                  value: amountUSD + " sUSD",
+                  value: parseFloat((amountUSD).toFixed(3)) + " sUSD",
                 },
                 {
                   name: ":alarm_clock: Timestamp:",
@@ -2318,12 +2325,14 @@ async function getL2Trades() {
 
       writenL2Trades.push(tradeL2.transactionHash);
       redisClient.lpush(L2tradesKey, tradeL2.transactionHash);
-        if(l2ReleaseDate<(tradeL2.timestamp*1000)){
-          totalAmountOfTradesL2 = totalAmountOfTradesL2 + amountShortLong;
-          redisClient.set("totalVolumeOfTradesL2", totalAmountOfTradesL2, function (err, reply) {
+      totalAmountOfTradesL2 = totalAmountOfTradesL2 + Math.round(amountUSD);
+      numberOfTradesL2++;
+      redisClient.set("totalAmountL2", totalAmountOfTradesL2, function (err, reply) {
             console.log(reply); // OK
-          });
-        }
+      });
+      redisClient.set("totalTradesL2", numberOfTradesL2, function (err, reply) {
+          console.log(reply); // OK
+        });
       }catch (e) {
         console.log("error in l2 trades "+e);
       }
@@ -2338,16 +2347,16 @@ async function updateTotalL2Trades() {
 
     clientTotalL2Trades.guilds.cache.forEach(function (value, key) {
       try {
-        console.log("for guild "+value+" value is "+getNumberLabelDecimals(totalAmountOfTradesL2));
+        console.log("for guild "+value+" value is "+totalAmountOfTradesL2);
         value.members.cache
             .get(clientTotalL2Trades.user.id)
-            .setNickname("$"+getNumberLabelDecimals(totalAmountOfTradesL2));
+            .setNickname("L2="+getNumberLabelDecimals(totalAmountOfTradesL2)+"$");
       } catch (e) {
         console.log('error while updating amount of trades '+e);
       }
     });
     clientTotalL2Trades.user.setActivity(
-        "L2 Volume traded",
+        "Trades L2="+numberOfTradesL2,
         { type: "WATCHING" }
     );
   }catch (e) {
