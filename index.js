@@ -2338,11 +2338,12 @@ async function updateTotalL2Trades() {
 
     clientTotalL2Trades.guilds.cache.forEach(function (value, key) {
       try {
+        console.log("for guild "+value+" value is "+getNumberLabelDecimals(totalAmountOfTradesL2));
         value.members.cache
             .get(clientTotalL2Trades.user.id)
             .setNickname("$"+getNumberLabelDecimals(totalAmountOfTradesL2));
       } catch (e) {
-        console.log(e);
+        console.log('error while updating amount of trades '+e);
       }
     });
     clientTotalL2Trades.user.setActivity(
