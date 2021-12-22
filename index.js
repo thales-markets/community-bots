@@ -2363,5 +2363,5 @@ clientTotalL2Trades.once("ready", () => {
 
 setInterval(function () {
   console.log("update l2 trades");
-  updateTotalL2Trades
+  updateTotalL2Trades();
 }, 360 * 1000);
