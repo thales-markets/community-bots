@@ -1809,15 +1809,16 @@ if (process.env.REDIS_URL) {
     console.error(error);
   });
 
-  redisClient.get("verifiedUsersMap", function (err, obj) {
+  /*redisClient.get("verifiedUsersMap", function (err, obj) {
     let verifiedUsersMapRaw = obj;
     if (verifiedUsersMapRaw) {
       verifiedUsersMap = new Map(JSON.parse(verifiedUsersMapRaw));
     }
-  });
+  });*/
 
-  redisClient.get("totalAmountOfTradesL2", function (err, obj) {
+  redisClient.get("totalVolumeOfTradesL2", function (err, obj) {
     if(obj){
+      console.log("setting object "+obj);
       totalAmountOfTradesL2 = Number(obj);
     }
   });
@@ -1835,7 +1836,7 @@ app.listen(process.env.PORT || 3001, () => {
 });
 
 app.get("/verified", function (req, res) {
-  res.send(Object.fromEntries(verifiedUsersMap));
+  /*res.send(Object.fromEntries(verifiedUsersMap));*/
 });
 
 var ENS = require("ethereum-ens");
@@ -1861,14 +1862,14 @@ client.on("message", async (msg) => {
 
             let address = msg.content.toLowerCase().substring(7).trim();
 
-            if (verifiedUsersMap.has(address)) {
+            /*if (verifiedUsersMap.has(address)) {
               msg.channel.send(discordUser+" Address already used for verification");
               return;
-            }
+            }*/
 
             let found = false;
             let foundKey = "";
-            verifiedUsersMap.forEach(function (value, key) {
+            /*verifiedUsersMap.forEach(function (value, key) {
               if (value.id == msg.author.id) {
                 found = true;
                 foundKey = key;
@@ -1876,7 +1877,7 @@ client.on("message", async (msg) => {
             });
             if (found) {
               verifiedUsersMap.delete(foundKey);
-            }
+            }*/
 
             if (!address.startsWith("0x") || address.length != 42) {
               address = await ens.resolver(address).addr();
@@ -1889,13 +1890,13 @@ client.on("message", async (msg) => {
             verifiedObject.id = msg.author.id;
             verifiedObject.name = msg.author.username;
             verifiedObject.avatar = msg.author.avatarURL();
-            verifiedUsersMap.set(address, verifiedObject);
+            /*verifiedUsersMap.set(address, verifiedObject);*/
             if (process.env.REDIS_URL) {
-              redisClient.set(
+             /* redisClient.set(
                 "verifiedUsersMap",
                 JSON.stringify([...verifiedUsersMap]),
                 function () {}
-              );
+              );*/
             }
 
             if (found) {
@@ -1927,7 +1928,7 @@ function pollVerifiedUsers() {
     });
     try {
       if (value.name.toLowerCase().includes("thales")) {
-        verifiedUsersMap.forEach(function (memberObject, keyMap) {
+        /*verifiedUsersMap.forEach(function (memberObject, keyMap) {
           try {
             vi = vi + 1;
 
@@ -1943,13 +1944,13 @@ function pollVerifiedUsers() {
                 }
                 memberObject.name = m.user.username;
                 memberObject.avatar = m.user.avatarURL();
-                verifiedUsersMap.set(key, memberObject);
+                /!*verifiedUsersMap.set(key, memberObject);*!/
                 if (process.env.REDIS_URL) {
-                  redisClient.set(
+                  /!*redisClient.set(
                     "verifiedUsersMap",
                     JSON.stringify([...verifiedUsersMap]),
                     function () {}
-                  );
+                  );*!/
                 }
               })
               .catch((e) => {
@@ -1959,17 +1960,17 @@ function pollVerifiedUsers() {
                 );
                 verifiedUsersMap.delete(keyMap);
                 if (process.env.REDIS_URL) {
-                  redisClient.set(
+                  /!*redisClient.set(
                     "verifiedUsersMap",
                     JSON.stringify([...verifiedUsersMap]),
                     function () {}
-                  );
+                  );*!/
                 }
               });
           } catch (e) {
             console.log(e);
           }
-        });
+        });*/
       }
     } catch (e) {
       console.log(e);
@@ -2149,7 +2150,7 @@ async function  getMarketL2(tradeL2) {
   return markets[0];
 }
 
-let l2ReleaseDate = 1640181600;
+let l2ReleaseDate = 1640181600000;
 
 async function getL2Trades() {
 
@@ -2319,7 +2320,7 @@ async function getL2Trades() {
       redisClient.lpush(L2tradesKey, tradeL2.transactionHash);
         if(l2ReleaseDate<(tradeL2.timestamp*1000)){
           totalAmountOfTradesL2 = totalAmountOfTradesL2 + amountShortLong;
-          redisClient.set("totalAmountOfTradesL2", totalAmountOfTradesL2, function (err, reply) {
+          redisClient.set("totalVolumeOfTradesL2", totalAmountOfTradesL2, function (err, reply) {
             console.log(reply); // OK
           });
         }
