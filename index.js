@@ -2295,7 +2295,7 @@ async function getL2Trades() {
                 },
                 {
                   name: isLong ? ":dollar: Amount (sLONG)" : ":dollar: Amount (sSHORT)",
-                  value: getNumberLabel(amountShortLong),
+                  value: parseFloat((amountShortLong).toFixed(3)),
                 },
                 {
                   name: ":dollar: Total:",
