@@ -2,6 +2,12 @@ require("dotenv").config();
 const Discord = require("discord.js");
 const clientCountdown = new Discord.Client();
 clientCountdown.login(process.env.BOT_TOKEN_COUNTDOWN);
+const clientGameCountdown = new Discord.Client();
+clientGameCountdown.login(process.env.BOT_TOKEN_GAME_COUNTDOWN);
+const clientThalesOPCountdown = new Discord.Client();
+clientThalesOPCountdown.login(process.env.BOT_TOKEN_OPTHALES_COUNTDOWN);
+const clientRoyaleMainnetCountdown = new Discord.Client();
+clientRoyaleMainnetCountdown.login(process.env.BOT_TOKEN_TROYALEM_COUNTDOWN);
 var fs = require("fs");
 const client = new Discord.Client();
 let contentRaw = fs.readFileSync("content.json");
@@ -72,6 +78,23 @@ clientCountdown.once("ready", () => {
   updateCountdown();
 });
 
+clientGameCountdown.once("ready", () => {
+  console.log("update Game Countdown on ready");
+  updateGameCountdown();
+});
+
+
+clientRoyaleMainnetCountdown.once("ready", () => {
+  console.log("update clientRoyaleMainnetCountdown on ready");
+  updateThalesRoyaleMainnetCountdown();
+});
+
+
+clientThalesOPCountdown.once("ready", () => {
+  console.log("update clientThalesOPCountdown Countdown on ready");
+  updateThalesOPCountdown();
+});
+
 client.on("ready", () => {
   console.log(`Logged in as ${client.user.tag}!`);
 });
@@ -93,7 +116,7 @@ const updateCountdown = async () => {
       try {
         value.members.cache
           .get(clientCountdown.user.id)
-          .setNickname("Countdown");
+          .setNickname("Staking rewards");
       } catch (e) {
         console.log(e);
       }
@@ -111,10 +134,87 @@ const updateCountdown = async () => {
   });
 };
 
+const updateGameCountdown = async () => {
+  if (clientGameCountdown) {
+    clientGameCountdown.guilds.cache.forEach(function (value, key) {
+      try {
+        value.members.cache
+            .get(clientGameCountdown.user.id)
+            .setNickname("Tale of Thales");
+      } catch (e) {
+        console.log(e);
+      }
+    });
+  }
+  let endDateUTC = new Date("Jan 24, 2022 13:00:00 UTC")
+  let currentDate = new Date(new Date().toUTCString());
+  var distance = endDateUTC.getTime() - currentDate.getTime();
+  var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+  var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+  var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+  clientGameCountdown.user.setActivity(days + "D:" + hours + "H:" + minutes + "M", {
+    type: "WATCHING",
+  });
+};
+
+
+const updateThalesRoyaleMainnetCountdown = async () => {
+  if (clientRoyaleMainnetCountdown) {
+    clientRoyaleMainnetCountdown.guilds.cache.forEach(function (value, key) {
+      try {
+        value.members.cache
+            .get(clientRoyaleMainnetCountdown.user.id)
+            .setNickname("Thales Royale Mainnet");
+      } catch (e) {
+        console.log(e);
+      }
+    });
+  }
+  let endDateUTC = new Date("Jan 31, 2022 13:00:00 UTC")
+  let currentDate = new Date(new Date().toUTCString());
+  var distance = endDateUTC.getTime() - currentDate.getTime();
+  var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+  var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+  var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+  clientRoyaleMainnetCountdown.user.setActivity(days + "D:" + hours + "H:" + minutes + "M", {
+    type: "WATCHING",
+  });
+};
+
+
+const updateThalesOPCountdown = async () => {
+  if (clientThalesOPCountdown) {
+    clientThalesOPCountdown.guilds.cache.forEach(function (value, key) {
+      try {
+        value.members.cache
+            .get(clientThalesOPCountdown.user.id)
+            .setNickname("OpTHALES");
+      } catch (e) {
+        console.log(e);
+      }
+    });
+  }
+  let endDateUTC = new Date("Feb 02, 2022 13:00:00 UTC")
+  let currentDate = new Date(new Date().toUTCString());
+  var distance = endDateUTC.getTime() - currentDate.getTime();
+  var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+  var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+  var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+  clientThalesOPCountdown.user.setActivity("L2: "+days + "D:" + hours + "H:" + minutes + "M", {
+    type: "WATCHING",
+  });
+};
+
 setInterval(function () {
   console.log("updateCountdown and eth burned");
   getETHBurned();
   updateCountdown();
+  updateThalesRoyaleMainnetCountdown();
+  updateThalesOPCountdown();
+  updateGameCountdown();
 }, 360 * 1000);
 
 setInterval(function () {
