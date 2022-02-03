@@ -177,23 +177,22 @@ const updateThalesRoyaleMainnetCountdown = async () => {
 
 
 const updateThalesOPCountdown = async () => {
-  if (clientThalesOPCountdown) {
+  let response = await axios.get('https://api.1inch.exchange/v3.0/10/quote?fromTokenAddress=0x217D47011b23BB961eB6D93cA9945B7501a5BB11&toTokenAddress=0x7f5c764cbc14f9669b88837ca1490cca17c31607&amount=1000000000000000000000');
+  let  thalesOPValue= Math.round((response.data.toTokenAmount/1000000000) * 100) / 100;
+  if (thalesOPValue) {
     clientThalesOPCountdown.guilds.cache.forEach(function (value, key) {
       try {
         value.members.cache
             .get(clientThalesOPCountdown.user.id)
-            .setNickname("OpTHALES");
+            .setNickname("$"+thalesOPValue);
       } catch (e) {
         console.log(e);
       }
     });
   }
 
-  let response = await axios.get('https://api.1inch.exchange/v3.0/10/quote?fromTokenAddress=0x217D47011b23BB961eB6D93cA9945B7501a5BB11&toTokenAddress=0x7f5c764cbc14f9669b88837ca1490cca17c31607&amount=1000000000000000000000');
-  let thalesOPValue = Math.round((response.data.toTokenAmount/1000000000) * 100) / 100
 
-
-  clientThalesOPCountdown.user.setActivity(+thalesOPValue+" THALES", {
+  clientThalesOPCountdown.user.setActivity("OpTHALES", {
     type: "WATCHING",
   });
 };
