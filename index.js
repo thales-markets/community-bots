@@ -100,11 +100,9 @@ client.on("ready", () => {
 });
 
 const updateCountdown = async () => {
-  let lastPeriodTimeStamp = (
-    await stakingContract.lastPeriodTimeStamp()
-  ).toString();
-
-  let durationPeriod = (await stakingContract.durationPeriod()).toString();
+  let  stakingContractL2=  new web3L2.eth.Contract(stakingThalesABI.stakingthales.abi, "0xC392133eEa695603B51a5d5de73655d571c2CE51");
+  const lastPeriodTimeStamp = await stakingContractL2.methods.lastPeriodTimeStamp().call();
+  const durationPeriod = await stakingContractL2.methods.durationPeriod().call();
   let closingDate = new Date(
     lastPeriodTimeStamp * 1000.0 + durationPeriod * 1000.0
   );
@@ -190,14 +188,12 @@ const updateThalesOPCountdown = async () => {
       }
     });
   }
-  let endDateUTC = new Date("Feb 02, 2022 13:00:00 UTC")
-  let currentDate = new Date(new Date().toUTCString());
-  var distance = endDateUTC.getTime() - currentDate.getTime();
-  var days = Math.floor(distance / (1000 * 60 * 60 * 24));
-  var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-  var seconds = Math.floor((distance % (1000 * 60)) / 1000);
-  clientThalesOPCountdown.user.setActivity("L2: "+days + "D:" + hours + "H:" + minutes + "M", {
+
+  let response = await axios.get('https://api.1inch.exchange/v3.0/10/quote?fromTokenAddress=0x217D47011b23BB961eB6D93cA9945B7501a5BB11&toTokenAddress=0x7f5c764cbc14f9669b88837ca1490cca17c31607&amount=1000000000000000000000');
+  let thalesOPValue = Math.round((response.data.toTokenAmount/1000000000) * 100) / 100
+
+
+  clientThalesOPCountdown.user.setActivity(+thalesOPValue+" THALES", {
     type: "WATCHING",
   });
 };
