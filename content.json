@@ -686,5 +686,21 @@
       "footer": {
       }
     }
+  },
+  {
+    "number": 44,
+    "content": {
+      "title": "Question 44",
+      "description": "How do I fix Sorbet.finance UI on Optimism?",
+      "color": "0099ff",
+      "fields": [
+        {
+          "title": "Answer:",
+          "value": "Sorbet.finance UI is still in Beta phase. \n\nIf you are having issues with seeing your wallet balance or if the THALES token is not showing, try to **clear the application state** in your Web Browser console.\n(https://i.postimg.cc/brJZQFdG/annotely-image-4.jpg)" 
+        }
+      ],
+      "footer": {
+      }
+    }
   }
 ]
