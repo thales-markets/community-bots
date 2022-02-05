@@ -4,6 +4,8 @@ const clientCountdown = new Discord.Client();
 clientCountdown.login(process.env.BOT_TOKEN_COUNTDOWN);
 const clientGameCountdown = new Discord.Client();
 clientGameCountdown.login(process.env.BOT_TOKEN_GAME_COUNTDOWN);
+const clientThalesL2APR = new Discord.Client();
+clientThalesL2APR.login(process.env.BOT_TOKEN_THALES_L2_APR);
 const clientThalesOPCountdown = new Discord.Client();
 clientThalesOPCountdown.login(process.env.BOT_TOKEN_OPTHALES_COUNTDOWN);
 const clientRoyaleMainnetCountdown = new Discord.Client();
@@ -58,6 +60,7 @@ const stakingContract = new ethers.Contract(
   stakingThalesABI.stakingthales.abi,
   walletTest
 );
+const gelatoContract = require("./contracts/GelatoContract.js");
 let mapSladeMM = new Map();
 let mapAlmaMM = new Map();
 let mapDeckardMM = new Map();
@@ -2463,3 +2466,59 @@ setInterval(function () {
   console.log("update l2 trades");
   updateTotalL2Trades();
 }, 360 * 1000);
+
+
+clientThalesL2APR.once("ready", () => {
+  console.log("calculate L2 APR");
+  calculateThalesL2APR();
+});
+
+setInterval(function () {
+  console.log("calculate L2 APR");
+  calculateThalesL2APR();
+}, 360 * 1000);
+
+async function calculateThalesL2APR() {
+
+  const priceL2ThalesURL =
+      'https://api.1inch.exchange/v3.0/10/quote?fromTokenAddress=0x217D47011b23BB961eB6D93cA9945B7501a5BB11&toTokenAddress=0x7f5c764cbc14f9669b88837ca1490cca17c31607&amount=1000000000000000000';
+
+  const [res1, res2] = await Promise.all([
+    fetch(priceL2ThalesURL),
+    fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd'),
+  ]);
+  const data1 = await res1.json();
+  const data2 = await res2.json();
+  const thalesValue = await Number(ethers.utils.formatUnits(data1.toTokenAmount, data1.toToken.decimals)).toFixed(2);
+  const ethValue = data2.ethereum.usd;
+  let  gelatoContractThales =  new web3L2.eth.Contract(gelatoContract.gelatoContract.abi, "0xac6705BC7f6a35eb194bdB89066049D6f1B0B1b5");
+  const balances = await gelatoContractThales.methods.getUnderlyingBalances().call();
+  let wethBalance = await web3.utils.fromWei(balances[1],"ether");
+  let thalesBalance = await web3.utils.fromWei(balances[0],"ether");
+  let wethBalanceNumber = Number(wethBalance).toFixed(2);
+  let thalesBalanceNumber = Number(thalesBalance).toFixed(2);
+
+  const totalInUSD = Number(
+      (wethBalanceNumber * ethValue + thalesBalanceNumber * thalesValue).toFixed(2)
+  );
+
+  const apr = ((100 * (35000 * thalesValue * 52)) / totalInUSD).toFixed(0);
+  let formatedAPR = Math.round(apr*100)/100+"%";
+
+
+  if (formatedAPR) {
+    clientThalesL2APR.guilds.cache.forEach(function (value, key) {
+      try {
+        value.members.cache
+            .get(clientThalesL2APR.user.id)
+            .setNickname(formatedAPR);
+      } catch (e) {
+        console.log(e);
+      }
+    });
+  }
+
+  clientThalesL2APR.user.setActivity("APR L2 WETH/THALES", {
+    type: "WATCHING",
+  });
+};
