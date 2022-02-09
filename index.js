@@ -29,6 +29,18 @@ const Web3 = require("web3");
 let contract = JSON.parse(contractRaw);
 const web3 = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_URL));
 const web3L2 = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_L2_URL));
+const CoinGecko = require('coingecko-api');
+const CoinGeckoClient = new CoinGecko();
+const clientUniswap = new Discord.Client();
+clientUniswap.login(process.env.BOT_TOKEN_UNISWAP);
+const clientSOL = new Discord.Client();
+clientSOL.login(process.env.BOT_TOKEN_SOL);
+const clientLink = new Discord.Client();
+clientLink.login(process.env.BOT_TOKEN_LINK);
+const clientAAVE = new Discord.Client();
+clientAAVE.login(process.env.BOT_TOKEN_AAVE);
+const clientCURVE = new Discord.Client();
+clientCURVE.login(process.env.BOT_TOKEN_CURVE);
 let mapThalesTrades = new Map();
 let mapThalesAsks = new Map();
 let mapThalesBids = new Map();
@@ -101,6 +113,50 @@ clientThalesOPCountdown.once("ready", () => {
 client.on("ready", () => {
   console.log(`Logged in as ${client.user.tag}!`);
 });
+
+clientUniswap.on("ready", () => {
+  setPriceBot(clientUniswap,"uniswap","UNI Price");
+});
+
+clientSOL.on("ready", () => {
+  setPriceBot(clientSOL,"solana","SOL Price");
+});
+
+clientLink.on("ready", () => {
+  setPriceBot(clientLink,"chainlink","LINK Price");
+});
+
+clientAAVE.on("ready", () => {
+  setPriceBot(clientAAVE,"aave","AAVE Price");
+});
+
+clientCURVE.on("ready", () => {
+  setPriceBot(clientCURVE,"curve-dao-token","CURVE Price");
+});
+
+setInterval(function () {
+  console.log("updating price bots");
+    setPriceBot(clientUniswap,"uniswap","UNI Price");
+    setPriceBot(clientSOL,"solana","SOL Price");
+    setPriceBot(clientLink,"chainlink","LINK Price");
+    setPriceBot(clientAAVE,"aave","AAVE Price");
+    setPriceBot(clientCURVE,"curve-dao-token","CURVE Price");
+}, 380 * 1000);
+
+const setPriceBot = async (clientForSetting,tokenForPrice,nameOfTheToken) => {
+
+  let data = await CoinGeckoClient.coins.fetch(tokenForPrice);
+
+  clientForSetting.guilds.cache.forEach(function (value, key) {
+    try {
+      console.log("Updating "+nameOfTheToken+" Price info " + data.data.market_data.current_price.usd);
+      value.members.cache.get(clientForSetting.user.id).setNickname("$" + round(data.data.market_data.current_price.usd));
+    } catch (e) {
+      console.log(e);
+    }
+  });
+  clientForSetting.user.setActivity(nameOfTheToken, {type: 'WATCHING'});
+}
 
 const updateCountdown = async () => {
   let  stakingContractL2=  new web3L2.eth.Contract(stakingThalesABI.stakingthales.abi, "0xC392133eEa695603B51a5d5de73655d571c2CE51");

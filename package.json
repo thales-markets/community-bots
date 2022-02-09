@@ -21,6 +21,7 @@
     "axios": "^0.21.1",
     "discord.js": "^12.5.3",
     "dotenv": "^8.2.0",
+    "coingecko-api": "^1.0.10",
     "ethereum-ens": "^0.8.0",
     "ethers": "^5.4.7",
     "express": "^4.17.1",
