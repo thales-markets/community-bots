@@ -158,6 +158,11 @@ const setPriceBot = async (clientForSetting,tokenForPrice,nameOfTheToken) => {
   clientForSetting.user.setActivity(nameOfTheToken, {type: 'WATCHING'});
 }
 
+const round = function (num) {
+  var m = Number((Math.abs(num) * 100).toPrecision(15));
+  return Math.round(m) / 100 * Math.sign(num);
+}
+
 const updateCountdown = async () => {
   let  stakingContractL2=  new web3L2.eth.Contract(stakingThalesABI.stakingthales.abi, "0xC392133eEa695603B51a5d5de73655d571c2CE51");
   const lastPeriodTimeStamp = await stakingContractL2.methods.lastPeriodTimeStamp().call();
