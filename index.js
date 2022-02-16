@@ -221,20 +221,20 @@ const updateThalesRoyaleMainnetCountdown = async () => {
       try {
         value.members.cache
             .get(clientRoyaleMainnetCountdown.user.id)
-            .setNickname("Thales Royale Mainnet");
+            .setNickname("Thales Royale Optimism");
       } catch (e) {
         console.log(e);
       }
     });
   }
-  let endDateUTC = new Date("Jan 31, 2022 16:00:00 UTC")
+  let endDateUTC = new Date("Feb 17, 2022 16:00:00 UTC")
   let currentDate = new Date(new Date().toUTCString());
   var distance = endDateUTC.getTime() - currentDate.getTime();
   var days = Math.floor(distance / (1000 * 60 * 60 * 24));
   var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
   var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
   var seconds = Math.floor((distance % (1000 * 60)) / 1000);
-  clientRoyaleMainnetCountdown.user.setActivity("It's live!", {
+  clientRoyaleMainnetCountdown.user.setActivity(days + "D:" + hours + "H:" + minutes + "M", {
     type: "WATCHING",
   });
 };
