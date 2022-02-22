@@ -227,7 +227,7 @@ const updateThalesRoyaleMainnetCountdown = async () => {
       }
     });
   }
-  let endDateUTC = new Date("Feb 17, 2022 16:00:00 UTC")
+  let endDateUTC = new Date("Feb 19, 2022 16:00:00 UTC")
   let currentDate = new Date(new Date().toUTCString());
   var distance = endDateUTC.getTime() - currentDate.getTime();
   var days = Math.floor(distance / (1000 * 60 * 60 * 24));
