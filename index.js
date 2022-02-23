@@ -10,6 +10,8 @@ const clientThalesOPCountdown = new Discord.Client();
 clientThalesOPCountdown.login(process.env.BOT_TOKEN_OPTHALES_COUNTDOWN);
 const clientRoyaleMainnetCountdown = new Discord.Client();
 clientRoyaleMainnetCountdown.login(process.env.BOT_TOKEN_TROYALEM_COUNTDOWN);
+const clientRoyalePingingBot = new Discord.Client();
+clientRoyalePingingBot.login(process.env.BOT_TOKEN_ROYALE_PING);
 var fs = require("fs");
 const client = new Discord.Client();
 let contentRaw = fs.readFileSync("content.json");
@@ -73,6 +75,9 @@ const stakingContract = new ethers.Contract(
   walletTest
 );
 const gelatoContract = require("./contracts/GelatoContract.js");
+let contractRoyaleRaw = fs.readFileSync('contracts/royale.json');
+let contractRoyale = JSON.parse(contractRoyaleRaw);
+let royaleContract =  new web3L2.eth.Contract(contractRoyale, "0x3198ab211CdF3E4d13a698E1Fb819507BcA2e579");
 let mapSladeMM = new Map();
 let mapAlmaMM = new Map();
 let mapDeckardMM = new Map();
@@ -227,8 +232,11 @@ const updateThalesRoyaleMainnetCountdown = async () => {
       }
     });
   }
-  let endDateUTC = new Date("Feb 19, 2022 16:00:00 UTC")
+  let endDateUTC = new Date("Mar 03, 2022 16:00:00 UTC")
   let currentDate = new Date(new Date().toUTCString());
+  /*if(currentDate.getTime()>endDateUTC.getTime()){
+    //change time
+  }*/
   var distance = endDateUTC.getTime() - currentDate.getTime();
   var days = Math.floor(distance / (1000 * 60 * 60 * 24));
   var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -2583,3 +2591,157 @@ async function calculateThalesL2APR() {
     type: "WATCHING",
   });
 };
+
+
+let seasonNumber=3;
+let currentRoundNumber=0;
+let seasonRegistrationStarts = "seasonNumber"+seasonNumber+"starts";
+let seasonRegistration24hCloseKey = "seasonNumber"+seasonNumber+"closingTime24h";
+let seasonRegistration2hCloseKey = "seasonNumber"+seasonNumber+"closingTime2h";
+let positionStartsKey = "seasonNumber"+seasonNumber+"posistionRound"+currentRoundNumber+"starts";
+let position2hCloseKey = "seasonNumber"+seasonNumber+"posistionRound"+currentRoundNumber+"closes2h";
+let isRegistrationStartedMessageSent = false
+let isRegistration2hMessageSent = false
+let isRegistration24hMessageSent = false
+let isPositionStartedSent = false
+let isPostion2hSent = false
+
+async function setSeasonAndCurrentRound(){
+  try {
+
+    seasonNumber = await royaleContract.methods.season().call();
+    currentRoundNumber = await royaleContract.methods.roundInASeason(seasonNumber).call();
+    seasonRegistrationStarts = "seasonNumber"+seasonNumber+"starts";
+    seasonRegistration24hCloseKey = "seasonNumber"+seasonNumber+"closingTime24h";
+    seasonRegistration2hCloseKey = "seasonNumber"+seasonNumber+"closingTime2h";
+    positionStartsKey = "seasonNumber"+seasonNumber+"posistionRound"+currentRoundNumber+"starts";
+    position2hCloseKey = "seasonNumber"+seasonNumber+"posistionRound"+currentRoundNumber+"closes2h";
+
+    await redisClient.get(seasonRegistrationStarts, function (err, obj) {
+      console.log("3redis " + obj);
+      if(obj)
+        isRegistrationStartedMessageSent = true;
+    });
+    await redisClient.get(seasonRegistration24hCloseKey, function (err, obj) {
+      console.log("3redis " + obj);
+      if(obj)
+        isRegistration24hMessageSent = true;
+    });
+    await redisClient.get(seasonRegistration2hCloseKey, function (err, obj) {
+      console.log("3redis " + obj);
+      if(obj)
+        isRegistration2hMessageSent = true;
+    });
+    await redisClient.get(positionStartsKey, function (err, obj) {
+      console.log("3redis " + obj);
+      if(obj)
+        isPositionStartedSent = true;
+    });
+    await redisClient.get(position2hCloseKey, function (err, obj) {
+      console.log("3redis " + obj);
+      if(obj)
+        isPostion2hSent = true;
+    });
+  }catch (e) {
+    console.log("there was error while calling current season/round"+e);
+  }
+}
+
+async function checkSeasonStarts() {
+if(seasonNumber!=2){
+  if(!isRegistrationStartedMessageSent){
+    const seasonCreationTime = await royaleContract.methods.seasonCreationTime(seasonNumber).call();
+    let currentTimestamp = Math.floor(Date.now() / 1000);
+    if(currentTimestamp>Number(seasonCreationTime)){
+      sendThalesRoyaleMessage("Hey Thales Royale enthusiasts, the registration phase (lasting 72 hours) has just started! You can register here: <https://thalesmarket.io/royale?page=scoreboard>")
+      await redisClient.set(seasonRegistrationStarts,false);
+      isRegistrationStartedMessageSent = true;
+    }
+  }else
+  if(!isRegistration24hMessageSent) {
+
+    const signUpPeriod =  await royaleContract.methods.signUpPeriod().call();
+    const seasonCreationTime = await royaleContract.methods.seasonCreationTime(seasonNumber).call();
+    let oneDay = 86400;
+    const registration24Close =  Number(seasonCreationTime) + Number(signUpPeriod) - oneDay ;
+    let currentTimestamp = Math.floor(Date.now() / 1000);
+    if(currentTimestamp > registration24Close){
+      sendThalesRoyaleMessage("Only one more day (24 hours) to go for Thales Royale, don't miss it! If you still haven't registered you can do so here: <https://thalesmarket.io/royale?page=scoreboard>")
+      await redisClient.set(seasonRegistration24hCloseKey,true);
+      isRegistration24hMessageSent = true;
+    }
+  } else
+  if(!isRegistration2hMessageSent){
+    const signUpPeriod =  await royaleContract.methods.signUpPeriod().call();
+    const seasonCreationTime = await royaleContract.methods.seasonCreationTime(seasonNumber).call();
+    let twoHours = 7200;
+    const registration2hClose =  Number(seasonCreationTime) + Number(signUpPeriod) - twoHours ;
+    let currentTimestamp = Math.floor(Date.now() / 1000);
+    if(currentTimestamp > registration2hClose){
+      sendThalesRoyaleMessage("Two more hours to register in Thales Royale. Last call. Register here: <https://thalesmarket.io/royale?page=scoreboard>");
+      await redisClient.set(seasonRegistration2hCloseKey,true);
+      isRegistration2hMessageSent = true;
+    }
+  }
+}
+}
+
+
+
+async function sendThalesRoyaleMessage(message){
+  let channel =  await clientRoyalePingingBot.channels
+      .fetch("913143283033722990");
+  let roleId = "939868108749942785" ;
+  channel.send("<@&" + roleId + "> "+message);
+}
+
+async function checkPositioning() {
+  if(seasonNumber!=2){
+  if(!isPositionStartedSent){
+
+    const positioningStarted =  await royaleContract.methods.royaleInSeasonStarted(seasonNumber).call();
+    const roundInASeasonStartTime =  await royaleContract.methods.roundInASeasonStartTime(seasonNumber).call();
+
+    let currentTimestamp = Math.floor(Date.now() / 1000);
+    if(positioningStarted && currentTimestamp > Number(roundInASeasonStartTime)){
+      sendThalesRoyaleMessage("Aaaaand we are live! Thales Royale round "+currentRoundNumber+" has started. You have 8 hours to choose a position. Remember that you can change your position at any time before this period ends. See you in the arena, good luck!")
+      await redisClient.set(positionStartsKey,true);
+      isPositionStartedSent = true;
+    }
+  } else if(!isPostion2hSent){
+
+    const positioningStarted =  await royaleContract.methods.royaleInSeasonStarted(seasonNumber).call();
+    const roundInASeasonStartTime =  await royaleContract.methods.roundInASeasonStartTime(seasonNumber).call();
+    const roundLength = await royaleContract.methods.roundLength().call();
+    let twoHours = 7200;
+    const positioning2hoursToClose = Number(roundInASeasonStartTime) + Number(roundLength) - twoHours;
+
+    let currentTimestamp = Math.floor(Date.now() / 1000);
+    if(positioningStarted && currentTimestamp > positioning2hoursToClose){
+      sendThalesRoyaleMessage("Only 2 hours left to choose a position for Thales Royale round "+currentRoundNumber+". After the positioning period ends you won't be able to change your position and the resolution phase will start, lasting 16 hours. After resolution phase ends, if you chose the correct side, you'll advance to the next round, if not... better luck next time!")
+      await redisClient.set(position2hCloseKey,true);
+      isPostion2hSent = true;
+    }
+  }
+  }
+}
+
+clientRoyalePingingBot.once("ready", () => {
+  console.log("updating royale settings");
+  setSeasonAndCurrentRound();
+});
+
+setInterval(function () {
+  console.log("updating current thales season bots");
+  setSeasonAndCurrentRound();
+}, 60 * 10 * 1000);
+
+setInterval(function () {
+  console.log("updating updating season starts bots");
+  checkSeasonStarts();
+  checkPositioning();
+}, 60 * 5 * 1000);
+
+
+
+
