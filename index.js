@@ -234,10 +234,23 @@ const updateThalesRoyaleMainnetCountdown = async () => {
   }
   let endDateUTC = new Date("Mar 03, 2022 16:00:00 UTC")
   let currentDate = new Date(new Date().toUTCString());
-  /*if(currentDate.getTime()>endDateUTC.getTime()){
-    //change time
-  }*/
-  var distance = endDateUTC.getTime() - currentDate.getTime();
+  let distance;
+  if(currentDate.getTime()>endDateUTC.getTime()){
+    let currentTimestamp = Math.floor(Date.now() / 1000);
+    const roundInASeasonStartTime =  await royaleContract.methods.roundInASeasonStartTime(seasonNumber).call();
+    const roundChoosingLength = await royaleContract.methods.roundChoosingLength().call();
+    let positioningEnd = Number(roundInASeasonStartTime)+Number(roundChoosingLength);
+    if(currentTimestamp<positioningEnd){
+      distance = Number(positioningEnd) - currentTimestamp;
+    }else{
+      const roundLength = await royaleContract.methods.roundLength().call();
+      let roundEnd = Number(roundInASeasonStartTime)+Number(roundLength);
+      distance = Number(roundEnd) - currentTimestamp;
+    }
+  }
+  else{
+    distance = endDateUTC.getTime() - currentDate.getTime();
+  }
   var days = Math.floor(distance / (1000 * 60 * 60 * 24));
   var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
   var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
@@ -2712,9 +2725,9 @@ async function checkPositioning() {
 
     const positioningStarted =  await royaleContract.methods.royaleInSeasonStarted(seasonNumber).call();
     const roundInASeasonStartTime =  await royaleContract.methods.roundInASeasonStartTime(seasonNumber).call();
-    const roundLength = await royaleContract.methods.roundLength().call();
+     const roundChoosingLength = await royaleContract.methods.roundChoosingLength().call();
     let twoHours = 7200;
-    const positioning2hoursToClose = Number(roundInASeasonStartTime) + Number(roundLength) - twoHours;
+    const positioning2hoursToClose = Number(roundInASeasonStartTime) + Number(roundChoosingLength) - twoHours;
 
     let currentTimestamp = Math.floor(Date.now() / 1000);
     if(positioningStarted && currentTimestamp > positioning2hoursToClose){
