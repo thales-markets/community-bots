@@ -2584,7 +2584,7 @@ async function calculateThalesL2APR() {
       (wethBalanceNumber * ethValue + thalesBalanceNumber * thalesValue).toFixed(2)
   );
 
-  const apr = ((100 * (35000 * thalesValue * 52)) / totalInUSD).toFixed(0);
+  const apr = ((100 * (50000 * thalesValue * 52)) / totalInUSD).toFixed(0);
   let formatedAPR = Math.round(apr*100)/100+"%";
 
 
