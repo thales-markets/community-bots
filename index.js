@@ -241,11 +241,11 @@ const updateThalesRoyaleMainnetCountdown = async () => {
     const roundChoosingLength = await royaleContract.methods.roundChoosingLength().call();
     let positioningEnd = Number(roundInASeasonStartTime)+Number(roundChoosingLength);
     if(currentTimestamp<positioningEnd){
-      distance = Number(positioningEnd) - currentTimestamp;
+      distance = (Number(positioningEnd) - currentTimestamp) * 1000;
     }else{
       const roundLength = await royaleContract.methods.roundLength().call();
       let roundEnd = Number(roundInASeasonStartTime)+Number(roundLength);
-      distance = Number(roundEnd) - currentTimestamp;
+      distance = (Number(roundEnd) - currentTimestamp) * 1000;
     }
   }
   else{
@@ -2618,6 +2618,7 @@ let isRegistration2hMessageSent = false
 let isRegistration24hMessageSent = false
 let isPositionStartedSent = false
 let isPostion2hSent = false
+let mapRoyaleCounterBot = new Map();
 
 async function setSeasonAndCurrentRound(){
   try {
@@ -2632,28 +2633,44 @@ async function setSeasonAndCurrentRound(){
 
     await redisClient.get(seasonRegistrationStarts, function (err, obj) {
       console.log("3redis " + obj);
-      if(obj)
-        isRegistrationStartedMessageSent = true;
+      if(obj) {
+        mapRoyaleCounterBot.set(seasonRegistrationStarts,true);
+      } else {
+        mapRoyaleCounterBot.set(seasonRegistrationStarts,false);
+      }
     });
     await redisClient.get(seasonRegistration24hCloseKey, function (err, obj) {
       console.log("3redis " + obj);
-      if(obj)
-        isRegistration24hMessageSent = true;
+      if(obj){
+        mapRoyaleCounterBot.set(seasonRegistration24hCloseKey,true);
+      }
+      else {
+        mapRoyaleCounterBot.set(seasonRegistration24hCloseKey,false);
+      }
     });
     await redisClient.get(seasonRegistration2hCloseKey, function (err, obj) {
       console.log("3redis " + obj);
-      if(obj)
-        isRegistration2hMessageSent = true;
+      if(obj){
+        mapRoyaleCounterBot.set(seasonRegistration2hCloseKey,true);
+      }else {
+        mapRoyaleCounterBot.set(seasonRegistration2hCloseKey,false);
+      }
     });
     await redisClient.get(positionStartsKey, function (err, obj) {
       console.log("3redis " + obj);
-      if(obj)
-        isPositionStartedSent = true;
+      if(obj){
+        mapRoyaleCounterBot.set(positionStartsKey,true);
+      }else {
+        mapRoyaleCounterBot.set(positionStartsKey,false);
+      }
     });
     await redisClient.get(position2hCloseKey, function (err, obj) {
       console.log("3redis " + obj);
-      if(obj)
-        isPostion2hSent = true;
+      if(obj){
+        mapRoyaleCounterBot.set(position2hCloseKey,true);
+      }else {
+        mapRoyaleCounterBot.set(position2hCloseKey,false);
+      }
     });
   }catch (e) {
     console.log("there was error while calling current season/round"+e);
@@ -2661,17 +2678,17 @@ async function setSeasonAndCurrentRound(){
 }
 
 async function checkSeasonStarts() {
-if(seasonNumber!=2){
-  if(!isRegistrationStartedMessageSent){
+if(seasonNumber!=3){
+  if(!mapRoyaleCounterBot.get(seasonRegistrationStarts)){
     const seasonCreationTime = await royaleContract.methods.seasonCreationTime(seasonNumber).call();
     let currentTimestamp = Math.floor(Date.now() / 1000);
     if(currentTimestamp>Number(seasonCreationTime)){
       sendThalesRoyaleMessage("Hey Thales Royale enthusiasts, the registration phase (lasting 72 hours) has just started! You can register here: <https://thalesmarket.io/royale?page=scoreboard>")
-      await redisClient.set(seasonRegistrationStarts,false);
-      isRegistrationStartedMessageSent = true;
+      await redisClient.set(seasonRegistrationStarts,true);
+      mapRoyaleCounterBot.set(seasonRegistrationStarts,true)
     }
   }else
-  if(!isRegistration24hMessageSent) {
+  if(!mapRoyaleCounterBot.get(seasonRegistration24hCloseKey)) {
 
     const signUpPeriod =  await royaleContract.methods.signUpPeriod().call();
     const seasonCreationTime = await royaleContract.methods.seasonCreationTime(seasonNumber).call();
@@ -2681,10 +2698,10 @@ if(seasonNumber!=2){
     if(currentTimestamp > registration24Close){
       sendThalesRoyaleMessage("Only one more day (24 hours) to go for Thales Royale, don't miss it! If you still haven't registered you can do so here: <https://thalesmarket.io/royale?page=scoreboard>")
       await redisClient.set(seasonRegistration24hCloseKey,true);
-      isRegistration24hMessageSent = true;
+      mapRoyaleCounterBot.set(seasonRegistration24hCloseKey,true);
     }
   } else
-  if(!isRegistration2hMessageSent){
+  if(!mapRoyaleCounterBot.get(seasonRegistration2hCloseKey)){
     const signUpPeriod =  await royaleContract.methods.signUpPeriod().call();
     const seasonCreationTime = await royaleContract.methods.seasonCreationTime(seasonNumber).call();
     let twoHours = 7200;
@@ -2693,7 +2710,7 @@ if(seasonNumber!=2){
     if(currentTimestamp > registration2hClose){
       sendThalesRoyaleMessage("Two more hours to register in Thales Royale. Last call. Register here: <https://thalesmarket.io/royale?page=scoreboard>");
       await redisClient.set(seasonRegistration2hCloseKey,true);
-      isRegistration2hMessageSent = true;
+      mapRoyaleCounterBot.set(seasonRegistration2hCloseKey,true);
     }
   }
 }
@@ -2709,33 +2726,35 @@ async function sendThalesRoyaleMessage(message){
 }
 
 async function checkPositioning() {
-  if(seasonNumber!=2){
-  if(!isPositionStartedSent){
+  if(!mapRoyaleCounterBot.get(positionStartsKey)){
 
     const positioningStarted =  await royaleContract.methods.royaleInSeasonStarted(seasonNumber).call();
     const roundInASeasonStartTime =  await royaleContract.methods.roundInASeasonStartTime(seasonNumber).call();
-
+    console.log("checking position started "+positioningStarted+" round in a season start time"+roundInASeasonStartTime);
     let currentTimestamp = Math.floor(Date.now() / 1000);
-    if(positioningStarted && currentTimestamp > Number(roundInASeasonStartTime)){
+    const timeDifference=Number(roundInASeasonStartTime) - currentTimestamp;
+    if(positioningStarted && (currentTimestamp > Number(roundInASeasonStartTime)) && (timeDifference<=900)){
+      console.log("check passed sending message positioning started message");
       sendThalesRoyaleMessage("Aaaaand we are live! Thales Royale round "+currentRoundNumber+" has started. You have 8 hours to choose a position. Remember that you can change your position at any time before this period ends. See you in the arena, good luck!")
       await redisClient.set(positionStartsKey,true);
-      isPositionStartedSent = true;
+      mapRoyaleCounterBot.set(positionStartsKey,true);
     }
-  } else if(!isPostion2hSent){
+  } else if(!mapRoyaleCounterBot.get(position2hCloseKey)){
 
     const positioningStarted =  await royaleContract.methods.royaleInSeasonStarted(seasonNumber).call();
     const roundInASeasonStartTime =  await royaleContract.methods.roundInASeasonStartTime(seasonNumber).call();
      const roundChoosingLength = await royaleContract.methods.roundChoosingLength().call();
     let twoHours = 7200;
     const positioning2hoursToClose = Number(roundInASeasonStartTime) + Number(roundChoosingLength) - twoHours;
-
+    console.log("checking positioning2hoursToClose "+positioning2hoursToClose+" roundInASeasonStartTime"+roundInASeasonStartTime);
     let currentTimestamp = Math.floor(Date.now() / 1000);
-    if(positioningStarted && currentTimestamp > positioning2hoursToClose){
+    const timeDifference=Number(positioning2hoursToClose) - currentTimestamp;
+    if(positioningStarted && (currentTimestamp > positioning2hoursToClose) && (timeDifference<=900)){
+      console.log("check passed sending message 2 hours left");
       sendThalesRoyaleMessage("Only 2 hours left to choose a position for Thales Royale round "+currentRoundNumber+". After the positioning period ends you won't be able to change your position and the resolution phase will start, lasting 16 hours. After resolution phase ends, if you chose the correct side, you'll advance to the next round, if not... better luck next time!")
       await redisClient.set(position2hCloseKey,true);
-      isPostion2hSent = true;
+      mapRoyaleCounterBot.set(position2hCloseKey,true);
     }
-  }
   }
 }
 
