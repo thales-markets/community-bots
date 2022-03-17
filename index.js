@@ -2683,7 +2683,7 @@ if(seasonNumber!=3){
     const seasonCreationTime = await royaleContract.methods.seasonCreationTime(seasonNumber).call();
     let currentTimestamp = Math.floor(Date.now() / 1000);
     const timeDifference=Number(seasonCreationTime) - currentTimestamp;
-    if((currentTimestamp>Number(seasonCreationTime)) && Math.abs(timeDifference<=900)){
+    if((currentTimestamp>Number(seasonCreationTime)) && Math.abs(timeDifference)<=750){
       sendThalesRoyaleMessage("Hey Thales Royale enthusiasts, the registration phase (lasting 72 hours) has just started! You can register here: <https://thalesmarket.io/royale?page=scoreboard>")
       await redisClient.set(seasonRegistrationStarts,true);
       mapRoyaleCounterBot.set(seasonRegistrationStarts,true)
@@ -2697,7 +2697,7 @@ if(seasonNumber!=3){
     const registration24Close =  Number(seasonCreationTime) + Number(signUpPeriod) - oneDay ;
     let currentTimestamp = Math.floor(Date.now() / 1000);
     const timeDifference=Number(registration24Close) - currentTimestamp;
-    if((currentTimestamp > registration24Close) && Math.abs(timeDifference<=900)){
+    if((currentTimestamp > registration24Close) && Math.abs(timeDifference)<=750){
       sendThalesRoyaleMessage("Only one more day (24 hours) to go for Thales Royale, don't miss it! If you still haven't registered you can do so here: <https://thalesmarket.io/royale?page=scoreboard>")
       await redisClient.set(seasonRegistration24hCloseKey,true);
       mapRoyaleCounterBot.set(seasonRegistration24hCloseKey,true);
@@ -2710,7 +2710,7 @@ if(seasonNumber!=3){
     const registration2hClose =  Number(seasonCreationTime) + Number(signUpPeriod) - twoHours ;
     let currentTimestamp = Math.floor(Date.now() / 1000);
     const timeDifference=Number(registration2hClose) - currentTimestamp;
-    if((currentTimestamp > registration2hClose) && Math.abs(timeDifference)<=900){
+    if((currentTimestamp > registration2hClose) && Math.abs(timeDifference)<=750){
       sendThalesRoyaleMessage("Two more hours to register in Thales Royale. Last call. Register here: <https://thalesmarket.io/royale?page=scoreboard>");
       await redisClient.set(seasonRegistration2hCloseKey,true);
       mapRoyaleCounterBot.set(seasonRegistration2hCloseKey,true);
@@ -2729,7 +2729,7 @@ async function sendThalesRoyaleMessage(message){
 }
 
 async function checkPositioning() {
-  if(seasonNumber!=3) {
+  if(seasonNumber!=3 && currentRoundNumber!=0) {
     if (!mapRoyaleCounterBot.get(positionStartsKey)) {
 
       const positioningStarted = await royaleContract.methods.royaleInSeasonStarted(seasonNumber).call();
@@ -2737,7 +2737,7 @@ async function checkPositioning() {
       console.log("checking position started " + positioningStarted + " round in a season start time" + roundInASeasonStartTime);
       let currentTimestamp = Math.floor(Date.now() / 1000);
       const timeDifference = Number(roundInASeasonStartTime) - currentTimestamp;
-      if (positioningStarted && (currentTimestamp > Number(roundInASeasonStartTime)) && (Math.abs(timeDifference) <= 900)) {
+      if (positioningStarted && (currentTimestamp > Number(roundInASeasonStartTime)) && (Math.abs(timeDifference) <= 300)) {
         console.log("check passed sending message positioning started message");
         sendThalesRoyaleMessage("Aaaaand we are live! Thales Royale round " + currentRoundNumber + " has started. You have 8 hours to choose a position. Remember that you can change your position at any time before this period ends. See you in the arena, good luck!")
         await redisClient.set(positionStartsKey, true);
@@ -2753,7 +2753,7 @@ async function checkPositioning() {
       console.log("checking positioning2hoursToClose " + positioning2hoursToClose + " roundInASeasonStartTime" + roundInASeasonStartTime);
       let currentTimestamp = Math.floor(Date.now() / 1000);
       const timeDifference = Number(positioning2hoursToClose) - currentTimestamp;
-      if (positioningStarted && (currentTimestamp > positioning2hoursToClose) && (Math.abs(timeDifference) <= 900)) {
+      if (positioningStarted && (currentTimestamp > positioning2hoursToClose) && (Math.abs(timeDifference) <= 300)) {
         console.log("check passed sending message 2 hours left");
         sendThalesRoyaleMessage("Only 2 hours left to choose a position for Thales Royale round " + currentRoundNumber + ". After the positioning period ends you won't be able to change your position and the resolution phase will start, lasting 16 hours. After resolution phase ends, if you chose the correct side, you'll advance to the next round, if not... better luck next time!")
         await redisClient.set(position2hCloseKey, true);
