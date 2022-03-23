@@ -43,6 +43,8 @@ const clientAAVE = new Discord.Client();
 clientAAVE.login(process.env.BOT_TOKEN_AAVE);
 const clientCURVE = new Discord.Client();
 clientCURVE.login(process.env.BOT_TOKEN_CURVE);
+const clientSTARGATE = new Discord.Client();
+clientSTARGATE.login(process.env.BOT_TOKEN_STARGATE);
 let mapThalesTrades = new Map();
 let mapThalesAsks = new Map();
 let mapThalesBids = new Map();
@@ -139,6 +141,10 @@ clientCURVE.on("ready", () => {
   setPriceBot(clientCURVE,"curve-dao-token","CURVE Price");
 });
 
+clientSTARGATE.on("ready", () => {
+  setPriceBot(clientSTARGATE,"stargate-finance","STG Price");
+});
+
 setInterval(function () {
   console.log("updating price bots");
     setPriceBot(clientUniswap,"uniswap","UNI Price");
@@ -146,6 +152,7 @@ setInterval(function () {
     setPriceBot(clientLink,"chainlink","LINK Price");
     setPriceBot(clientAAVE,"aave","AAVE Price");
     setPriceBot(clientCURVE,"curve-dao-token","CURVE Price");
+    setPriceBot(clientSTARGATE,"stargate-finance","STG Price");
 }, 380 * 1000);
 
 const setPriceBot = async (clientForSetting,tokenForPrice,nameOfTheToken) => {
@@ -2633,7 +2640,7 @@ async function setSeasonAndCurrentRound(){
 
     await redisClient.get(seasonRegistrationStarts, function (err, obj) {
       console.log("3redis " + obj);
-      if(obj) {
+      if(obj !=null) {
         mapRoyaleCounterBot.set(seasonRegistrationStarts,true);
       } else {
         mapRoyaleCounterBot.set(seasonRegistrationStarts,false);
@@ -2642,6 +2649,7 @@ async function setSeasonAndCurrentRound(){
     await redisClient.get(seasonRegistration24hCloseKey, function (err, obj) {
       console.log("3redis " + obj);
       if(obj){
+      if(obj !=null){
         mapRoyaleCounterBot.set(seasonRegistration24hCloseKey,true);
       }
       else {
@@ -2650,7 +2658,7 @@ async function setSeasonAndCurrentRound(){
     });
     await redisClient.get(seasonRegistration2hCloseKey, function (err, obj) {
       console.log("3redis " + obj);
-      if(obj){
+      if(obj != null){
         mapRoyaleCounterBot.set(seasonRegistration2hCloseKey,true);
       }else {
         mapRoyaleCounterBot.set(seasonRegistration2hCloseKey,false);
@@ -2658,7 +2666,7 @@ async function setSeasonAndCurrentRound(){
     });
     await redisClient.get(positionStartsKey, function (err, obj) {
       console.log("3redis " + obj);
-      if(obj){
+      if(obj !=null ){
         mapRoyaleCounterBot.set(positionStartsKey,true);
       }else {
         mapRoyaleCounterBot.set(positionStartsKey,false);
@@ -2666,7 +2674,7 @@ async function setSeasonAndCurrentRound(){
     });
     await redisClient.get(position2hCloseKey, function (err, obj) {
       console.log("3redis " + obj);
-      if(obj){
+      if(obj != null){
         mapRoyaleCounterBot.set(position2hCloseKey,true);
       }else {
         mapRoyaleCounterBot.set(position2hCloseKey,false);
@@ -2737,13 +2745,13 @@ async function checkPositioning() {
       console.log("checking position started " + positioningStarted + " round in a season start time" + roundInASeasonStartTime);
       let currentTimestamp = Math.floor(Date.now() / 1000);
       const timeDifference = Number(roundInASeasonStartTime) - currentTimestamp;
-      if (positioningStarted && (currentTimestamp > Number(roundInASeasonStartTime)) && (Math.abs(timeDifference) <= 300)) {
+      if (positioningStarted && (currentTimestamp > Number(roundInASeasonStartTime)) && (Math.abs(timeDifference) <= 550)) {
         console.log("check passed sending message positioning started message");
         sendThalesRoyaleMessage("Aaaaand we are live! Thales Royale round " + currentRoundNumber + " has started. You have 8 hours to choose a position. Remember that you can change your position at any time before this period ends. See you in the arena, good luck!")
         await redisClient.set(positionStartsKey, true);
         mapRoyaleCounterBot.set(positionStartsKey, true);
       }
-    } else if (!mapRoyaleCounterBot.get(position2hCloseKey)) {
+    }  if (!mapRoyaleCounterBot.get(position2hCloseKey)) {
 
       const positioningStarted = await royaleContract.methods.royaleInSeasonStarted(seasonNumber).call();
       const roundInASeasonStartTime = await royaleContract.methods.roundInASeasonStartTime(seasonNumber).call();
@@ -2753,7 +2761,7 @@ async function checkPositioning() {
       console.log("checking positioning2hoursToClose " + positioning2hoursToClose + " roundInASeasonStartTime" + roundInASeasonStartTime);
       let currentTimestamp = Math.floor(Date.now() / 1000);
       const timeDifference = Number(positioning2hoursToClose) - currentTimestamp;
-      if (positioningStarted && (currentTimestamp > positioning2hoursToClose) && (Math.abs(timeDifference) <= 300)) {
+      if (positioningStarted && (currentTimestamp > positioning2hoursToClose) && (Math.abs(timeDifference) <= 550)) {
         console.log("check passed sending message 2 hours left");
         sendThalesRoyaleMessage("Only 2 hours left to choose a position for Thales Royale round " + currentRoundNumber + ". After the positioning period ends you won't be able to change your position and the resolution phase will start, lasting 16 hours. After resolution phase ends, if you chose the correct side, you'll advance to the next round, if not... better luck next time!")
         await redisClient.set(position2hCloseKey, true);
@@ -2771,7 +2779,7 @@ clientRoyalePingingBot.once("ready", () => {
 setInterval(function () {
   console.log("updating current thales season bots");
   setSeasonAndCurrentRound();
-}, 60 * 10 * 1000);
+}, 60 * 2 * 1000);
 
 setInterval(function () {
   console.log("updating updating season starts bots");
