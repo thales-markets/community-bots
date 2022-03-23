@@ -2648,7 +2648,6 @@ async function setSeasonAndCurrentRound(){
     });
     await redisClient.get(seasonRegistration24hCloseKey, function (err, obj) {
       console.log("3redis " + obj);
-      if(obj){
       if(obj !=null){
         mapRoyaleCounterBot.set(seasonRegistration24hCloseKey,true);
       }
