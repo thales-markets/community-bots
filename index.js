@@ -86,6 +86,14 @@ let mapDeckardMM = new Map();
 let mapMint = new Map();
 let nonMMOrdersMap = new Map();
 let setConcludedTradesPastHour = new Set();
+const twitterConfAMMMarketBot = {
+  consumer_key: "gPzmJnN4LUL3m0MthX6OwIlBK",
+  consumer_secret: "jusQFHYubfkanbqss9nYwRqeKewnTCPyo2kgRTUymiQHt8GNHD",
+  access_token: "1506559867804434433-ubAnRN1H7xmvojRRI1Zaov1Eu5Cad2",
+  access_token_secret: "LAbF90txvWd6WlhJm7UUwuG9VICYaPJwTmukh7HmAKK7s",
+}
+const Twitter = require('twit');
+const twitterClientAMMMarket = new Twitter(twitterConfAMMMarketBot);
 answersContent.forEach((a) => {
   qaMaps.set(a.number, a.content);
 });
@@ -2340,6 +2348,10 @@ async function  getMarketL2(tradeL2) {
 
 let l2ReleaseDate = 1640181600000;
 
+function calculateProfitPercentageTotal(paid, total) {
+  return  Math.round(100 * Math.abs( ( paid - total ) / ( (paid+total)/2 ) ));
+}
+
 async function getL2Trades() {
 
   const body = JSON.stringify({
@@ -2496,6 +2508,25 @@ async function getL2Trades() {
               .then((ammTradesChannel) => {
                 ammTradesChannel.send(message);
               });
+          let newAMMTradeMessage = 'New AMM position bought\n';
+          var date = new Date(tradeL2.timestamp*1000);
+
+          newAMMTradeMessage = newAMMTradeMessage + 'Condition: '+marketMessage+'. '+date.getUTCHours()+' UTC\n';
+          let downOrUP;
+          if(isLong){
+            downOrUP='UP';
+          }else{
+            downOrUP='DOWN';
+          };
+          let amountAMM = parseFloat((amountShortLong).toFixed(3));
+          let paidAMM = parseFloat((amountUSD).toFixed(3));
+          newAMMTradeMessage = newAMMTradeMessage + 'Amount: '+parseFloat((amountShortLong).toFixed(3))+' '+downOrUP+' tokens\n';
+          newAMMTradeMessage = newAMMTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' sUSD\n';
+          newAMMTradeMessage = newAMMTradeMessage + 'Potential profit: '+Math.round(amountAMM-paidAMM)+' sUSD ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
+
+          twitterClientAMMMarket.post('statuses/update', { status: newAMMTradeMessage }, function(err, data, response) {
+            console.log(data)
+          });
         }else {
           clientNewListings.channels
               .fetch("906872836235362306")
@@ -2521,6 +2552,8 @@ async function getL2Trades() {
   }
 
 }
+
+
 
 async function updateTotalL2Trades() {
 

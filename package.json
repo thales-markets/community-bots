@@ -24,6 +24,7 @@
     "coingecko-api": "^1.0.10",
     "ethereum-ens": "^0.8.0",
     "ethers": "^5.4.7",
+    "twit": "^2.2.11",
     "express": "^4.17.1",
     "node-fetch": "^2.6.1",
     "redis": "^3.1.2",
