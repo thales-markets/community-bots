@@ -2511,7 +2511,7 @@ async function getL2Trades() {
           let newAMMTradeMessage = 'New AMM position bought\n';
           var date = new Date(tradeL2.timestamp*1000);
 
-          newAMMTradeMessage = newAMMTradeMessage + 'Condition: '+marketMessage+'. '+date.getUTCHours()+' UTC\n';
+          newAMMTradeMessage = newAMMTradeMessage + 'Condition: '+marketMessage+'\n';
           let downOrUP;
           if(isLong){
             downOrUP='UP';
