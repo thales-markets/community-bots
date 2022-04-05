@@ -247,7 +247,7 @@ const updateThalesRoyaleMainnetCountdown = async () => {
       }
     });
   }
-  let endDateUTC = new Date("Mar 17, 2022 16:00:00 UTC")
+  let endDateUTC = new Date("Mar 31, 2022 17:00:00 UTC")
   let currentDate = new Date(new Date().toUTCString());
   let distance;
   if(currentDate.getTime()>endDateUTC.getTime()){
