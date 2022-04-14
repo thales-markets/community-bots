@@ -45,6 +45,10 @@ const clientCURVE = new Discord.Client();
 clientCURVE.login(process.env.BOT_TOKEN_CURVE);
 const clientSTARGATE = new Discord.Client();
 clientSTARGATE.login(process.env.BOT_TOKEN_STARGATE);
+const clientLUNA = new Discord.Client();
+clientLUNA.login(process.env.BOT_TOKEN_LUNA);
+const clientLYRA = new Discord.Client();
+clientLYRA.login(process.env.BOT_TOKEN_LYRA);
 let mapThalesTrades = new Map();
 let mapThalesAsks = new Map();
 let mapThalesBids = new Map();
@@ -153,6 +157,14 @@ clientSTARGATE.on("ready", () => {
   setPriceBot(clientSTARGATE,"stargate-finance","STG Price");
 });
 
+clientLYRA.on("ready", () => {
+  setPriceBot(clientLYRA,"lyra-finance","LYRA Price");
+});
+
+clientLUNA.on("ready", () => {
+  setPriceBot(clientLUNA,"terra-luna","LUNA Price");
+});
+
 setInterval(function () {
   console.log("updating price bots");
     setPriceBot(clientUniswap,"uniswap","UNI Price");
@@ -161,6 +173,8 @@ setInterval(function () {
     setPriceBot(clientAAVE,"aave","AAVE Price");
     setPriceBot(clientCURVE,"curve-dao-token","CURVE Price");
     setPriceBot(clientSTARGATE,"stargate-finance","STG Price");
+    setPriceBot(clientLYRA,"lyra-finance","LYRA Price");
+    setPriceBot(clientLUNA,"terra-luna","LUNA Price");
 }, 380 * 1000);
 
 const setPriceBot = async (clientForSetting,tokenForPrice,nameOfTheToken) => {
@@ -247,7 +261,7 @@ const updateThalesRoyaleMainnetCountdown = async () => {
       }
     });
   }
-  let endDateUTC = new Date("Apr 14, 2022 16:00:00 UTC")
+  let endDateUTC = new Date("Apr 16, 2022 17:00:00 UTC")
   let currentDate = new Date(new Date().toUTCString());
   let distance;
   if(currentDate.getTime()>endDateUTC.getTime()){
@@ -1989,8 +2003,8 @@ clientETHBurned.login(process.env.BOT_TOKEN_ETH_BURNED);
 const redis = require("redis");
 let redisClient = null;
 let L2tradesKey = "L2Trades";
-let totalAmountOfTradesL2 = 5929;
-let numberOfTradesL2 = 35;
+let totalAmountOfTradesL2 = 1445000;
+let numberOfTradesL2 = 2579;
 let writenL2Trades = [];
 let verifiedUsersMap = new Map();
 if (process.env.REDIS_URL) {
@@ -2579,10 +2593,9 @@ async function updateTotalL2Trades() {
 
 }
 
-clientTotalL2Trades.once("ready", () => {
-  console.log("totalL2 on ready");
+setTimeout(function () {
   updateTotalL2Trades();
-});
+}, 1000 * 30 * 1);
 
 setInterval(function () {
   console.log("update l2 trades");
@@ -2624,7 +2637,7 @@ async function calculateThalesL2APR() {
       (wethBalanceNumber * ethValue + thalesBalanceNumber * thalesValue).toFixed(2)
   );
 
-  const apr = ((100 * (50000 * thalesValue * 52)) / totalInUSD).toFixed(0);
+  const apr = ((100 * (30000 * thalesValue * 52)) / totalInUSD).toFixed(0);
   let formatedAPR = Math.round(apr*100)/100+"%";
 
 
@@ -2807,6 +2820,7 @@ clientRoyalePingingBot.once("ready", () => {
   console.log("updating royale settings");
   setSeasonAndCurrentRound();
 });
+
 
 setInterval(function () {
   console.log("updating current thales season bots");
