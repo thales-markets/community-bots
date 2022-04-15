@@ -19,6 +19,7 @@ const axios = require("axios");
 let answersContent = JSON.parse(contentRaw);
 let qaMaps = new Map();
 let contractRaw = fs.readFileSync("contracts/erc20Contract.json");
+let polygonRaw = fs.readFileSync('contracts/polygon.json');
 const thalesData = require("thales-data");
 const SYNTH_USD_MAINNET = "0x57ab1ec28d129707052df4df418d58a2d46d5f51";
 const clientNewListings = new Discord.Client();
@@ -27,8 +28,12 @@ const clientCountdownChannel = new Discord.Client();
 const clientTotalL2Trades = new Discord.Client();
 clientCountdownChannel.login(process.env.BOT_TOKEN_COUNTDOWN_CHANNEL);
 clientTotalL2Trades.login(process.env.BOT_TOKEN_TOTAL_L2);
+const clientTotalPolygonTrades = new Discord.Client();
+clientTotalPolygonTrades.login(process.env.BOT_TOKEN_TOTAL_POLYGON);
 const Web3 = require("web3");
 let contract = JSON.parse(contractRaw);
+let polygonContract = JSON.parse(polygonRaw);
+const web3Polygon = new Web3(new Web3.providers.HttpProvider("https://polygon-mainnet.infura.io/v3/71f890a2441d49088e4e145b2bc23bc7"));
 const web3 = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_URL));
 const web3L2 = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_L2_URL));
 const CoinGecko = require('coingecko-api');
@@ -323,7 +328,9 @@ setInterval(function () {
 setInterval(function () {
   console.log("get L2 trades");
   getL2Trades();
+  getPolygonTrades();
 }, 2 * 60 * 1000);
+
 
 client.on("guildMemberAdd", function (member) {
   const exampleEmbed = new Discord.MessageEmbed()
@@ -2003,9 +2010,13 @@ clientETHBurned.login(process.env.BOT_TOKEN_ETH_BURNED);
 const redis = require("redis");
 let redisClient = null;
 let L2tradesKey = "L2Trades";
+let polygonTradesKey = "PolygonTrades";
 let totalAmountOfTradesL2 = 1445000;
 let numberOfTradesL2 = 2579;
+let totalAmountOfTradesPolygon = 455;
+let numberOfTradesPolygon = 75;
 let writenL2Trades = [];
+let writenPolygonTrades = [];
 let verifiedUsersMap = new Map();
 if (process.env.REDIS_URL) {
   redisClient = redis.createClient(process.env.REDIS_URL);
@@ -2032,10 +2043,27 @@ if (process.env.REDIS_URL) {
       numberOfTradesL2 = Number(obj);
     }
   });
+  redisClient.get("totalAmountPolygon", function (err, obj) {
+    if(obj){
+      console.log("setting object "+obj);
+      totalAmountOfTradesPolygon = Number(obj);
+    }
+  });
+  redisClient.get("totalTradesPolygon", function (err, obj) {
+    if(obj){
+      console.log("setting object "+obj);
+      numberOfTradesPolygon = Number(obj);
+    }
+  });
+
 
     redisClient.lrange(L2tradesKey, 0, -1, function (err, l2Trades) {
       writenL2Trades = l2Trades;
     });
+
+  redisClient.lrange(polygonTradesKey, 0, -1, function (err, polygonTrades) {
+    writenPolygonTrades = polygonTrades;
+  });
 
 }
 
@@ -2329,6 +2357,36 @@ async function updateCountdownChannel() {
 
 let ammTradeAddress="0x5ae7454827d83526261f3871c1029792644ef1b1";
 
+async function  getPolygonMarket(tradeL2) {
+
+  const body = JSON.stringify({
+    query: `{markets(where:{
+    id: "${tradeL2.market}"
+  }) {
+    id
+    timestamp
+    creator
+    currencyKey
+    maturityDate
+    strikePrice
+  }}`,
+    variables: null,
+  });
+
+  const response = await fetch(
+      "https://api.thegraph.com/subgraphs/name/thales-markets/thales-polygon",
+      {
+        method: "POST",
+        body,
+      }
+  );
+
+  const json = await response.json();
+  const markets = json.data.markets;
+
+  return markets[0];
+}
+
 
 async function  getMarketL2(tradeL2) {
 
@@ -2567,12 +2625,190 @@ async function getL2Trades() {
 
 }
 
+async function getPolygonTrades() {
 
+  const body = JSON.stringify({
+    query: `{
+      trades(
+        orderBy:timestamp,
+        orderDirection:desc,
+      ) {
+    id
+    timestamp
+    transactionHash
+    orderHash
+    maker
+    taker
+    makerToken
+    takerToken
+    makerAmount
+    takerAmount
+    market
+    optionSide
+    orderSide
+  }
+}`,
+    variables: null,
+  });
+
+  const response = await fetch(
+      "https://api.thegraph.com/subgraphs/name/thales-markets/thales-polygon",
+      {
+        method: "POST",
+        body,
+      }
+  );
+
+  const json = await response.json();
+  const polygonTrades = json.data.trades;
+
+  var startdate = new Date();
+  var durationInMinutes = 30;
+  startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
+  let startDateUnixTime = Math.floor(startdate.getTime()/1000);
+  for (const polygonTrade of polygonTrades) {
+    if (startDateUnixTime < Number(polygonTrade.timestamp) && !writenPolygonTrades.includes(polygonTrade.transactionHash)) {
+      try{
+        console.log("new polygon trade");
+        var shortLong;
+        const makerToken = new web3Polygon.eth.Contract(polygonContract, polygonTrade.makerToken);
+        const makerTokenName = await makerToken.methods.name().call();
+        const takerToken = new web3Polygon.eth.Contract(polygonContract, polygonTrade.takerToken);
+        const takerTokenName = await takerToken.methods.name().call();
+        var amountUSD;
+        var amountShortLong;
+        var isLong = false;
+        var isBuy = false;
+        if (
+            makerTokenName.toLowerCase().includes("up") ||
+            makerTokenName.toLowerCase().includes("down")
+        ) {
+          if (makerTokenName.toLowerCase().includes("up")) {
+            shortLong = " > ";
+            isLong = true;
+          } else {
+            shortLong = " < ";
+            isLong = false;
+          }
+          amountShortLong = polygonTrade.makerAmount/1e6;
+          amountUSD = polygonTrade.takerAmount / 1e6;
+          isBuy = true;
+        } else {
+          if (takerTokenName.toLowerCase().includes("up")) {
+            shortLong = " > ";
+            isLong = true;
+          } else {
+            shortLong = " < ";
+            isLong = false;
+          }
+
+          amountUSD =polygonTrade.makerAmount / 1e6;
+          amountShortLong = polygonTrade.takerAmount / 1e6;
+          shortLong = takerTokenName.toLowerCase().includes("up") ? " > " : " < ";
+        }
+
+        let market = await  getPolygonMarket(polygonTrade);
+
+        var marketMessage =
+            web3.utils.hexToAscii(market.currencyKey).replace(/\0/g, '') +
+            shortLong +
+            Math.round(((market.strikePrice/1e18) + Number.EPSILON) * 1000) / 1000;
+        marketMessage =
+            marketMessage +
+            "@" +
+            new Date(market.maturityDate*1000).toISOString().slice(0, 10);
+
+        let messageTitle;
+        messageTitle = ":lock: New Polygon Amm Thales Trade :lock:"
+
+
+        var message = new Discord.MessageEmbed()
+            .addFields(
+                {
+                  name: messageTitle,
+                  value: "\u200b",
+                },
+                {
+                  name: ":link: Transaction:",
+                  value:
+                      "[" +
+                      polygonTrade.transactionHash +
+                      "](https://polygonscan.com/tx/" +
+                      polygonTrade.transactionHash +
+                      ")",
+                },
+                {
+                  name: ":coin: Transaction type:",
+                  value: isBuy ? "Buy" : "Sell",
+                },
+                {
+                  name: ":classical_building: Market:",
+                  value:
+                      "[" +
+                      marketMessage +
+                      "](https://thalesmarket.io/markets/" +
+                      polygonTrade.market +
+                      ")",
+                },
+                {
+                  name: isLong ? ":dollar: Amount (sLONG)" : ":dollar: Amount (sSHORT)",
+                  value: parseFloat((amountShortLong).toFixed(3)),
+                },
+                {
+                  name: ":dollar: Total:",
+                  value: parseFloat((amountUSD).toFixed(3)) + " USDC",
+                },
+                {
+                  name: ":alarm_clock: Timestamp:",
+                  value: new Date(polygonTrade.timestamp*1000),
+                }
+            )
+            .setColor("#0037ff");
+          clientNewListings.channels
+              .fetch("963823355595747338")
+              .then((ammTradesChannel) => {
+                ammTradesChannel.send(message);
+              });
+          let newAMMTradeMessage = 'New Polygon AMM position bought\n';
+          var date = new Date(polygonTrade.timestamp*1000);
+
+          newAMMTradeMessage = newAMMTradeMessage + 'Condition: '+marketMessage+'\n';
+          let downOrUP;
+          if(isLong){
+            downOrUP='UP';
+          }else{
+            downOrUP='DOWN';
+          };
+          let amountAMM = parseFloat((amountShortLong).toFixed(3));
+          let paidAMM = parseFloat((amountUSD).toFixed(3));
+          newAMMTradeMessage = newAMMTradeMessage + 'Amount: '+parseFloat((amountShortLong).toFixed(3))+' '+downOrUP+' tokens\n';
+          newAMMTradeMessage = newAMMTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' USDC\n';
+          newAMMTradeMessage = newAMMTradeMessage + 'Potential profit: '+Math.round(amountAMM-paidAMM)+' USDC ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
+
+          twitterClientAMMMarket.post('statuses/update', { status: newAMMTradeMessage }, function(err, data, response) {
+            console.log(data)
+          });
+
+        writenPolygonTrades.push(polygonTrade.transactionHash);
+        redisClient.lpush(polygonTradesKey, polygonTrade.transactionHash);
+        totalAmountOfTradesPolygon = totalAmountOfTradesPolygon + Math.round(amountUSD);
+        numberOfTradesPolygon++;
+        redisClient.set("totalAmountPolygon", totalAmountOfTradesPolygon, function (err, reply) {
+          console.log(reply); // OK
+        });
+        redisClient.set("totalTradesPolygon", numberOfTradesPolygon, function (err, reply) {
+          console.log(reply); // OK
+        });
+      }catch (e) {
+        console.log("error in polygon trades "+e);
+      }
+    }
+  }
+
+}
 
 async function updateTotalL2Trades() {
-
   try {
-
     clientTotalL2Trades.guilds.cache.forEach(function (value, key) {
       try {
         console.log("for guild "+value+" value is "+totalAmountOfTradesL2);
@@ -2590,7 +2826,27 @@ async function updateTotalL2Trades() {
   }catch (e) {
     console.log("there was an error while updating total l2");
   }
+}
 
+async function updateTotalPolygonTrades() {
+  try {
+    clientTotalPolygonTrades.guilds.cache.forEach(function (value, key) {
+      try {
+        console.log("for guild "+value+" value is "+totalAmountOfTradesPolygon);
+        value.members.cache
+            .get(clientTotalPolygonTrades.user.id)
+            .setNickname("Polygon="+getNumberLabelDecimals(totalAmountOfTradesPolygon)+"$");
+      } catch (e) {
+        console.log('error while updating amount of trades polygon '+e);
+      }
+    });
+    clientTotalPolygonTrades.user.setActivity(
+        "Trades Polygon="+numberOfTradesPolygon,
+        { type: "WATCHING" }
+    );
+  }catch (e) {
+    console.log("there was an error while updating total polygon");
+  }
 }
 
 setTimeout(function () {
@@ -2602,6 +2858,14 @@ setInterval(function () {
   updateTotalL2Trades();
 }, 360 * 1000);
 
+setTimeout(function () {
+  updateTotalPolygonTrades();
+}, 1000 * 30 * 1);
+
+setInterval(function () {
+  console.log("update polygon trades");
+  updateTotalPolygonTrades();
+}, 360 * 1000);
 
 clientThalesL2APR.once("ready", () => {
   console.log("calculate L2 APR");
