@@ -2690,7 +2690,7 @@ async function getPolygonTrades() {
             shortLong = " < ";
             isLong = false;
           }
-          amountShortLong = polygonTrade.makerAmount/1e6;
+          amountShortLong = polygonTrade.makerAmount/1e18;
           amountUSD = polygonTrade.takerAmount / 1e6;
           isBuy = true;
         } else {
@@ -2703,7 +2703,7 @@ async function getPolygonTrades() {
           }
 
           amountUSD =polygonTrade.makerAmount / 1e6;
-          amountShortLong = polygonTrade.takerAmount / 1e6;
+          amountShortLong = polygonTrade.takerAmount / 1e18;
           shortLong = takerTokenName.toLowerCase().includes("up") ? " > " : " < ";
         }
 
@@ -2814,13 +2814,13 @@ async function updateTotalL2Trades() {
         console.log("for guild "+value+" value is "+totalAmountOfTradesL2);
         value.members.cache
             .get(clientTotalL2Trades.user.id)
-            .setNickname("L2="+getNumberLabelDecimals(totalAmountOfTradesL2)+"$");
+            .setNickname("OP="+getNumberLabelDecimals(totalAmountOfTradesL2)+"$");
       } catch (e) {
         console.log('error while updating amount of trades '+e);
       }
     });
     clientTotalL2Trades.user.setActivity(
-        "Trades L2="+numberOfTradesL2,
+        "Trades OP="+numberOfTradesL2,
         { type: "WATCHING" }
     );
   }catch (e) {
