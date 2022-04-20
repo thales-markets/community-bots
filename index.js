@@ -2559,7 +2559,7 @@ async function getL2Trades() {
                       ")",
                 },
                 {
-                  name: isLong ? ":dollar: Amount (sLONG)" : ":dollar: Amount (sSHORT)",
+                  name: isLong ? ":dollar: UP tokens" : ":dollar: DOWN tokens",
                   value: parseFloat((amountShortLong).toFixed(3)),
                 },
                 {
@@ -2580,7 +2580,7 @@ async function getL2Trades() {
               .then((ammTradesChannel) => {
                 ammTradesChannel.send(message);
               });
-          let newAMMTradeMessage = 'New AMM position bought\n';
+          let newAMMTradeMessage = 'New Optimism AMM position bought\n';
           var date = new Date(tradeL2.timestamp*1000);
 
           newAMMTradeMessage = newAMMTradeMessage + 'Condition: '+marketMessage+'\n';
@@ -2751,7 +2751,7 @@ async function getPolygonTrades() {
                       ")",
                 },
                 {
-                  name: isLong ? ":dollar: Amount (sLONG)" : ":dollar: Amount (sSHORT)",
+                  name: isLong ? ":dollar: UP tokens" : ":dollar: DOWN tokens",
                   value: parseFloat((amountShortLong).toFixed(3)),
                 },
                 {
@@ -3056,7 +3056,17 @@ async function checkPositioning() {
       const timeDifference = Number(roundInASeasonStartTime) - currentTimestamp;
       if (positioningStarted && (currentTimestamp > Number(roundInASeasonStartTime)) && (Math.abs(timeDifference) <= 550)) {
         console.log("check passed sending message positioning started message");
+        if(currentRoundNumber!=1){
+        const roundResult = await royaleContract.methods.roundResultPerSeason(seasonNumber,currentRoundNumber).call();
+        console.log('round result is '+roundResult);
+        if(roundResult==1){
+          sendThalesRoyaleMessage("Aaaaand we are live! Thales Royale round " + currentRoundNumber + " has started. Last round went DOWN. You have 8 hours to choose a position. Remember that you can change your position at any time before this period ends. See you in the arena, good luck!")
+        }else {
+          sendThalesRoyaleMessage("Aaaaand we are live! Thales Royale round " + currentRoundNumber + " has started. Last round went UP. You have 8 hours to choose a position. Remember that you can change your position at any time before this period ends. See you in the arena, good luck!")
+        }
+        }else{
         sendThalesRoyaleMessage("Aaaaand we are live! Thales Royale round " + currentRoundNumber + " has started. You have 8 hours to choose a position. Remember that you can change your position at any time before this period ends. See you in the arena, good luck!")
+        }
         await redisClient.set(positionStartsKey, true);
         mapRoyaleCounterBot.set(positionStartsKey, true);
       }
