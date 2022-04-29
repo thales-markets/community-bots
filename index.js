@@ -266,7 +266,7 @@ const updateThalesRoyaleMainnetCountdown = async () => {
       }
     });
   }
-  let endDateUTC = new Date("Apr 16, 2022 17:00:00 UTC")
+  let endDateUTC = new Date("Apr 28, 2022 16:00:00 UTC")
   let currentDate = new Date(new Date().toUTCString());
   let distance;
   if(currentDate.getTime()>endDateUTC.getTime()){
@@ -2479,10 +2479,10 @@ async function getL2Trades() {
         var isLong = false;
         var isBuy = false;
         if (
-            makerTokenName.toLowerCase().includes("long") ||
-            makerTokenName.toLowerCase().includes("short")
+            makerTokenName.toLowerCase().includes("up") ||
+            makerTokenName.toLowerCase().includes("down")
         ) {
-          if (makerTokenName.toLowerCase().includes("long")) {
+          if (makerTokenName.toLowerCase().includes("up")) {
             shortLong = " > ";
             isLong = true;
           } else {
@@ -2493,7 +2493,7 @@ async function getL2Trades() {
           amountUSD = tradeL2.takerAmount / 1e18;
           isBuy = true;
         } else {
-          if (takerTokenName.toLowerCase().includes("long")) {
+          if (takerTokenName.toLowerCase().includes("up")) {
             shortLong = " > ";
             isLong = true;
           } else {
@@ -2503,7 +2503,7 @@ async function getL2Trades() {
 
           amountUSD =tradeL2.makerAmount / 1e18;
           amountShortLong = tradeL2.takerAmount / 1e18;
-          shortLong = takerTokenName.toLowerCase().includes("long") ? " > " : " < ";
+          shortLong = takerTokenName.toLowerCase().includes("up") ? " > " : " < ";
         }
 
         let market = await  getMarketL2(tradeL2);
@@ -2901,7 +2901,7 @@ async function calculateThalesL2APR() {
       (wethBalanceNumber * ethValue + thalesBalanceNumber * thalesValue).toFixed(2)
   );
 
-  const apr = ((100 * (30000 * thalesValue * 52)) / totalInUSD).toFixed(0);
+  const apr = ((100 * (45000 * thalesValue * 52)) / totalInUSD).toFixed(0);
   let formatedAPR = Math.round(apr*100)/100+"%";
 
 
