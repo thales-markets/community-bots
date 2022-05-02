@@ -3057,7 +3057,7 @@ async function checkPositioning() {
       if (positioningStarted && (currentTimestamp > Number(roundInASeasonStartTime)) && (Math.abs(timeDifference) <= 550)) {
         console.log("check passed sending message positioning started message");
         if(currentRoundNumber!=1){
-        const roundResult = await royaleContract.methods.roundResultPerSeason(seasonNumber,currentRoundNumber).call();
+        const roundResult = await royaleContract.methods.roundResultPerSeason(seasonNumber,currentRoundNumber-1).call();
         console.log('round result is '+roundResult);
         if(roundResult==1){
           sendThalesRoyaleMessage("Aaaaand we are live! Thales Royale round " + currentRoundNumber + " has started. Last round went DOWN. You have 8 hours to choose a position. Remember that you can change your position at any time before this period ends. See you in the arena, good luck!")
