@@ -2011,12 +2011,19 @@ const redis = require("redis");
 let redisClient = null;
 let L2tradesKey = "L2Trades";
 let polygonTradesKey = "PolygonTrades";
+let exoticMarketsKey = "ExoticMarkets";
+let exoticMarketPositionsKey = "ExoticMarketPositions";
+let exoticMarketDisputesKey = "ExoticMarketDisputes";
 let totalAmountOfTradesL2 = 1445000;
 let numberOfTradesL2 = 2579;
 let totalAmountOfTradesPolygon = 455;
 let numberOfTradesPolygon = 75;
 let writenL2Trades = [];
 let writenPolygonTrades = [];
+let writenExoticMarkets = [];
+let writenExoticDisputes = [];
+let writenExoticPositions = [];
+
 let verifiedUsersMap = new Map();
 if (process.env.REDIS_URL) {
   redisClient = redis.createClient(process.env.REDIS_URL);
@@ -2063,6 +2070,18 @@ if (process.env.REDIS_URL) {
 
   redisClient.lrange(polygonTradesKey, 0, -1, function (err, polygonTrades) {
     writenPolygonTrades = polygonTrades;
+  });
+
+  redisClient.lrange(exoticMarketsKey, 0, -1, function (err, polygonTrades) {
+    writenExoticMarkets = polygonTrades;
+  });
+
+  redisClient.lrange(exoticMarketPositionsKey, 0, -1, function (err, polygonTrades) {
+    writenExoticPositions = polygonTrades;
+  });
+
+  redisClient.lrange(exoticMarketDisputesKey, 0, -1, function (err, polygonTrades) {
+    writenExoticDisputes = polygonTrades;
   });
 
 }
@@ -3107,6 +3126,346 @@ setInterval(function () {
   checkPositioning();
 }, 60 * 5 * 1000);
 
+async function  getPosition() {
+
+  const body = JSON.stringify({
+    query: `{
+  positions(orderBy:timestamp,
+        orderDirection:desc) {
+    id
+    timestamp
+    account
+    market
+    position
+    isWithdrawn
+    isClaimed
+  }
+}`,
+    variables: null,
+  });
+
+  const response = await fetch(
+      "https://api.thegraph.com/subgraphs/name/thales-markets/exotic-markets-optimism",
+      {
+        method: "POST",
+        body,
+      }
+  );
+
+  const json = await response.json();
+  const positions = json.data.positions;
+
+  var startdate = new Date();
+  var durationInMinutes = 30;
+  startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
+  let startDateUnixTime = Math.floor(startdate.getTime()/1000);
+  for (const position of positions) {
+    if (startDateUnixTime < Number(position.timestamp) && !writenExoticPositions.includes(position.id)) {
+      try {
+        console.log("new exotic market position");
+
+        let messageTitle = "New Exotic Market Position";
+        let market = await getExoticMarket(position);
+        let poolSize = market.poolSize / 1e18;
+        let ticketPrice = market.ticketPrice / 1e18;
+
+        var message = new Discord.MessageEmbed()
+            .addFields(
+                {
+                  name: messageTitle,
+                  value: "\u200b",
+                },
+                {
+                  name: ":classical_building: Market:",
+                  value:
+                      "[" +
+                      market.question +
+                      "](https://exoticmarkets.xyz/#/markets/" +
+                      market.address +
+                      ")",
+                },
+                {
+                  name: ":coin: Position:",
+                  value: market.positions[position.position-1],
+                },
+                {
+                  name: ":coin: Ticket price:",
+                  value: ticketPrice+" sUSD",
+                },
+                {
+                  name: ":coin: Pool size:",
+                  value: poolSize+" sUSD",
+                },
+                {
+                  name: ":alarm_clock: Timestamp:",
+                  value: new Date(position.timestamp * 1000),
+                }
+            )
+            .setColor("#0037ff");
+        clientNewListings.channels
+            .fetch("968912147826507796")
+            .then((ammTradesChannel) => {
+              ammTradesChannel.send(message);
+            });
+        writenExoticPositions.push(position.id);
+        redisClient.lpush(exoticMarketPositionsKey, position.id);
+      } catch (e) {
+        console.log("There was a problem while getting exotic markets", e);
+      }
+    }
+  }
+}
+
+async function  getExoticMarket(dispute) {
+
+  const body = JSON.stringify({
+    query: `{
+  markets(where:{
+    id: "${dispute.market}"
+  }) {
+     id
+    timestamp
+    creator
+    creationTime
+    resolver
+    resolvedTime
+    address
+    question
+    dataSource
+    endOfPositioning
+    ticketPrice
+    isWithdrawalAllowed
+    positions
+    tags
+    isTicketType
+    isOpen
+    numberOfDisputes
+    numberOfOpenDisputes
+    marketClosedForDisputes
+    isResolved
+    isCancelled
+    winningPosition
+    backstopTimeout
+    isPaused
+    isDisputed
+    disputeClosedTime
+    poolSize
+    numberOfParticipants
+    noWinners
+    cancelledByCreator
+  }
+}`,
+    variables: null,
+  });
+
+  const response = await fetch(
+      "https://api.thegraph.com/subgraphs/name/thales-markets/exotic-markets-optimism",
+      {
+        method: "POST",
+        body,
+      }
+  );
+
+  const json = await response.json();
+  const markets = json.data.markets;
+
+  return markets[0];
+}
+
+async function getOpenDisputesExotic() {
+
+  const body = JSON.stringify({
+    query: `{
+  disputes(orderBy:timestamp,
+        orderDirection:desc) {
+    id
+    timestamp
+    creationDate
+    disputeNumber
+    disputer
+    market
+    reasonForDispute
+    isInPositioningPhase
+    disputeCode
+  }
+}`,
+    variables: null,
+  });
+
+  const response = await fetch(
+      "https://api.thegraph.com/subgraphs/name/thales-markets/exotic-markets-optimism",
+      {
+        method: "POST",
+        body,
+      }
+  );
+
+  const json = await response.json();
+  const disputes = json.data.disputes;
+
+  var startdate = new Date();
+  var durationInMinutes = 30;
+  startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
+  let startDateUnixTime = Math.floor(startdate.getTime()/1000);
+  for (const dispute of disputes) {
+     if (startDateUnixTime < Number(dispute.timestamp) && !writenExoticDisputes.includes(dispute.id)) {
+    try {
+      console.log("new dispute");
+      let messageTitle = "New Exotic Market Dispute";
+      let market = await getExoticMarket(dispute);
+
+      var message = new Discord.MessageEmbed()
+          .addFields(
+              {
+                name: messageTitle,
+                value: "\u200b",
+              },
+              {
+                name: ":question: Dispute Reason:",
+                value: dispute.reasonForDispute,
+              },
+              {
+                name: ":classical_building: Market:",
+                value:
+                    "[" +
+                    market.question +
+                    "](https://exoticmarkets.xyz/#/markets/" +
+                    dispute.market +
+                    ")",
+              },
+              {
+                name: ":alarm_clock: Timestamp:",
+                value: new Date(dispute.timestamp*1000),
+              }
+          )
+          .setColor("#0037ff");
+      clientNewListings.channels
+          .fetch("968805375015014410")
+          .then((ammTradesChannel) => {
+            ammTradesChannel.send(message);
+          });
+      writenExoticDisputes.push(dispute.id);
+      redisClient.lpush(exoticMarketDisputesKey, dispute.id);
+    } catch (e) {
+      console.log("There was a problem while getting exotic market disputes",e);
+    }
+  }
+  }
+}
+
+async function getExoticMarkets(){
+  const body = JSON.stringify({
+    query: `{
+  markets(orderBy:timestamp,
+        orderDirection:desc) {
+    id
+    timestamp
+    creator
+    creationTime
+    resolver
+    resolvedTime
+    address
+    question
+    dataSource
+    endOfPositioning
+    ticketPrice
+    isWithdrawalAllowed
+    positions
+    tags
+    isTicketType
+    isOpen
+    numberOfDisputes
+    numberOfOpenDisputes
+    marketClosedForDisputes
+    isResolved
+    isCancelled
+    winningPosition
+    backstopTimeout
+    isPaused
+    isDisputed
+    disputeClosedTime
+    poolSize
+    numberOfParticipants
+    noWinners
+    cancelledByCreator
+  }
+}`,
+    variables: null,
+  });
+
+  const response = await fetch(
+      "https://api.thegraph.com/subgraphs/name/thales-markets/exotic-markets-optimism",
+      {
+        method: "POST",
+        body,
+      }
+  );
+
+  const json = await response.json();
+  const exoticMarkets = json.data.markets;
+
+  var startdate = new Date();
+  var durationInMinutes = 30;
+  startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
+  let startDateUnixTime = Math.floor(startdate.getTime()/1000);
+  for (const exoticMarket of exoticMarkets) {
+     if (startDateUnixTime < Number(exoticMarket.timestamp) && !writenExoticMarkets.includes(exoticMarket.id)) {
+    try {
+      console.log("new exotic market");
+
+      let messageTitle = "New Exotic Market";
+      let exoticMarketQuestion = exoticMarket.question;
+      let ticketPrice = exoticMarket.ticketPrice / 1e18;
+      let poolSize = exoticMarket.poolSize / 1e18;
+      var message = new Discord.MessageEmbed()
+          .addFields(
+              {
+                name: messageTitle,
+                value: "\u200b",
+              },
+              {
+                name: ":classical_building: Market:",
+                value:
+                    "[" +
+                    exoticMarketQuestion +
+                    "](https://exoticmarkets.xyz/#/markets/" +
+                    exoticMarket.address +
+                    ")",
+              },
+              {
+                name: ":coin: Ticket price:",
+                value: ticketPrice+" sUSD",
+              },
+              {
+                name: ":alarm_clock: Deadline:",
+                value: new Date(exoticMarket.endOfPositioning *1000),
+              },
+              {
+                name: ":alarm_clock: Timestamp:",
+                value: new Date(exoticMarket.timestamp*1000),
+              }
+          )
+          .setColor("#0037ff");
+      clientNewListings.channels
+          .fetch("968805331104841738")
+          .then((ammTradesChannel) => {
+            ammTradesChannel.send(message);
+          });
+      writenExoticMarkets.push(exoticMarket.id);
+      redisClient.lpush(exoticMarketsKey, exoticMarket.id);
+    } catch (e) {
+      console.log("There was a problem while getting exotic markets",e);
+    }
+  }
+  }
+}
+
+setInterval(function () {
+  console.log("get L2 trades");
+  getExoticMarkets();
+  getPosition();
+  getOpenDisputesExotic();
+}, 2 * 60 * 1000);
 
 
 
