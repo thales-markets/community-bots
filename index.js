@@ -2604,7 +2604,7 @@ async function getL2Trades() {
               .then((ammTradesChannel) => {
                 ammTradesChannel.send(message);
               });
-          let newAMMTradeMessage = 'New Optimism AMM position bought\n';
+          let newAMMTradeMessage = isBuy ? 'New Optimism AMM position bought\n' : 'New Optimism AMM position sold\n';
           var date = new Date(tradeL2.timestamp*1000);
 
           newAMMTradeMessage = newAMMTradeMessage + 'Condition: '+marketMessage+'\n';
@@ -2793,7 +2793,10 @@ async function getPolygonTrades() {
               .then((ammTradesChannel) => {
                 ammTradesChannel.send(message);
               });
-          let newAMMTradeMessage = 'New Polygon AMM position bought\n';
+
+
+
+          let newAMMTradeMessage =isBuy ? 'New Polygon AMM position bought\n' : 'New Polygon AMM position sold\n';
           var date = new Date(polygonTrade.timestamp*1000);
 
           newAMMTradeMessage = newAMMTradeMessage + 'Condition: '+marketMessage+'\n';
