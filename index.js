@@ -2502,7 +2502,21 @@ async function getL2Trades() {
         var amountShortLong;
         var isLong = false;
         var isBuy = false;
+        var isRanged = false;
+
         if (
+            makerTokenName.toLowerCase().includes("in") ||
+            makerTokenName.toLowerCase().includes("out")
+        ){
+          amountShortLong = tradeL2.makerAmount/1e18;
+          amountUSD = tradeL2.takerAmount / 1e18;
+          isRanged = true;
+        }else if(takerTokenName.toLowerCase().includes("in") ||
+            takerTokenName.toLowerCase().includes("out")){
+          isRanged = true;
+          amountUSD =tradeL2.makerAmount / 1e18;
+          amountShortLong = tradeL2.takerAmount / 1e18;
+        }else if (
             makerTokenName.toLowerCase().includes("up") ||
             makerTokenName.toLowerCase().includes("down")
         ) {
@@ -2530,6 +2544,7 @@ async function getL2Trades() {
           shortLong = takerTokenName.toLowerCase().includes("up") ? " > " : " < ";
         }
 
+        if(!isRanged){
         let market = await  getMarketL2(tradeL2);
 
         var marketMessage =
@@ -2630,7 +2645,64 @@ async function getL2Trades() {
                 orderBookChannel.send(message);
               });
         }
+      } else {
+          let rangedMarket = await  getRangedMarketL2(tradeL2);
+          var marketMessage =
+              web3.utils.hexToAscii(rangedMarket.currencyKey).replace(/\0/g, '') +
+              " "+tradeL2.optionSide.toUpperCase() + " > $"+
+              Math.round(((rangedMarket.leftPrice/1e18) + Number.EPSILON) * 1000) / 1000+" < $"+Math.round(((rangedMarket.rightPrice/1e18) + Number.EPSILON) * 1000) / 1000;
+          marketMessage =
+              marketMessage +
+              "@" +
+              new Date(rangedMarket.maturityDate*1000).toISOString().slice(0, 10);
 
+
+          var message = new Discord.MessageEmbed()
+              .addFields(
+                  {
+                    name: ":lock: New Ranged Market Thales Trade :lock:",
+                    value: "\u200b",
+                  },
+                  {
+                    name: ":link: Transaction:",
+                    value:
+                        "[" +
+                        tradeL2.transactionHash +
+                        "](https://optimistic.etherscan.io/tx/" +
+                        tradeL2.transactionHash +
+                        ")",
+                  },
+                  {
+                    name: ":coin: Transaction type:",
+                    value: tradeL2.orderSide.toUpperCase(),
+                  },
+                  {
+                    name: ":classical_building: Market:",
+                    value:
+                        "[" +
+                        marketMessage +
+                        "](https://thales-dapp-git-feature-ranged-markets-thales-market.vercel.app/ranged-markets/" +
+                        tradeL2.market +
+                        ")",
+                  },
+                  {
+                    name: ":dollar: "+tradeL2.optionSide.toUpperCase()+" tokens",
+                    value: parseFloat((amountShortLong).toFixed(3)),
+                  },
+                  {
+                    name: ":dollar: Total:",
+                    value: parseFloat((amountUSD).toFixed(3)) + " sUSD",
+                  },
+                  {
+                    name: ":alarm_clock: Timestamp:",
+                    value: new Date(tradeL2.timestamp*1000),
+                  }
+              )
+              .setColor("#0037ff");
+          let channel =  await clientNewListings.channels
+              .fetch("976063364662956042");
+          channel.send(message);
+        }
       writenL2Trades.push(tradeL2.transactionHash);
       redisClient.lpush(L2tradesKey, tradeL2.transactionHash);
       totalAmountOfTradesL2 = totalAmountOfTradesL2 + Math.round(amountUSD);
@@ -3466,6 +3538,52 @@ async function getExoticMarkets(){
     }
   }
   }
+}
+
+async function  getRangedMarketL2(tradeL2) {
+
+  const body = JSON.stringify({
+    query: `{rangedMarkets(where:{
+    id: "${tradeL2.market}"
+  }) {
+    id
+    timestamp
+    currencyKey
+    maturityDate
+    expiryDate
+    leftPrice
+    rightPrice
+    rightMarket{
+    id
+    strikePrice
+      currencyKey
+      maturityDate
+      expiryDate
+    }
+    leftMarket{
+      id
+    strikePrice
+      currencyKey
+      maturityDate
+      expiryDate
+    }
+    
+  }}`,
+    variables: null,
+  });
+
+  const response = await fetch(
+      "https://api.thegraph.com/subgraphs/name/thales-markets/thales-optimism",
+      {
+        method: "POST",
+        body,
+      }
+  );
+
+  const json = await response.json();
+  const markets = json.data.rangedMarkets;
+
+  return markets[0];
 }
 
 
