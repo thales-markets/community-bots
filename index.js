@@ -266,7 +266,7 @@ const updateThalesRoyaleMainnetCountdown = async () => {
       }
     });
   }
-  let endDateUTC = new Date("May 12, 2022 16:00:00 UTC")
+  let endDateUTC = new Date("May 26, 2022 16:00:00 UTC")
   let currentDate = new Date(new Date().toUTCString());
   let distance;
   if(currentDate.getTime()>endDateUTC.getTime()){
@@ -2490,7 +2490,7 @@ async function getL2Trades() {
   startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
   let startDateUnixTime = Math.floor(startdate.getTime()/1000);
   for (const tradeL2 of tradesL2) {
-    if (startDateUnixTime < Number(tradeL2.timestamp) && !writenL2Trades.includes(tradeL2.transactionHash)) {
+    if (startDateUnixTime < Number(tradeL2.timestamp) && !writenL2Trades.includes(tradeL2.id)) {
       try{
         console.log("new trade l2");
         var shortLong;
@@ -2703,8 +2703,8 @@ async function getL2Trades() {
               .fetch("976063364662956042");
           channel.send(message);
         }
-      writenL2Trades.push(tradeL2.transactionHash);
-      redisClient.lpush(L2tradesKey, tradeL2.transactionHash);
+      writenL2Trades.push(tradeL2.id);
+      redisClient.lpush(L2tradesKey, tradeL2.id);
       totalAmountOfTradesL2 = totalAmountOfTradesL2 + Math.round(amountUSD);
       numberOfTradesL2++;
       redisClient.set("totalAmountL2", totalAmountOfTradesL2, function (err, reply) {
