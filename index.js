@@ -2651,7 +2651,8 @@ async function getL2Trades() {
               web3.utils.hexToAscii(rangedMarket.currencyKey).replace(/\0/g, '') +
               " "+tradeL2.optionSide.toUpperCase() + " > $"+
               Math.round(((rangedMarket.leftPrice/1e18) + Number.EPSILON) * 1000) / 1000+" < $"+Math.round(((rangedMarket.rightPrice/1e18) + Number.EPSILON) * 1000) / 1000;
-          marketMessage =
+          let discordMarketMessage
+          discordMarketMessage =
               marketMessage +
               "@" +
               new Date(rangedMarket.maturityDate*1000).toISOString().slice(0, 10);
@@ -2680,7 +2681,7 @@ async function getL2Trades() {
                     name: ":classical_building: Market:",
                     value:
                         "[" +
-                        marketMessage +
+                        discordMarketMessage +
                         "](https://thales-dapp-git-feature-ranged-markets-thales-market.vercel.app/ranged-markets/" +
                         tradeL2.market +
                         ")",
@@ -2702,6 +2703,22 @@ async function getL2Trades() {
           let channel =  await clientNewListings.channels
               .fetch("976063364662956042");
           channel.send(message);
+
+          let newRangeTradeMessage = tradeL2.orderSide.toUpperCase()=="BUY" ? 'New Optimism Ranged Market position bought\n' : 'New Optimism Ranged Market position sold\n';
+          var date = new Date(tradeL2.timestamp*1000);
+
+          newRangeTradeMessage = newRangeTradeMessage + 'Condition: '+marketMessage+'\n';
+          let amountAMM = parseFloat((amountShortLong).toFixed(3));
+          let paidAMM = parseFloat((amountUSD).toFixed(3));
+          newRangeTradeMessage = newRangeTradeMessage + 'Maturity date: '+new Date(rangedMarket.maturityDate*1000).toISOString().slice(0, 10)+'\n';
+          newRangeTradeMessage = newRangeTradeMessage + 'Amount: '+parseFloat((amountShortLong).toFixed(3))+' '+tradeL2.optionSide.toUpperCase()+' tokens\n';
+          newRangeTradeMessage = newRangeTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' sUSD\n';
+          newRangeTradeMessage = newRangeTradeMessage + 'Potential profit: '+Math.round(amountAMM-paidAMM)+' sUSD ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
+
+          twitterClientAMMMarket.post('statuses/update', { status: newRangeTradeMessage }, function(err, data, response) {
+            console.log(data)
+          });
+
         }
       writenL2Trades.push(tradeL2.id);
       redisClient.lpush(L2tradesKey, tradeL2.id);
