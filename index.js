@@ -3233,6 +3233,7 @@ async function  getPosition() {
     timestamp
     account
     market
+    positions
     position
     isWithdrawn
     isClaimed
@@ -3257,14 +3258,31 @@ async function  getPosition() {
   startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
   let startDateUnixTime = Math.floor(startdate.getTime()/1000);
   for (const position of positions) {
-    if (startDateUnixTime < Number(position.timestamp) && !writenExoticPositions.includes(position.id) && position.position!=0) {
+    if (startDateUnixTime < Number(position.timestamp) && !writenExoticPositions.includes(position.id) && (position.position!=0 || isOpenBidPosition(position.positions))) {
       try {
         console.log("new exotic market position");
 
         let messageTitle = "New Exotic Market Position";
         let market = await getExoticMarket(position);
         let poolSize = market.poolSize / 1e18;
-        let ticketPrice = market.ticketPrice / 1e18;
+        let ticketPrice = 0;
+        let posistionsMade="";
+        if(!market.isTicketType){
+          for (var i = 0; i < position.positions.length; i++) {
+            if(position.positions[i]!="0"){
+              if(posistionsMade!=""){
+                posistionsMade =posistionsMade +  ", "+ market.positions[i]
+              }else{
+                posistionsMade =  market.positions[i];
+              }
+              ticketPrice = ticketPrice + Number(position.positions[i]);
+            }
+          }
+          ticketPrice = ticketPrice / 1e18;
+        } else {
+          posistionsMade = market.positions[position.position-1];
+          ticketPrice = market.ticketPrice / 1e18;
+        }
 
         var message = new Discord.MessageEmbed()
             .addFields(
@@ -3283,7 +3301,7 @@ async function  getPosition() {
                 },
                 {
                   name: ":coin: Position:",
-                  value: market.positions[position.position-1],
+                  value: posistionsMade,
                 },
                 {
                   name: ":coin: Ticket price:",
@@ -3324,6 +3342,7 @@ async function  getExoticMarket(dispute) {
     timestamp
     creator
     creationTime
+    isTicketType
     resolver
     resolvedTime
     address
@@ -3334,7 +3353,6 @@ async function  getExoticMarket(dispute) {
     isWithdrawalAllowed
     positions
     tags
-    isTicketType
     isOpen
     numberOfDisputes
     numberOfOpenDisputes
@@ -3514,6 +3532,12 @@ async function getExoticMarkets(){
       let exoticMarketQuestion = exoticMarket.question;
       let ticketPrice = exoticMarket.ticketPrice / 1e18;
       let poolSize = exoticMarket.poolSize / 1e18;
+      let bidType = "";
+      if(!exoticMarket.isTicketType){
+        bidType = "Open bid";
+      }else{
+        bidType = "Ticket"
+      }
       var message = new Discord.MessageEmbed()
           .addFields(
               {
@@ -3532,6 +3556,10 @@ async function getExoticMarkets(){
               {
                 name: ":coin: Ticket price:",
                 value: ticketPrice+" sUSD",
+              },
+              {
+                name: ":coin: Bid type:",
+                value: bidType,
               },
               {
                 name: ":alarm_clock: Deadline:",
@@ -3690,6 +3718,14 @@ async function getExoticMarketResultSet() {
       } catch (e) {
         console.log("There was a problem while getting exotic market result sets",e);
       }
+    }
+  }
+}
+
+function isOpenBidPosition(array){
+  for (var i = 0; i < array.length; i++) {
+    if(array[i]!="0"){
+      return true;
     }
   }
 }
