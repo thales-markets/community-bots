@@ -18,6 +18,8 @@ let contentRaw = fs.readFileSync("content.json");
 const axios = require("axios");
 let answersContent = JSON.parse(contentRaw);
 let qaMaps = new Map();
+let aprRAW = fs.readFileSync('contracts/apr.json');
+let aprContract = JSON.parse(aprRAW);
 let contractRaw = fs.readFileSync("contracts/erc20Contract.json");
 let polygonRaw = fs.readFileSync('contracts/polygon.json');
 const thalesData = require("thales-data");
@@ -33,6 +35,8 @@ clientTotalPolygonTrades.login(process.env.BOT_TOKEN_TOTAL_POLYGON);
 const Web3 = require("web3");
 let contract = JSON.parse(contractRaw);
 let polygonContract = JSON.parse(polygonRaw);
+let burnedRaw = fs.readFileSync('contracts/burned.json');
+let contractBurned = JSON.parse(burnedRaw);
 const web3Polygon = new Web3(new Web3.providers.HttpProvider("https://polygon-mainnet.infura.io/v3/71f890a2441d49088e4e145b2bc23bc7"));
 const web3 = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_URL));
 const web3L2 = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_L2_URL));
@@ -54,6 +58,8 @@ const clientLUNA = new Discord.Client();
 clientLUNA.login(process.env.BOT_TOKEN_LUNA);
 const clientLYRA = new Discord.Client();
 clientLYRA.login(process.env.BOT_TOKEN_LYRA);
+const clientTotalBurnedThales = new Discord.Client();
+clientTotalBurnedThales.login(process.env.BOT_TOKEN_TOTAL_BURNED_THALES);
 let mapThalesTrades = new Map();
 let mapThalesAsks = new Map();
 let mapThalesBids = new Map();
@@ -85,6 +91,7 @@ const stakingContract = new ethers.Contract(
   stakingThalesABI.stakingthales.abi,
   walletTest
 );
+let  burnedContract =  new web3L2.eth.Contract(contractBurned, "0x217D47011b23BB961eB6D93cA9945B7501a5BB11");
 const gelatoContract = require("./contracts/GelatoContract.js");
 let contractRoyaleRaw = fs.readFileSync('contracts/royale.json');
 let contractRoyale = JSON.parse(contractRoyaleRaw);
@@ -110,6 +117,11 @@ answersContent.forEach((a) => {
 clientETHBurned.once("ready", () => {
   console.log("updating ETH burned on ready");
   getETHBurned();
+});
+
+clientTotalBurnedThales.once("ready", () => {
+  console.log("updating Burned Thales on ready");
+  getBurnedThalesBalance();
 });
 
 clientCountdown.once("ready", () => {
@@ -323,6 +335,7 @@ setInterval(function () {
   updateThalesRoyaleMainnetCountdown();
   updateThalesOPCountdown();
   updateGameCountdown();
+  getBurnedThalesBalance();
 }, 360 * 1000);
 
 setInterval(function () {
@@ -3012,10 +3025,13 @@ async function calculateThalesL2APR() {
   let thalesBalance = await web3.utils.fromWei(balances[0],"ether");
   let wethBalanceNumber = Number(wethBalance).toFixed(2);
   let thalesBalanceNumber = Number(thalesBalance).toFixed(2);
+  let  thalestotalsupply =  new web3L2.eth.Contract(aprContract, "0x31a20E5b7b1b067705419D57Ab4F72E81cC1F6Bf");
+  const totalSupply = await gelatoContractThales.methods.totalSupply().call() /1e18;
+  const totalGelatoLocked = await thalestotalsupply.methods.totalSupply().call() /1e18;
 
-  const totalInUSD = Number(
-      (wethBalanceNumber * ethValue + thalesBalanceNumber * thalesValue).toFixed(2)
-  );
+  const totalInUSD = totalGelatoLocked * (Number(
+          (wethBalanceNumber * ethValue + thalesBalanceNumber * thalesValue).toFixed(2))
+  )/totalSupply;
 
   const apr = ((100 * (45000 * thalesValue * 52)) / totalInUSD).toFixed(0);
   let formatedAPR = Math.round(apr*100)/100+"%";
@@ -3740,4 +3756,25 @@ setInterval(function () {
 }, 2 * 60 * 1000);
 
 
+async  function getBurnedThalesBalance (){
 
+  const tokenBalance = await burnedContract.methods.balanceOf("0x679C0174f6c288C4bcd5C95C9Ec99D50357C59E7").call();
+  let amountOfThales = tokenBalance / 1e18;
+  try {
+    clientTotalBurnedThales.guilds.cache.forEach(function (value, key) {
+      try {
+        value.members.cache
+            .get(clientTotalBurnedThales.user.id)
+            .setNickname(getNumberLabelDecimals(amountOfThales));
+      } catch (e) {
+        console.log('error while updating amount of thales'+e);
+      }
+    });
+    clientTotalBurnedThales.user.setActivity(
+        "THALES burned",
+        { type: "WATCHING" }
+    );
+  }catch (e) {
+    console.log("there was an error while updating total opThales");
+  }
+}
