@@ -58,6 +58,16 @@ const clientLUNA = new Discord.Client();
 clientLUNA.login(process.env.BOT_TOKEN_LUNA);
 const clientLYRA = new Discord.Client();
 clientLYRA.login(process.env.BOT_TOKEN_LYRA);
+const clientOP = new Discord.Client();
+clientOP.login(process.env.BOT_TOKEN_OP);
+const clientOHM = new Discord.Client();
+clientOHM.login(process.env.BOT_TOKEN_OHM);
+const clientAPE = new Discord.Client();
+clientAPE.login(process.env.BOT_TOKEN_APE);
+const clientCVX = new Discord.Client();
+clientCVX.login(process.env.BOT_TOKEN_CVX);
+const clientPERP = new Discord.Client();
+clientPERP.login(process.env.BOT_TOKEN_PERP);
 const clientTotalBurnedThales = new Discord.Client();
 clientTotalBurnedThales.login(process.env.BOT_TOKEN_TOTAL_BURNED_THALES);
 let mapThalesTrades = new Map();
@@ -182,6 +192,26 @@ clientLUNA.on("ready", () => {
   setPriceBot(clientLUNA,"terra-luna","LUNA Price");
 });
 
+clientOP.on("ready", () => {
+  setPriceBot(clientOP,"optimism","OP Price");
+});
+
+clientOHM.on("ready", () => {
+  setPriceBot(clientOHM,"olympus","OHM Price");
+});
+
+clientAPE.on("ready", () => {
+  setPriceBot(clientAPE,"apecoin","APE Price");
+});
+
+clientCVX.on("ready", () => {
+  setPriceBot(clientCVX,"convex-finance","CVX Price");
+});
+
+clientPERP.on("ready", () => {
+  setPriceBot(clientPERP,"perpetual-protocol","PERP Price");
+});
+
 setInterval(function () {
   console.log("updating price bots");
     setPriceBot(clientUniswap,"uniswap","UNI Price");
@@ -192,6 +222,11 @@ setInterval(function () {
     setPriceBot(clientSTARGATE,"stargate-finance","STG Price");
     setPriceBot(clientLYRA,"lyra-finance","LYRA Price");
     setPriceBot(clientLUNA,"terra-luna","LUNA Price");
+    setPriceBot(clientOP,"optimism","OP Price");
+    setPriceBot(clientOHM,"olympus","OHM Price");
+    setPriceBot(clientAPE,"apecoin","APE Price");
+    setPriceBot(clientCVX,"convex-finance","CVX Price");
+    setPriceBot(clientPERP,"perpetual-protocol","PERP Price");
 }, 380 * 1000);
 
 const setPriceBot = async (clientForSetting,tokenForPrice,nameOfTheToken) => {
