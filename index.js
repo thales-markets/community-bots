@@ -12,6 +12,8 @@ const clientRoyaleMainnetCountdown = new Discord.Client();
 clientRoyaleMainnetCountdown.login(process.env.BOT_TOKEN_TROYALEM_COUNTDOWN);
 const clientRoyalePingingBot = new Discord.Client();
 clientRoyalePingingBot.login(process.env.BOT_TOKEN_ROYALE_PING);
+const clientMATICBot = new Discord.Client();
+clientMATICBot.login(process.env.BOT_TOKEN_MATIC);
 var fs = require("fs");
 const client = new Discord.Client();
 let contentRaw = fs.readFileSync("content.json");
@@ -212,6 +214,10 @@ clientPERP.on("ready", () => {
   setPriceBot(clientPERP,"perpetual-protocol","PERP Price");
 });
 
+clientMATICBot.on("ready", () => {
+  setPriceBot(clientMATICBot,"matic-network","MATIC Price");
+});
+
 setInterval(function () {
   console.log("updating price bots");
     setPriceBot(clientUniswap,"uniswap","UNI Price");
@@ -227,6 +233,7 @@ setInterval(function () {
     setPriceBot(clientAPE,"apecoin","APE Price");
     setPriceBot(clientCVX,"convex-finance","CVX Price");
     setPriceBot(clientPERP,"perpetual-protocol","PERP Price");
+    setPriceBot(clientMATICBot,"matic-network","MATIC Price");
 }, 380 * 1000);
 
 const setPriceBot = async (clientForSetting,tokenForPrice,nameOfTheToken) => {
@@ -2060,6 +2067,8 @@ let redisClient = null;
 let L2tradesKey = "L2Trades";
 let polygonTradesKey = "PolygonTrades";
 let exoticMarketsKey = "ExoticMarkets";
+let overtimeMarketsKey = "OvertimeMarkets";
+let overtimeTradesKey = "OvertimeTrades";
 let exoticMarketPositionsKey = "ExoticMarketPositions";
 let exoticMarketDisputesKey = "ExoticMarketDisputes";
 let exoticMarketResultSet = "ExoticMarketResultSet";
@@ -2070,6 +2079,8 @@ let numberOfTradesPolygon = 75;
 let writenL2Trades = [];
 let writenPolygonTrades = [];
 let writenExoticMarkets = [];
+let writenOvertimeMarkets = [];
+let writenOvertimeTrades = [];
 let writenExoticDisputes = [];
 let writenExoticPositions = [];
 let writenExoticMarketResultSet = [];
@@ -2123,6 +2134,14 @@ if (process.env.REDIS_URL) {
 
   redisClient.lrange(exoticMarketsKey, 0, -1, function (err, polygonTrades) {
     writenExoticMarkets = polygonTrades;
+  });
+
+  redisClient.lrange(overtimeMarketsKey, 0, -1, function (err, polygonTrades) {
+    writenOvertimeMarkets = polygonTrades;
+  });
+
+  redisClient.lrange(overtimeTradesKey, 0, -1, function (err, polygonTrades) {
+    writenOvertimeTrades = polygonTrades;
   });
 
   redisClient.lrange(exoticMarketPositionsKey, 0, -1, function (err, polygonTrades) {
@@ -3788,6 +3807,8 @@ setInterval(function () {
   getPosition();
   getOpenDisputesExotic();
   getExoticMarketResultSet();
+  getOvertimeMarkets();
+  getOvertimeTrades();
 }, 2 * 60 * 1000);
 
 
@@ -3811,5 +3832,143 @@ async  function getBurnedThalesBalance (){
     );
   }catch (e) {
     console.log("there was an error while updating total opThales");
+  }
+}
+
+
+async function getOvertimeMarkets(){
+
+  let sportMarkets = await  thalesData.sportMarkets.markets({});
+  var startdate = new Date();
+  var durationInMinutes = 30;
+  startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
+  let startDateUnixTime = Math.floor(startdate.getTime());
+  for (const sportMarket of sportMarkets) {
+    if (startDateUnixTime < Number(sportMarket.timestamp) && !writenOvertimeMarkets.includes(sportMarket.timestamp)) {
+      try {
+        console.log("new overtime market");
+        let messageTitle;
+        let channelToSend="";
+        if(!sportMarket.isCanceled && !sportMarket.isResolved){
+         messageTitle = "New Overtime Market";
+         channelToSend = "994917583302172742";
+        }else if(sportMarket.isCanceled){
+           messageTitle = "Overtime Market Canceled";
+          channelToSend = "994917658833190922";
+        }else{
+          messageTitle = "Overtime Market Resolved";
+          channelToSend = "994917622640549908";
+        }
+        var message = new Discord.MessageEmbed()
+            .addFields(
+                {
+                  name: messageTitle,
+                  value: "\u200b",
+                },
+                {
+                  name: ":classical_building: Overtime market:",
+                  value:
+                      "[" +
+                      sportMarket.homeTeam +" - "+sportMarket.awayTeam+
+                      "](https://overtimemarkets.xyz/#/sportmarkets/" +
+                      sportMarket.address +
+                      ")",
+                },
+                {
+                  name: ":coin: Home team wining odds:",
+                  value: sportMarket.homeOdds.toFixed(3),
+                },
+                {
+                  name: ":coin: Draw odds:",
+                  value: sportMarket.drawOdds.toFixed(3),
+                },
+                {
+                  name: ":coin: Away team wining odds:",
+                  value: sportMarket.awayOdds.toFixed(3),
+                },
+                {
+                  name: ":alarm_clock: Deadline:",
+                  value: new Date(sportMarket.maturityDate *1000),
+                },
+                {
+                  name: ":alarm_clock: Timestamp:",
+                  value: new Date(sportMarket.timestamp * 1000),
+                }
+            )
+            .setColor("#0037ff");
+
+        let marketsChannel =   await clientNewListings.channels.fetch(channelToSend);
+        marketsChannel.send(message);
+        writenOvertimeMarkets.push(sportMarket.timestamp);
+        redisClient.lpush(overtimeMarketsKey, sportMarket.timestamp);
+      } catch (e) {
+        console.log("There was a problem while getting overtime markets",e);
+      }
+    }
+  }
+}
+
+async function getOvertimeTrades(){
+
+  let overtimeMarketsTrades = await  thalesData.sportMarkets.marketTransactions({
+    network:10
+  });
+  var startdate = new Date();
+  var durationInMinutes = 30;
+  startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
+  let startDateUnixTime = Math.floor(startdate.getTime());
+  for (const overtimeMarketTrade of overtimeMarketsTrades) {
+    if (startDateUnixTime < Number(overtimeMarketTrade.timestamp) && !writenOvertimeTrades.includes(overtimeMarketTrade.id)) {
+      try {
+        let position = overtimeMarketTrade.position;
+        if(position==0){
+          position = "Home team to win";
+        }else if(position==1){
+          position = "Draw";
+        }else{
+          position = "Away team to win";
+        }
+        var message = new Discord.MessageEmbed()
+            .addFields(
+                {
+                  name: "Overtime Market Trade",
+                  value: "\u200b",
+                },
+                {
+                  name: ":classical_building: Overtime market:",
+                  value:
+                      "[" +
+                      overtimeMarketTrade.market+
+                      "](https://overtimemarkets.xyz/#/sportmarkets/" +
+                      overtimeMarketTrade.market +
+                      ")",
+                },
+                {
+                  name: ":coin: Transaction type:",
+                  value: overtimeMarketTrade.type.toUpperCase(),
+                },
+                {
+                  name: ":coin: Amount:",
+                  value: overtimeMarketTrade.amount,
+                },
+                {
+                  name: ":coin: Position:",
+                  value: position,
+                },
+                {
+                  name: ":alarm_clock: Timestamp:",
+                  value: new Date(overtimeMarketTrade.timestamp * 1000),
+                }
+            )
+            .setColor("#0037ff");
+       let overtimeTrades = await clientNewListings.channels
+            .fetch("994914814419808346");
+        overtimeTrades.send(message);
+        writenOvertimeTrades.push(overtimeMarketTrade.id);
+        redisClient.lpush(overtimeTradesKey, overtimeMarketTrade.id);
+      } catch (e) {
+        console.log("There was a problem while getting overtime trades",e);
+      }
+    }
   }
 }
