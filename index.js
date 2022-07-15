@@ -3840,7 +3840,8 @@ async  function getBurnedThalesBalance (){
 function getOvertimeMarketDTO(market) {
   return {
     isCanceled: market.isCanceled,
-    isResolved: market.isResolved
+    isResolved: market.isResolved,
+    homeOdds: market.homeOdds
   }
 }
 
@@ -3857,8 +3858,8 @@ async function getOvertimeMarkets(){
         console.log("new overtime market");
         let messageTitle;
         let channelToSend="";
+        let isResolved = false;
         let existingMarket = writenOvertimeMarkets.get(sportMarket.id)
-        let isOddsChanged = false;
         if(existingMarket){
         if(!existingMarket.isCanceled && sportMarket.isCanceled){
           //cancelled
@@ -3868,9 +3869,12 @@ async function getOvertimeMarkets(){
           //resolved
           messageTitle = "Overtime Market Resolved";
           channelToSend = "994917622640549908";
-        } else{
-          //new odds changed do nothing
-          isOddsChanged = true;
+          isResolved = true;
+        } else if (existingMarket.homeOdds!=sportMarket.homeOdds){
+          messageTitle = "New Overtime Market Odds";
+          channelToSend = "997150060959776848";
+        }else{
+          continue;
         }
         } else if(!sportMarket.isCanceled && !sportMarket.isResolved){
          messageTitle = "New Overtime Market";
@@ -3879,10 +3883,13 @@ async function getOvertimeMarkets(){
            messageTitle = "Overtime Market Canceled";
           channelToSend = "994917658833190922";
         }else{
+
           messageTitle = "Overtime Market Resolved";
           channelToSend = "994917622640549908";
+          isResolved = true;
         }
-        if(!isOddsChanged){
+
+    if(!isResolved){
         var message = new Discord.MessageEmbed()
             .addFields(
                 {
@@ -3920,14 +3927,57 @@ async function getOvertimeMarkets(){
                 }
             )
             .setColor("#0037ff");
-
         let marketsChannel =   await clientNewListings.channels.fetch(channelToSend);
         marketsChannel.send(message);
+    } else {
+      var message = new Discord.MessageEmbed()
+          .addFields(
+              {
+                name: messageTitle,
+                value: "\u200b",
+              },
+              {
+                name: ":classical_building: Overtime market:",
+                value:
+                    "[" +
+                    sportMarket.homeTeam +" - "+sportMarket.awayTeam+
+                    "](https://overtimemarkets.xyz/#/markets/" +
+                    sportMarket.address +
+                    ")",
+              },
+              {
+                name: ":coin: Final result:",
+                value: sportMarket.homeScore +" - "+ sportMarket.awayScore,
+              },
+              {
+                name: ":coin: Home team wining odds:",
+                value: sportMarket.homeOdds.toFixed(3),
+              },
+              {
+                name: ":coin: Draw odds:",
+                value: sportMarket.drawOdds!=0?sportMarket.drawOdds.toFixed(3):"No draw available",
+              },
+              {
+                name: ":coin: Away team wining odds:",
+                value: sportMarket.awayOdds.toFixed(3),
+              },
+              {
+                name: ":alarm_clock: Deadline:",
+                value: new Date(sportMarket.maturityDate),
+              },
+              {
+                name: ":alarm_clock: Timestamp:",
+                value: new Date(sportMarket.timestamp),
+              }
+          )
+          .setColor("#0037ff");
+      let marketsChannel =   await clientNewListings.channels.fetch(channelToSend);
+      marketsChannel.send(message);
+    }
         writenOvertimeMarkets.set(sportMarket.id,getOvertimeMarketDTO(sportMarket));
         redisClient.set(overtimeMarketsKey, JSON.stringify([...writenOvertimeMarkets]), function () {
           console.log("added correctly map market")
         });
-        }
       } catch (e) {
         console.log("There was a problem while getting overtime markets",e);
       }
@@ -4011,4 +4061,27 @@ async function getOvertimeTrades(){
       }
     }
   }
+}
+
+
+/*clientNewListings.on("message", (msg) => {
+  if (msg.content.toLowerCase().startsWith("!syncovertime")) {
+    syncOvertimeMarkets();
+  }
+});*/
+
+async function syncOvertimeMarkets() {
+  console.log("starting sync")
+  let sportMarkets = await  thalesData.sportMarkets.markets({network:10});
+  for (const sportMarket of sportMarkets) {
+    try {
+      writenOvertimeMarkets.set(sportMarket.id,getOvertimeMarketDTO(sportMarket));
+      redisClient.set(overtimeMarketsKey, JSON.stringify([...writenOvertimeMarkets]), function () {
+        console.log("added correctly map market")
+      });
+    } catch (e) {
+      console.log("There was a problem while syncing overtime markets",e);
+    }
+  }
+
 }
