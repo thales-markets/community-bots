@@ -30,8 +30,10 @@ const clientNewListings = new Discord.Client();
 const clientETHBurned = new Discord.Client();
 const clientCountdownChannel = new Discord.Client();
 const clientTotalL2Trades = new Discord.Client();
-clientCountdownChannel.login(process.env.BOT_TOKEN_COUNTDOWN_CHANNEL);
 clientTotalL2Trades.login(process.env.BOT_TOKEN_TOTAL_L2);
+const clientOvertimeTrades = new Discord.Client();
+clientOvertimeTrades.login(process.env.BOT_TOKEN_TOTAL_OT);
+clientCountdownChannel.login(process.env.BOT_TOKEN_COUNTDOWN_CHANNEL);
 const clientTotalPolygonTrades = new Discord.Client();
 clientTotalPolygonTrades.login(process.env.BOT_TOKEN_TOTAL_POLYGON);
 const Web3 = require("web3");
@@ -2073,7 +2075,9 @@ let exoticMarketPositionsKey = "ExoticMarketPositions";
 let exoticMarketDisputesKey = "ExoticMarketDisputes";
 let exoticMarketResultSet = "ExoticMarketResultSet";
 let totalAmountOfTradesL2 = 1445000;
-let numberOfTradesL2 = 2579;
+let numberOfTradesL2 = 6245;
+let totalAmountOfTradesOT = 1403;
+let numberOfTradesOT = 245;
 let totalAmountOfTradesPolygon = 455;
 let numberOfTradesPolygon = 75;
 let writenL2Trades = [];
@@ -2085,6 +2089,8 @@ let writenExoticDisputes = [];
 let writenExoticPositions = [];
 let writenExoticMarketResultSet = [];
 let verifiedUsersMap = new Map();
+let totalAmountOTKey = "totalAmountOTKey";
+let totalTradesOTKey = "totalTradesOTKey";
 if (process.env.REDIS_URL) {
   redisClient = redis.createClient(process.env.REDIS_URL);
   redisClient.on("error", function (error) {
@@ -2104,7 +2110,22 @@ if (process.env.REDIS_URL) {
       totalAmountOfTradesL2 = Number(obj);
     }
   });
-  redisClient.get("totalTradesL2", function (err, obj) {
+
+  redisClient.get(totalAmountOTKey, function (err, obj) {
+    if(obj){
+      console.log("setting object "+obj);
+      totalAmountOfTradesOT = Number(obj);
+    }
+  });
+
+  redisClient.get(totalTradesOTKey, function (err, obj) {
+    if(obj){
+      console.log("setting object "+obj);
+      numberOfTradesOT = Number(obj);
+    }
+  });
+
+  redisClient.get("totalTradesL2Key", function (err, obj) {
     if(obj){
       console.log("setting object "+obj);
       numberOfTradesL2 = Number(obj);
@@ -2796,7 +2817,7 @@ async function getL2Trades() {
       redisClient.set("totalAmountL2", totalAmountOfTradesL2, function (err, reply) {
             console.log(reply); // OK
       });
-      redisClient.set("totalTradesL2", numberOfTradesL2, function (err, reply) {
+      redisClient.set("totalTradesL2Key", numberOfTradesL2, function (err, reply) {
           console.log(reply); // OK
         });
       }catch (e) {
@@ -3036,11 +3057,13 @@ async function updateTotalPolygonTrades() {
 
 setTimeout(function () {
   updateTotalL2Trades();
+  updateTotalOvertimeTrades();
 }, 1000 * 30 * 1);
 
 setInterval(function () {
   console.log("update l2 trades");
   updateTotalL2Trades();
+  updateTotalOvertimeTrades();
 }, 360 * 1000);
 
 setTimeout(function () {
@@ -4056,6 +4079,15 @@ async function getOvertimeTrades(){
         overtimeTrades.send(message);
         writenOvertimeTrades.push(overtimeMarketTrade.id);
         redisClient.lpush(overtimeTradesKey, overtimeMarketTrade.id);
+        totalAmountOfTradesOT = totalAmountOfTradesOT + Math.round(overtimeMarketTrade.paid);
+        numberOfTradesOT++;
+        redisClient.set(totalAmountOTKey, totalAmountOfTradesOT, function (err, reply) {
+          console.log(reply); // OK
+        });
+        redisClient.set(totalTradesOTKey, numberOfTradesOT, function (err, reply) {
+          console.log(reply); // OK
+        });
+
       } catch (e) {
         console.log("There was a problem while getting overtime trades",e);
       }
@@ -4084,4 +4116,26 @@ async function syncOvertimeMarkets() {
     }
   }
 
+}
+
+
+async function updateTotalOvertimeTrades() {
+  try {
+    clientOvertimeTrades.guilds.cache.forEach(function (value, key) {
+      try {
+        console.log("for guild "+value+" value is "+totalAmountOfTradesOT);
+        value.members.cache
+            .get(clientOvertimeTrades.user.id)
+            .setNickname("Overtime="+getNumberLabelDecimals(totalAmountOfTradesOT)+"$");
+      } catch (e) {
+        console.log('error while updating amount of trades OT'+e);
+      }
+    });
+    clientOvertimeTrades.user.setActivity(
+        "Trades OT="+numberOfTradesOT,
+        { type: "WATCHING" }
+    );
+  }catch (e) {
+    console.log("there was an error while updating total OT");
+  }
 }
