@@ -122,8 +122,15 @@ const twitterConfAMMMarketBot = {
   access_token: "1506559867804434433-ubAnRN1H7xmvojRRI1Zaov1Eu5Cad2",
   access_token_secret: "LAbF90txvWd6WlhJm7UUwuG9VICYaPJwTmukh7HmAKK7s",
 }
+const twitterOvertimeAMMMarketBot = {
+  consumer_key: "Z7llUPViwkuLHyANHVfC4eiGZ",
+  consumer_secret: "9tqnQIfAHCMjIlVlYPNlMNzyQDGRspLsGw12xo813tf7BNsoTV",
+  access_token: "1547957461809737728-5W4MOkhCrf7aATiDeYoBQy6xs3jrSv",
+  access_token_secret: "46mmmChum6vnsYkU0wdTdx5vUtvNp53kyi0YP2SK7y0He",
+}
 const Twitter = require('twit');
 const twitterClientAMMMarket = new Twitter(twitterConfAMMMarketBot);
+const twitterClientOvertimeAMMMarket = new Twitter(twitterOvertimeAMMMarketBot);
 answersContent.forEach((a) => {
   qaMaps.set(a.number, a.content);
 });
@@ -4008,6 +4015,10 @@ async function getOvertimeMarkets(){
   }
 }
 
+function  calculatePercentageProfit(total,paid) {
+  return Math.round(((total-paid)/paid)*100)
+}
+
 async function getOvertimeTrades(){
 
   let overtimeMarketsTrades = await  thalesData.sportMarkets.marketTransactions({
@@ -4025,6 +4036,7 @@ async function getOvertimeTrades(){
           market:overtimeMarketTrade.market
         });
         let position = overtimeMarketTrade.position;
+        let odds;
         if(position==0){
           position = "Home team to win";
         }else if(position==2 || specificMarket[0].drawOdds==0 ){
@@ -4086,6 +4098,18 @@ async function getOvertimeTrades(){
         });
         redisClient.set(totalTradesOTKey, numberOfTradesOT, function (err, reply) {
           console.log(reply); // OK
+        });
+
+        let newOvertimeAMMMessage = overtimeMarketTrade.type.toUpperCase()==="BUY" ? 'New Overtime AMM position bought\n' : 'New Overtime AMM position sold\n';
+
+        newOvertimeAMMMessage = newOvertimeAMMMessage + marketMessage+'\n';
+        newOvertimeAMMMessage = newOvertimeAMMMessage + 'Amount: '+ overtimeMarketTrade.amount+"\n";
+        newOvertimeAMMMessage = newOvertimeAMMMessage + 'Paid: '+ overtimeMarketTrade.paid.toFixed(3)+' sUSD\n';
+        newOvertimeAMMMessage = newOvertimeAMMMessage + 'Position: '+ position+'\n';
+        newOvertimeAMMMessage = newOvertimeAMMMessage + 'Potential profit: '+Math.round(overtimeMarketTrade.amount-overtimeMarketTrade.paid.toFixed(3))+' sUSD ('+calculatePercentageProfit(overtimeMarketTrade.amount,Number(overtimeMarketTrade.paid.toFixed(3)))+'%)\n';
+
+        twitterClientOvertimeAMMMarket.post('statuses/update', { status: newOvertimeAMMMessage }, function(err, data, response) {
+          console.log(data)
         });
 
       } catch (e) {
