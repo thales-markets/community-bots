@@ -3122,20 +3122,27 @@ async function calculateThalesL2APR() {
   const apr = ((100 * (45000 * thalesValue * 52)) / totalInUSD).toFixed(0);
   let formatedAPR = Math.round(apr*100)/100+"%";
 
+  const resOP = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=optimism&vs_currencies=usd');
+  const dataOP =  await resOP.json();
+  const opValue = dataOP.optimism.usd;
+  console.log("op value is "+opValue);
+  const aprOP = ((100 * (15750 * opValue * 52)) / totalInUSD).toFixed(0);
+  let formatedAPROP = Math.round(aprOP*100)/100+"%";
+  console.log("formated APR OP is "+formatedAPROP);
 
   if (formatedAPR) {
     clientThalesL2APR.guilds.cache.forEach(function (value, key) {
       try {
         value.members.cache
             .get(clientThalesL2APR.user.id)
-            .setNickname(formatedAPR);
+            .setNickname(formatedAPR+" | "+formatedAPROP);
       } catch (e) {
         console.log(e);
       }
     });
   }
 
-  clientThalesL2APR.user.setActivity("APR L2 WETH/THALES", {
+  clientThalesL2APR.user.setActivity("APR L2 WETH/THALES | OP", {
     type: "WATCHING",
   });
 };
@@ -4061,6 +4068,15 @@ async function getOvertimeTrades(){
                       ")",
                 },
                 {
+                  name: ":link: Transaction:",
+                  value:
+                      "[" +
+                      overtimeMarketTrade.hash +
+                      "](https://optimistic.etherscan.io/tx/" +
+                      overtimeMarketTrade.hash +
+                      ")",
+                },
+                {
                   name: ":coin: Transaction type:",
                   value: overtimeMarketTrade.type.toUpperCase(),
                 },
@@ -4101,12 +4117,12 @@ async function getOvertimeTrades(){
         });
 
         let newOvertimeAMMMessage = overtimeMarketTrade.type.toUpperCase()==="BUY" ? 'New Overtime AMM position bought\n' : 'New Overtime AMM position sold\n';
-
+        let potentialProfit = (overtimeMarketTrade.amount-overtimeMarketTrade.paid.toFixed(3))>0? Math.round(overtimeMarketTrade.amount-overtimeMarketTrade.paid.toFixed(3)): overtimeMarketTrade.amount-overtimeMarketTrade.paid.toFixed(3);
         newOvertimeAMMMessage = newOvertimeAMMMessage + marketMessage+'\n';
         newOvertimeAMMMessage = newOvertimeAMMMessage + 'Amount: '+ overtimeMarketTrade.amount+"\n";
         newOvertimeAMMMessage = newOvertimeAMMMessage + 'Paid: '+ overtimeMarketTrade.paid.toFixed(3)+' sUSD\n';
         newOvertimeAMMMessage = newOvertimeAMMMessage + 'Position: '+ position+'\n';
-        newOvertimeAMMMessage = newOvertimeAMMMessage + 'Potential profit: '+Math.round(overtimeMarketTrade.amount-overtimeMarketTrade.paid.toFixed(3))+' sUSD ('+calculatePercentageProfit(overtimeMarketTrade.amount,Number(overtimeMarketTrade.paid.toFixed(3)))+'%)\n';
+        newOvertimeAMMMessage = newOvertimeAMMMessage + 'Potential profit: '+potentialProfit+' sUSD ('+calculatePercentageProfit(overtimeMarketTrade.amount,Number(overtimeMarketTrade.paid.toFixed(3)))+'%)\n';
 
         twitterClientOvertimeAMMMarket.post('statuses/update', { status: newOvertimeAMMMessage }, function(err, data, response) {
           console.log(data)
