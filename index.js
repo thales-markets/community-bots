@@ -106,6 +106,7 @@ const stakingContract = new ethers.Contract(
   walletTest
 );
 let  burnedContract =  new web3L2.eth.Contract(contractBurned, "0x217D47011b23BB961eB6D93cA9945B7501a5BB11");
+let  deadburnedContract =  new web3.eth.Contract(contractBurned, "0x8947da500eb47f82df21143d0c01a29862a8c3c5");
 const gelatoContract = require("./contracts/GelatoContract.js");
 let contractRoyaleRaw = fs.readFileSync('contracts/royale.json');
 let contractRoyale = JSON.parse(contractRoyaleRaw);
@@ -2728,9 +2729,10 @@ async function getL2Trades() {
           };
           let amountAMM = parseFloat((amountShortLong).toFixed(3));
           let paidAMM = parseFloat((amountUSD).toFixed(3));
+          let potentialProfit = (amountAMM-paidAMM)>0.51? Math.round(amountAMM-paidAMM): amountAMM-paidAMM;
           newAMMTradeMessage = newAMMTradeMessage + 'Amount: '+parseFloat((amountShortLong).toFixed(3))+' '+downOrUP+' tokens\n';
           newAMMTradeMessage = newAMMTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' sUSD\n';
-          newAMMTradeMessage = newAMMTradeMessage + 'Potential profit: '+Math.round(amountAMM-paidAMM)+' sUSD ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
+          newAMMTradeMessage = newAMMTradeMessage + 'Potential profit: '+potentialProfit+' sUSD ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
 
           twitterClientAMMMarket.post('statuses/update', { status: newAMMTradeMessage }, function(err, data, response) {
             console.log(data)
@@ -2807,10 +2809,11 @@ async function getL2Trades() {
           newRangeTradeMessage = newRangeTradeMessage + 'Condition: '+marketMessage+'\n';
           let amountAMM = parseFloat((amountShortLong).toFixed(3));
           let paidAMM = parseFloat((amountUSD).toFixed(3));
+          let potentialProfit = (amountAMM-paidAMM)>0.51? Math.round(amountAMM-paidAMM): amountAMM-paidAMM;
           newRangeTradeMessage = newRangeTradeMessage + 'Maturity date: '+new Date(rangedMarket.maturityDate*1000).toISOString().slice(0, 10)+'\n';
           newRangeTradeMessage = newRangeTradeMessage + 'Amount: '+parseFloat((amountShortLong).toFixed(3))+' '+tradeL2.optionSide.toUpperCase()+' tokens\n';
           newRangeTradeMessage = newRangeTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' sUSD\n';
-          newRangeTradeMessage = newRangeTradeMessage + 'Potential profit: '+Math.round(amountAMM-paidAMM)+' sUSD ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
+          newRangeTradeMessage = newRangeTradeMessage + 'Potential profit: '+potentialProfit+' sUSD ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
 
           twitterClientAMMMarket.post('statuses/update', { status: newRangeTradeMessage }, function(err, data, response) {
             console.log(data)
@@ -2994,9 +2997,10 @@ async function getPolygonTrades() {
           };
           let amountAMM = parseFloat((amountShortLong).toFixed(3));
           let paidAMM = parseFloat((amountUSD).toFixed(3));
+          let potentialProfit = (amountAMM-paidAMM)>0.51? Math.round(amountAMM-paidAMM): amountAMM-paidAMM;
           newAMMTradeMessage = newAMMTradeMessage + 'Amount: '+parseFloat((amountShortLong).toFixed(3))+' '+downOrUP+' tokens\n';
           newAMMTradeMessage = newAMMTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' USDC\n';
-          newAMMTradeMessage = newAMMTradeMessage + 'Potential profit: '+Math.round(amountAMM-paidAMM)+' USDC ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
+          newAMMTradeMessage = newAMMTradeMessage + 'Potential profit: '+potentialProfit+' USDC ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
 
           twitterClientAMMMarket.post('statuses/update', { status: newAMMTradeMessage }, function(err, data, response) {
             console.log(data)
@@ -3855,12 +3859,16 @@ async  function getBurnedThalesBalance (){
 
   const tokenBalance = await burnedContract.methods.balanceOf("0x679C0174f6c288C4bcd5C95C9Ec99D50357C59E7").call();
   let amountOfThales = tokenBalance / 1e18;
+  const deadTokenBalance = await deadburnedContract.methods.balanceOf("0x000000000000000000000000000000000000dEaD").call();
+  let amountOfDeadTokens = deadTokenBalance / 1e18;
+  let sumOfAllBurnedThales = amountOfThales+amountOfDeadTokens;
+
   try {
     clientTotalBurnedThales.guilds.cache.forEach(function (value, key) {
       try {
         value.members.cache
             .get(clientTotalBurnedThales.user.id)
-            .setNickname(getNumberLabelDecimals(amountOfThales));
+            .setNickname(getNumberLabelDecimals(sumOfAllBurnedThales));
       } catch (e) {
         console.log('error while updating amount of thales'+e);
       }
@@ -3927,6 +3935,10 @@ async function getOvertimeMarkets(){
         }
 
     if(!isResolved){
+
+      let homeTeam =  await fixDuplicatedTeamName(sportMarket.homeTeam);
+      let awayTeam  = await fixDuplicatedTeamName(sportMarket.awayTeam);
+
         var message = new Discord.MessageEmbed()
             .addFields(
                 {
@@ -3937,7 +3949,7 @@ async function getOvertimeMarkets(){
                   name: ":classical_building: Overtime market:",
                   value:
                       "[" +
-                      sportMarket.homeTeam +" - "+sportMarket.awayTeam+
+                      homeTeam +" - "+awayTeam+
                       "](https://overtimemarkets.xyz/#/markets/" +
                       sportMarket.address +
                       ")",
@@ -3967,6 +3979,10 @@ async function getOvertimeMarkets(){
         let marketsChannel =   await clientNewListings.channels.fetch(channelToSend);
         marketsChannel.send(message);
     } else {
+
+      let homeTeam =  await fixDuplicatedTeamName(sportMarket.homeTeam);
+      let awayTeam  = await fixDuplicatedTeamName(sportMarket.awayTeam);
+
       var message = new Discord.MessageEmbed()
           .addFields(
               {
@@ -3977,7 +3993,7 @@ async function getOvertimeMarkets(){
                 name: ":classical_building: Overtime market:",
                 value:
                     "[" +
-                    sportMarket.homeTeam +" - "+sportMarket.awayTeam+
+                    homeTeam +" - "+awayTeam+
                     "](https://overtimemarkets.xyz/#/markets/" +
                     sportMarket.address +
                     ")",
@@ -4026,6 +4042,25 @@ function  calculatePercentageProfit(total,paid) {
   return Math.round(((total-paid)/paid)*100)
 }
 
+
+async function fixDuplicatedTeamName (name) {
+  const middle = Math.floor(name.length / 2);
+  const firstHalf = name.substring(0, middle).trim();
+  const secondHalf = name.substring(middle, name.length).trim();
+
+  if (firstHalf === secondHalf) {
+    return firstHalf;
+  }
+
+  const splittedName = name.split(' ');
+  const uniqueWordsInName = new Set(splittedName);
+  if (uniqueWordsInName.size !== splittedName.length) {
+    return Array.from(uniqueWordsInName).join(' ');
+  }
+
+  return name;
+};
+
 async function getOvertimeTrades(){
 
   let overtimeMarketsTrades = await  thalesData.sportMarkets.marketTransactions({
@@ -4046,12 +4081,14 @@ async function getOvertimeTrades(){
         let odds;
         if(position==0){
           position = "Home team to win";
-        }else if(position==2 || specificMarket[0].drawOdds==0 ){
+        }else if(position==1){
           position = "Away team to win";
         }else{
           position = "Draw";
         }
-        let marketMessage = specificMarket[0].homeTeam + " - " + specificMarket[0].awayTeam;
+       let homeTeam =  await fixDuplicatedTeamName(specificMarket[0].homeTeam);
+        let awayTeam  = await fixDuplicatedTeamName(specificMarket[0].awayTeam);
+        let marketMessage = homeTeam + " - " + awayTeam ;
         var message = new Discord.MessageEmbed()
             .addFields(
                 {
@@ -4117,7 +4154,7 @@ async function getOvertimeTrades(){
         });
 
         let newOvertimeAMMMessage = overtimeMarketTrade.type.toUpperCase()==="BUY" ? 'New Overtime AMM position bought\n' : 'New Overtime AMM position sold\n';
-        let potentialProfit = (overtimeMarketTrade.amount-overtimeMarketTrade.paid.toFixed(3))>0? Math.round(overtimeMarketTrade.amount-overtimeMarketTrade.paid.toFixed(3)): overtimeMarketTrade.amount-overtimeMarketTrade.paid.toFixed(3);
+        let potentialProfit = (overtimeMarketTrade.amount-overtimeMarketTrade.paid.toFixed(3))>0.51? Math.round(overtimeMarketTrade.amount-overtimeMarketTrade.paid.toFixed(3)): overtimeMarketTrade.amount-overtimeMarketTrade.paid.toFixed(3);
         newOvertimeAMMMessage = newOvertimeAMMMessage + marketMessage+'\n';
         newOvertimeAMMMessage = newOvertimeAMMMessage + 'Amount: '+ overtimeMarketTrade.amount+"\n";
         newOvertimeAMMMessage = newOvertimeAMMMessage + 'Paid: '+ overtimeMarketTrade.paid.toFixed(3)+' sUSD\n';
