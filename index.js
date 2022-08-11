@@ -2892,11 +2892,35 @@ async function getPolygonTrades() {
         var amountShortLong;
         var isLong = false;
         var isBuy = false;
+        var isRanged = false;
+        var makerTokenNamesArray = makerTokenName.split(" ");
+        const lowerMakerTokenNamesArray = makerTokenNamesArray.map(element => {
+          return element.toLowerCase();
+        });
+
+        var takerTokenNamesArray = takerTokenName.split(" ");
+        const lowerTakerTokenNamesArray = takerTokenNamesArray.map(element => {
+          return element.toLowerCase();
+        });
+
+
         if (
-            makerTokenName.toLowerCase().includes("up") ||
-            makerTokenName.toLowerCase().includes("down")
+            lowerMakerTokenNamesArray.includes("in") ||
+            lowerMakerTokenNamesArray.includes("out")
+        ){
+          amountShortLong = polygonTrade.makerAmount/1e18;
+          amountUSD = polygonTrade.takerAmount / 1e6;
+          isRanged = true;
+        }else if(lowerTakerTokenNamesArray.includes("in") ||
+            lowerTakerTokenNamesArray.includes("out")){
+          isRanged = true;
+          amountUSD =polygonTrade.makerAmount / 1e6;
+          amountShortLong = polygonTrade.takerAmount / 1e18;
+        }else if (
+            lowerMakerTokenNamesArray.includes("up") ||
+            lowerMakerTokenNamesArray.includes("down")
         ) {
-          if (makerTokenName.toLowerCase().includes("up")) {
+          if (lowerMakerTokenNamesArray.includes("up")) {
             shortLong = " > ";
             isLong = true;
           } else {
@@ -2907,7 +2931,7 @@ async function getPolygonTrades() {
           amountUSD = polygonTrade.takerAmount / 1e6;
           isBuy = true;
         } else {
-          if (takerTokenName.toLowerCase().includes("up")) {
+          if (lowerTakerTokenNamesArray.includes("up")) {
             shortLong = " > ";
             isLong = true;
           } else {
@@ -2920,63 +2944,137 @@ async function getPolygonTrades() {
           shortLong = takerTokenName.toLowerCase().includes("up") ? " > " : " < ";
         }
 
-        let market = await  getPolygonMarket(polygonTrade);
+        if(isRanged){
 
-        var marketMessage =
-            web3.utils.hexToAscii(market.currencyKey).replace(/\0/g, '') +
-            shortLong +
-            Math.round(((market.strikePrice/1e18) + Number.EPSILON) * 1000) / 1000;
-        marketMessage =
-            marketMessage +
-            "@" +
-            new Date(market.maturityDate*1000).toISOString().slice(0, 10);
+          let rangedMarket = await  getRangedMarketPolygon(polygonTrade);
+          var marketMessage =
+              web3.utils.hexToAscii(rangedMarket.currencyKey).replace(/\0/g, '') +
+              " "+polygonTrade.optionSide.toUpperCase() + " > $"+
+              Math.round(((rangedMarket.leftPrice/1e18) + Number.EPSILON) * 1000) / 1000+" < $"+Math.round(((rangedMarket.rightPrice/1e18) + Number.EPSILON) * 1000) / 1000;
+          let discordMarketMessage
+          discordMarketMessage =
+              marketMessage +
+              "@" +
+              new Date(rangedMarket.maturityDate*1000).toISOString().slice(0, 10);
 
-        let messageTitle;
-        messageTitle = ":lock: New Polygon Amm Thales Trade :lock:"
+
+          var message = new Discord.MessageEmbed()
+              .addFields(
+                  {
+                    name: ":lock: New Polygon Ranged Market Thales Trade :lock:",
+                    value: "\u200b",
+                  },
+                  {
+                    name: ":link: Transaction:",
+                    value:
+                        "[" +
+                        polygonTrade.transactionHash +
+                        "](https://polygonscan.com/tx/" +
+                        polygonTrade.transactionHash +
+                        ")",
+                  },
+                  {
+                    name: ":coin: Transaction type:",
+                    value: polygonTrade.orderSide.toUpperCase(),
+                  },
+                  {
+                    name: ":classical_building: Market:",
+                    value:
+                        "[" +
+                        discordMarketMessage +
+                        "](https://thalesmarket.io/markets/" +
+                        polygonTrade.market +
+                        ")",
+                  },
+                  {
+                    name: ":dollar: "+polygonTrade.optionSide.toUpperCase()+" tokens",
+                    value: parseFloat((amountShortLong).toFixed(3)),
+                  },
+                  {
+                    name: ":dollar: Total:",
+                    value: parseFloat((amountUSD).toFixed(3)) + " sUSD",
+                  },
+                  {
+                    name: ":alarm_clock: Timestamp:",
+                    value: new Date(polygonTrade.timestamp*1000),
+                  }
+              )
+              .setColor("#0037ff");
+          let newRangeTradeMessage = polygonTrade.orderSide.toUpperCase()=="BUY" ? 'New Polygon Ranged Market position bought\n' : 'New Polygon Ranged Market position sold\n';
+          var date = new Date(polygonTrade.timestamp*1000);
+
+          newRangeTradeMessage = newRangeTradeMessage + 'Condition: '+marketMessage+'\n';
+          let amountAMM = parseFloat((amountShortLong).toFixed(3));
+          let paidAMM = parseFloat((amountUSD).toFixed(3));
+          let potentialProfit = (amountAMM-paidAMM)>0.51? Math.round(amountAMM-paidAMM): amountAMM-paidAMM;
+          newRangeTradeMessage = newRangeTradeMessage + 'Maturity date: '+new Date(rangedMarket.maturityDate*1000).toISOString().slice(0, 10)+'\n';
+          newRangeTradeMessage = newRangeTradeMessage + 'Amount: '+parseFloat((amountShortLong).toFixed(3))+' '+polygonTrade.optionSide.toUpperCase()+' tokens\n';
+          newRangeTradeMessage = newRangeTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' sUSD\n';
+          newRangeTradeMessage = newRangeTradeMessage + 'Potential profit: '+potentialProfit+' sUSD ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
+
+          twitterClientAMMMarket.post('statuses/update', { status: newRangeTradeMessage }, function(err, data, response) {
+            console.log(data)
+          });
+
+      }
+        else {
+          let market = await getPolygonMarket(polygonTrade);
+
+          var marketMessage =
+              web3.utils.hexToAscii(market.currencyKey).replace(/\0/g, '') +
+              shortLong +
+              Math.round(((market.strikePrice / 1e18) + Number.EPSILON) * 1000) / 1000;
+          marketMessage =
+              marketMessage +
+              "@" +
+              new Date(market.maturityDate * 1000).toISOString().slice(0, 10);
+
+          let messageTitle;
+          messageTitle = ":lock: New Polygon Amm Thales Trade :lock:"
 
 
-        var message = new Discord.MessageEmbed()
-            .addFields(
-                {
-                  name: messageTitle,
-                  value: "\u200b",
-                },
-                {
-                  name: ":link: Transaction:",
-                  value:
-                      "[" +
-                      polygonTrade.transactionHash +
-                      "](https://polygonscan.com/tx/" +
-                      polygonTrade.transactionHash +
-                      ")",
-                },
-                {
-                  name: ":coin: Transaction type:",
-                  value: isBuy ? "Buy" : "Sell",
-                },
-                {
-                  name: ":classical_building: Market:",
-                  value:
-                      "[" +
-                      marketMessage +
-                      "](https://thalesmarket.io/markets/" +
-                      polygonTrade.market +
-                      ")",
-                },
-                {
-                  name: isLong ? ":dollar: UP tokens" : ":dollar: DOWN tokens",
-                  value: parseFloat((amountShortLong).toFixed(3)),
-                },
-                {
-                  name: ":dollar: Total:",
-                  value: parseFloat((amountUSD).toFixed(3)) + " USDC",
-                },
-                {
-                  name: ":alarm_clock: Timestamp:",
-                  value: new Date(polygonTrade.timestamp*1000),
-                }
-            )
-            .setColor("#0037ff");
+          var message = new Discord.MessageEmbed()
+              .addFields(
+                  {
+                    name: messageTitle,
+                    value: "\u200b",
+                  },
+                  {
+                    name: ":link: Transaction:",
+                    value:
+                        "[" +
+                        polygonTrade.transactionHash +
+                        "](https://polygonscan.com/tx/" +
+                        polygonTrade.transactionHash +
+                        ")",
+                  },
+                  {
+                    name: ":coin: Transaction type:",
+                    value: isBuy ? "Buy" : "Sell",
+                  },
+                  {
+                    name: ":classical_building: Market:",
+                    value:
+                        "[" +
+                        marketMessage +
+                        "](https://thalesmarket.io/markets/" +
+                        polygonTrade.market +
+                        ")",
+                  },
+                  {
+                    name: isLong ? ":dollar: UP tokens" : ":dollar: DOWN tokens",
+                    value: parseFloat((amountShortLong).toFixed(3)),
+                  },
+                  {
+                    name: ":dollar: Total:",
+                    value: parseFloat((amountUSD).toFixed(3)) + " USDC",
+                  },
+                  {
+                    name: ":alarm_clock: Timestamp:",
+                    value: new Date(polygonTrade.timestamp * 1000),
+                  }
+              )
+              .setColor("#0037ff");
           clientNewListings.channels
               .fetch("963823355595747338")
               .then((ammTradesChannel) => {
@@ -2984,28 +3082,28 @@ async function getPolygonTrades() {
               });
 
 
+          let newAMMTradeMessage = isBuy ? 'New Polygon AMM position bought\n' : 'New Polygon AMM position sold\n';
+          var date = new Date(polygonTrade.timestamp * 1000);
 
-          let newAMMTradeMessage =isBuy ? 'New Polygon AMM position bought\n' : 'New Polygon AMM position sold\n';
-          var date = new Date(polygonTrade.timestamp*1000);
-
-          newAMMTradeMessage = newAMMTradeMessage + 'Condition: '+marketMessage+'\n';
+          newAMMTradeMessage = newAMMTradeMessage + 'Condition: ' + marketMessage + '\n';
           let downOrUP;
-          if(isLong){
-            downOrUP='UP';
-          }else{
-            downOrUP='DOWN';
-          };
+          if (isLong) {
+            downOrUP = 'UP';
+          } else {
+            downOrUP = 'DOWN';
+          }
+          ;
           let amountAMM = parseFloat((amountShortLong).toFixed(3));
           let paidAMM = parseFloat((amountUSD).toFixed(3));
-          let potentialProfit = (amountAMM-paidAMM)>0.51? Math.round(amountAMM-paidAMM): amountAMM-paidAMM;
-          newAMMTradeMessage = newAMMTradeMessage + 'Amount: '+parseFloat((amountShortLong).toFixed(3))+' '+downOrUP+' tokens\n';
-          newAMMTradeMessage = newAMMTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' USDC\n';
-          newAMMTradeMessage = newAMMTradeMessage + 'Potential profit: '+potentialProfit+' USDC ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
+          let potentialProfit = (amountAMM - paidAMM) > 0.51 ? Math.round(amountAMM - paidAMM) : amountAMM - paidAMM;
+          newAMMTradeMessage = newAMMTradeMessage + 'Amount: ' + parseFloat((amountShortLong).toFixed(3)) + ' ' + downOrUP + ' tokens\n';
+          newAMMTradeMessage = newAMMTradeMessage + 'Paid: ' + parseFloat((amountUSD).toFixed(3)) + ' USDC\n';
+          newAMMTradeMessage = newAMMTradeMessage + 'Potential profit: ' + potentialProfit + ' USDC (' + calculateProfitPercentageTotal(paidAMM, amountAMM) + '%)\n';
 
-          twitterClientAMMMarket.post('statuses/update', { status: newAMMTradeMessage }, function(err, data, response) {
+          twitterClientAMMMarket.post('statuses/update', {status: newAMMTradeMessage}, function (err, data, response) {
             console.log(data)
           });
-
+        }
         writenPolygonTrades.push(polygonTrade.transactionHash);
         redisClient.lpush(polygonTradesKey, polygonTrade.transactionHash);
         totalAmountOfTradesPolygon = totalAmountOfTradesPolygon + Math.round(amountUSD);
@@ -3022,6 +3120,53 @@ async function getPolygonTrades() {
     }
   }
 
+}
+
+
+async function  getRangedMarketPolygon(tradeL2) {
+
+  const body = JSON.stringify({
+    query: `{rangedMarkets(where:{
+    id: "${tradeL2.market}"
+  }) {
+    id
+    timestamp
+    currencyKey
+    maturityDate
+    expiryDate
+    leftPrice
+    rightPrice
+    rightMarket{
+    id
+    strikePrice
+      currencyKey
+      maturityDate
+      expiryDate
+    }
+    leftMarket{
+      id
+    strikePrice
+      currencyKey
+      maturityDate
+      expiryDate
+    }
+    
+  }}`,
+    variables: null,
+  });
+
+  const response = await fetch(
+      "https://api.thegraph.com/subgraphs/name/thales-markets/thales-polygon",
+      {
+        method: "POST",
+        body,
+      }
+  );
+
+  const json = await response.json();
+  const markets = json.data.rangedMarkets;
+
+  return markets[0];
 }
 
 async function updateTotalL2Trades() {
