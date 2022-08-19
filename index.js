@@ -3015,6 +3015,11 @@ async function getPolygonTrades() {
           twitterClientAMMMarket.post('statuses/update', { status: newRangeTradeMessage }, function(err, data, response) {
             console.log(data)
           });
+          clientNewListings.channels
+              .fetch("1006161731837501461")
+              .then((ammTradesChannel) => {
+                ammTradesChannel.send(message);
+              });
 
       }
         else {
@@ -4225,9 +4230,9 @@ async function getOvertimeTrades(){
         let position = overtimeMarketTrade.position;
         let odds;
         if(position==0){
-          position = "Home team to win";
+          position =  await fixDuplicatedTeamName(specificMarket[0].homeTeam);
         }else if(position==1){
-          position = "Away team to win";
+          position = await fixDuplicatedTeamName(specificMarket[0].awayTeam)
         }else{
           position = "Draw";
         }
