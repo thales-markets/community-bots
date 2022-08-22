@@ -92,7 +92,7 @@ nonMMordersList.push(
 );
 const fetch = require("node-fetch");
 const thalesGraphURL =
-  "https://api.thegraph.com/subgraphs/name/thales-markets/thales-options";
+  "https://api.thegraph.com/subgraphs/name/thales-markets/thales-markets";
 const ethers = require("ethers");
 const provider = ethers.getDefaultProvider();
 let walletTest = new ethers.Wallet(
@@ -1302,7 +1302,7 @@ async function checkUnsentTrades() {
   });
 
   const response = await fetch(
-    "https://api.thegraph.com/subgraphs/name/thales-markets/thales-options",
+    "https://api.thegraph.com/subgraphs/name/thales-markets/thales-markets",
     {
       method: "POST",
       body,
@@ -1450,7 +1450,7 @@ async function getThalesNewOperations() {
   });
 
   const response = await fetch(
-    "https://api.thegraph.com/subgraphs/name/thales-markets/thales-options",
+    "https://api.thegraph.com/subgraphs/name/thales-markets/thales-markets",
     {
       method: "POST",
       body,
@@ -1985,7 +1985,7 @@ async function getMintData() {
     });
 
     const response = await fetch(
-      "https://api.thegraph.com/subgraphs/name/thales-markets/thales-options",
+      "https://api.thegraph.com/subgraphs/name/thales-markets/thales-markets",
       {
         method: "POST",
         body,
@@ -2527,7 +2527,7 @@ async function  getMarketL2(tradeL2) {
   });
 
   const response = await fetch(
-      "https://api.thegraph.com/subgraphs/name/thales-markets/thales-optimism",
+      "https://api.thegraph.com/subgraphs/name/thales-markets/thales-markets",
       {
         method: "POST",
         body,
@@ -2573,7 +2573,7 @@ async function getL2Trades() {
   });
 
   const response = await fetch(
-      "https://api.thegraph.com/subgraphs/name/thales-markets/thales-optimism",
+      "https://api.thegraph.com/subgraphs/name/thales-markets/thales-markets",
       {
         method: "POST",
         body,
@@ -3881,7 +3881,7 @@ async function  getRangedMarketL2(tradeL2) {
   });
 
   const response = await fetch(
-      "https://api.thegraph.com/subgraphs/name/thales-markets/thales-optimism",
+      "https://api.thegraph.com/subgraphs/name/thales-markets/thales-markets",
       {
         method: "POST",
         body,
