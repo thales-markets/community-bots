@@ -249,6 +249,7 @@ setInterval(function () {
 const setPriceBot = async (clientForSetting,tokenForPrice,nameOfTheToken) => {
 
   let data = await CoinGeckoClient.coins.fetch(tokenForPrice);
+  if(data.data && data.data.market_data){
 
   clientForSetting.guilds.cache.forEach(function (value, key) {
     try {
@@ -259,6 +260,7 @@ const setPriceBot = async (clientForSetting,tokenForPrice,nameOfTheToken) => {
     }
   });
   clientForSetting.user.setActivity(nameOfTheToken, {type: 'WATCHING'});
+  }
 }
 
 const round = function (num) {
@@ -2082,8 +2084,8 @@ let overtimeTradesKey = "OvertimeTrades";
 let exoticMarketPositionsKey = "ExoticMarketPositions";
 let exoticMarketDisputesKey = "ExoticMarketDisputes";
 let exoticMarketResultSet = "ExoticMarketResultSet";
-let totalAmountOfTradesL2 = 1445000;
-let numberOfTradesL2 = 6245;
+let totalAmountOfTradesL2 = 4992821;
+let numberOfTradesL2 = 13110;
 let totalAmountOfTradesOT = 1403;
 let numberOfTradesOT = 245;
 let totalAmountOfTradesPolygon = 455;
@@ -2099,6 +2101,8 @@ let writenExoticMarketResultSet = [];
 let verifiedUsersMap = new Map();
 let totalAmountOTKey = "totalAmountOTKey";
 let totalTradesOTKey = "totalTradesOTKey";
+const totalAmountL2Key = "totalAmountL2Key";
+const totalTradesL2Key = "totalNumberTradesL2Key";
 if (process.env.REDIS_URL) {
   redisClient = redis.createClient(process.env.REDIS_URL);
   redisClient.on("error", function (error) {
@@ -2112,7 +2116,7 @@ if (process.env.REDIS_URL) {
     }
   });*/
 
-  redisClient.get("totalAmountL2", function (err, obj) {
+  redisClient.get(totalAmountL2Key, function (err, obj) {
     if(obj){
       console.log("setting object "+obj);
       totalAmountOfTradesL2 = Number(obj);
@@ -2133,7 +2137,7 @@ if (process.env.REDIS_URL) {
     }
   });
 
-  redisClient.get("totalTradesL2Key", function (err, obj) {
+  redisClient.get(totalTradesL2Key, function (err, obj) {
     if(obj){
       console.log("setting object "+obj);
       numberOfTradesL2 = Number(obj);
@@ -2824,10 +2828,10 @@ async function getL2Trades() {
       redisClient.lpush(L2tradesKey, tradeL2.id);
       totalAmountOfTradesL2 = totalAmountOfTradesL2 + Math.round(amountUSD);
       numberOfTradesL2++;
-      redisClient.set("totalAmountL2", totalAmountOfTradesL2, function (err, reply) {
+      redisClient.set(totalAmountL2Key, totalAmountOfTradesL2, function (err, reply) {
             console.log(reply); // OK
       });
-      redisClient.set("totalTradesL2Key", numberOfTradesL2, function (err, reply) {
+      redisClient.set(totalTradesL2Key, numberOfTradesL2, function (err, reply) {
           console.log(reply); // OK
         });
       }catch (e) {
@@ -3289,14 +3293,14 @@ async function calculateThalesL2APR() {
       try {
         value.members.cache
             .get(clientThalesL2APR.user.id)
-            .setNickname(formatedAPR+" | "+formatedAPROP);
+            .setNickname(formatedAPR+" + "+formatedAPROP);
       } catch (e) {
         console.log(e);
       }
     });
   }
 
-  clientThalesL2APR.user.setActivity("APR L2 WETH/THALES | OP", {
+  clientThalesL2APR.user.setActivity("APR L2 WETH/THALES + OP", {
     type: "WATCHING",
   });
 };
@@ -4105,7 +4109,7 @@ async function getOvertimeMarkets(){
                       ")",
                 },
                 {
-                  name: ":coin: Home team wining odds:",
+                  name: ":coin: Home team winning odds:",
                   value: sportMarket.homeOdds.toFixed(3),
                 },
                 {
@@ -4113,7 +4117,7 @@ async function getOvertimeMarkets(){
                   value: sportMarket.drawOdds!=0?sportMarket.drawOdds.toFixed(3):"No draw available",
                 },
                 {
-                  name: ":coin: Away team wining odds:",
+                  name: ":coin: Away team winning odds:",
                   value: sportMarket.awayOdds.toFixed(3),
                 },
                 {
@@ -4153,7 +4157,7 @@ async function getOvertimeMarkets(){
                 value: sportMarket.homeScore +" - "+ sportMarket.awayScore,
               },
               {
-                name: ":coin: Home team wining odds:",
+                name: ":coin: Home team winning odds:",
                 value: sportMarket.homeOdds.toFixed(3),
               },
               {
@@ -4161,7 +4165,7 @@ async function getOvertimeMarkets(){
                 value: sportMarket.drawOdds!=0?sportMarket.drawOdds.toFixed(3):"No draw available",
               },
               {
-                name: ":coin: Away team wining odds:",
+                name: ":coin: Away team winning odds:",
                 value: sportMarket.awayOdds.toFixed(3),
               },
               {
@@ -4214,6 +4218,7 @@ async function fixDuplicatedTeamName (name) {
 async function getOvertimeTrades(){
 
   let overtimeMarketsTrades = await  thalesData.sportMarkets.marketTransactions({
+    max:100,
     network:10
   });
   var startdate = new Date();
