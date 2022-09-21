@@ -33,6 +33,10 @@ const clientTotalL2Trades = new Discord.Client();
 clientTotalL2Trades.login(process.env.BOT_TOKEN_TOTAL_L2);
 const clientOvertimeTrades = new Discord.Client();
 clientOvertimeTrades.login(process.env.BOT_TOKEN_TOTAL_OT);
+const clientBSCTrades = new Discord.Client();
+clientOvertimeTrades.login(process.env.BOT_TOKEN_TOTAL_ARB);
+const clientARBTrades = new Discord.Client();
+clientOvertimeTrades.login(process.env.BOT_TOKEN_TOTAL_BSC);
 clientCountdownChannel.login(process.env.BOT_TOKEN_COUNTDOWN_CHANNEL);
 const clientTotalPolygonTrades = new Discord.Client();
 clientTotalPolygonTrades.login(process.env.BOT_TOKEN_TOTAL_POLYGON);
@@ -42,6 +46,12 @@ let polygonContract = JSON.parse(polygonRaw);
 let burnedRaw = fs.readFileSync('contracts/burned.json');
 let contractBurned = JSON.parse(burnedRaw);
 const web3Polygon = new Web3(new Web3.providers.HttpProvider("https://polygon-mainnet.infura.io/v3/71f890a2441d49088e4e145b2bc23bc7"));
+const web3Arbitrum = new Web3(new Web3.providers.HttpProvider("https://arbitrum-mainnet.infura.io/v3/71f890a2441d49088e4e145b2bc23bc7"));
+const web3BSC = new Web3(new Web3.providers.HttpProvider("https://winter-spring-frost.bsc.discover.quiknode.pro/360e06c724df630e0a6aa4417dedfb41142a3184/"));
+let bscRaw = fs.readFileSync('contracts/bsc.json');
+let bscContract = JSON.parse(bscRaw);
+let arbitrumRaw = fs.readFileSync('contracts/arbitrum.json');
+let arbitrumContract = JSON.parse(arbitrumRaw);
 const web3 = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_URL));
 const web3L2 = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_L2_URL));
 const CoinGecko = require('coingecko-api');
@@ -396,6 +406,8 @@ setInterval(function () {
   console.log("get L2 trades");
   getL2Trades();
   getPolygonTrades();
+  getArbitrumTrades();
+  getBSCTrades();
 }, 2 * 60 * 1000);
 
 
@@ -2078,6 +2090,8 @@ const redis = require("redis");
 let redisClient = null;
 let L2tradesKey = "L2Trades";
 let polygonTradesKey = "PolygonTrades";
+let arbitrumTradesKey = "ArbitrumTrades";
+let bscTradesKey = "BSCTrades";
 let exoticMarketsKey = "ExoticMarkets";
 let overtimeMarketsKey = "OvertimeMarketsMap";
 let overtimeTradesKey = "OvertimeTrades";
@@ -2088,10 +2102,16 @@ let totalAmountOfTradesL2 = 4992821;
 let numberOfTradesL2 = 13110;
 let totalAmountOfTradesOT = 1403;
 let numberOfTradesOT = 245;
+let totalAmountOfTradesBSC = 67;
+let numberOfTradesBSC = 77;
+let totalAmountOfTradesARB = 2377;
+let numberOfTradesARB = 130;
 let totalAmountOfTradesPolygon = 455;
 let numberOfTradesPolygon = 75;
 let writenL2Trades = [];
 let writenPolygonTrades = [];
+let writenArbitrumTrades = [];
+let writenBSCTrades = [];
 let writenExoticMarkets = [];
 let writenOvertimeMarkets = new Map();
 let writenOvertimeTrades = [];
@@ -2103,6 +2123,10 @@ let totalAmountOTKey = "totalAmountOTKey";
 let totalTradesOTKey = "totalTradesOTKey";
 const totalAmountL2Key = "totalAmountL2Key";
 const totalTradesL2Key = "totalNumberTradesL2Key";
+const totalTradesARBKey = "totalTradesARBKey";
+const totalAmountARBKey = "totalAmountTradesARBKey";
+const totalAmountBSCKey = "totalAmountBSCKey";
+const totalTradesBSCKey = "totalTradesBSCKey";
 if (process.env.REDIS_URL) {
   redisClient = redis.createClient(process.env.REDIS_URL);
   redisClient.on("error", function (error) {
@@ -2137,6 +2161,34 @@ if (process.env.REDIS_URL) {
     }
   });
 
+  redisClient.get(totalAmountBSCKey, function (err, obj) {
+    if(obj){
+      console.log("setting object "+obj);
+      totalAmountOfTradesBSC = Number(obj);
+    }
+  });
+
+  redisClient.get(totalTradesBSCKey, function (err, obj) {
+    if(obj){
+      console.log("setting object "+obj);
+      numberOfTradesBSC = Number(obj);
+    }
+  });
+
+  redisClient.get(totalAmountARBKey, function (err, obj) {
+    if(obj){
+      console.log("setting object "+obj);
+      totalAmountOfTradesARB = Number(obj);
+    }
+  });
+
+  redisClient.get(totalTradesARBKey, function (err, obj) {
+    if(obj){
+      console.log("setting object "+obj);
+      numberOfTradesARB = Number(obj);
+    }
+  });
+
   redisClient.get(totalTradesL2Key, function (err, obj) {
     if(obj){
       console.log("setting object "+obj);
@@ -2163,6 +2215,14 @@ if (process.env.REDIS_URL) {
 
   redisClient.lrange(polygonTradesKey, 0, -1, function (err, polygonTrades) {
     writenPolygonTrades = polygonTrades;
+  });
+
+  redisClient.lrange(arbitrumTradesKey, 0, -1, function (err, polygonTrades) {
+    writenArbitrumTrades = polygonTrades;
+  });
+
+  redisClient.lrange(bscTradesKey, 0, -1, function (err, polygonTrades) {
+    writenBSCTrades = polygonTrades;
   });
 
   redisClient.lrange(exoticMarketsKey, 0, -1, function (err, polygonTrades) {
@@ -3223,12 +3283,16 @@ async function updateTotalPolygonTrades() {
 setTimeout(function () {
   updateTotalL2Trades();
   updateTotalOvertimeTrades();
+  updateTotalARBTrades();
+  updateTotalBSCTrades();
 }, 1000 * 30 * 1);
 
 setInterval(function () {
   console.log("update l2 trades");
   updateTotalL2Trades();
   updateTotalOvertimeTrades();
+  updateTotalARBTrades();
+  updateTotalBSCTrades();
 }, 360 * 1000);
 
 setTimeout(function () {
@@ -4369,5 +4433,770 @@ async function updateTotalOvertimeTrades() {
     );
   }catch (e) {
     console.log("there was an error while updating total OT");
+  }
+}
+
+async function getArbitrumTrades() {
+
+  const body = JSON.stringify({
+    query: `{
+      trades(
+        orderBy:timestamp,
+        orderDirection:desc,
+      ) {
+    id
+    timestamp
+    transactionHash
+    orderHash
+    maker
+    taker
+    makerToken
+    takerToken
+    makerAmount
+    takerAmount
+    market
+    optionSide
+    orderSide
+  }
+}`,
+    variables: null,
+  });
+
+  const response = await fetch(
+      "https://api.thegraph.com/subgraphs/name/thales-markets/thales-arbitrum",
+      {
+        method: "POST",
+        body,
+      }
+  );
+  const json = await response.json();
+  const arbitrumTrades = json.data.trades;
+  var startdate = new Date();
+  var durationInMinutes = 30;
+  startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
+  let startDateUnixTime = Math.floor(startdate.getTime()/1000);
+  for (const arbitrumTrade of arbitrumTrades) {
+      if (startDateUnixTime < Number(arbitrumTrade.timestamp) && !writenArbitrumTrades.includes(arbitrumTrade.transactionHash)) {
+    try{
+      console.log("new arbitrum trade");
+      var shortLong;
+      const makerToken = new web3Arbitrum.eth.Contract(arbitrumContract, arbitrumTrade.makerToken);
+      const makerTokenName = await makerToken.methods.name().call();
+      const takerToken = new web3Arbitrum.eth.Contract(arbitrumContract, arbitrumTrade.takerToken);
+      const takerTokenName = await takerToken.methods.name().call();
+      var amountUSD;
+      var amountShortLong;
+      var isLong = false;
+      var isBuy = false;
+      var isRanged = false;
+      var makerTokenNamesArray = makerTokenName.split(" ");
+      const lowerMakerTokenNamesArray = makerTokenNamesArray.map(element => {
+        return element.toLowerCase();
+      });
+
+      var takerTokenNamesArray = takerTokenName.split(" ");
+      const lowerTakerTokenNamesArray = takerTokenNamesArray.map(element => {
+        return element.toLowerCase();
+      });
+
+
+      if (
+          lowerMakerTokenNamesArray.includes("in") ||
+          lowerMakerTokenNamesArray.includes("out")
+      ){
+        amountShortLong = arbitrumTrade.makerAmount/1e18;
+        amountUSD = arbitrumTrade.takerAmount / 1e6;
+        isRanged = true;
+      }else if(lowerTakerTokenNamesArray.includes("in") ||
+          lowerTakerTokenNamesArray.includes("out")){
+        isRanged = true;
+        amountUSD =arbitrumTrade.makerAmount / 1e6;
+        amountShortLong = arbitrumTrade.takerAmount / 1e18;
+      }else if (
+          lowerMakerTokenNamesArray.includes("up") ||
+          lowerMakerTokenNamesArray.includes("down")
+      ) {
+        if (lowerMakerTokenNamesArray.includes("up")) {
+          shortLong = " > ";
+          isLong = true;
+        } else {
+          shortLong = " < ";
+          isLong = false;
+        }
+        amountShortLong = arbitrumTrade.makerAmount/1e18;
+        amountUSD = arbitrumTrade.takerAmount / 1e6;
+        isBuy = true;
+      } else {
+        if (lowerTakerTokenNamesArray.includes("up")) {
+          shortLong = " > ";
+          isLong = true;
+        } else {
+          shortLong = " < ";
+          isLong = false;
+        }
+
+        amountUSD =arbitrumTrade.makerAmount / 1e6;
+        amountShortLong = arbitrumTrade.takerAmount / 1e18;
+        shortLong = takerTokenName.toLowerCase().includes("up") ? " > " : " < ";
+      }
+
+      if(isRanged){
+
+        let rangedMarket = await  getRangedMarketArbitrum(arbitrumTrade);
+        var marketMessage =
+            web3.utils.hexToAscii(rangedMarket.currencyKey).replace(/\0/g, '') +
+            " "+arbitrumTrade.optionSide.toUpperCase() + " > $"+
+            Math.round(((rangedMarket.leftPrice/1e18) + Number.EPSILON) * 1000) / 1000+" < $"+Math.round(((rangedMarket.rightPrice/1e18) + Number.EPSILON) * 1000) / 1000;
+        let discordMarketMessage
+        discordMarketMessage =
+            marketMessage +
+            "@" +
+            new Date(rangedMarket.maturityDate*1000).toISOString().slice(0, 10);
+
+
+        var message = new Discord.MessageEmbed()
+            .addFields(
+                {
+                  name: ":lock: New Arbitrum Ranged Market Thales Trade :lock:",
+                  value: "\u200b",
+                },
+                {
+                  name: ":link: Transaction:",
+                  value:
+                      "[" +
+                      arbitrumTrade.transactionHash +
+                      "](https://arbiscan.io/tx/" +
+                      arbitrumTrade.transactionHash +
+                      ")",
+                },
+                {
+                  name: ":coin: Transaction type:",
+                  value: arbitrumTrade.orderSide.toUpperCase(),
+                },
+                {
+                  name: ":classical_building: Market:",
+                  value:
+                      "[" +
+                      discordMarketMessage +
+                      "](https://thalesmarket.io/markets/" +
+                      arbitrumTrade.market +
+                      ")",
+                },
+                {
+                  name: ":dollar: "+arbitrumTrade.optionSide.toUpperCase()+" tokens",
+                  value: parseFloat((amountShortLong).toFixed(3)),
+                },
+                {
+                  name: ":dollar: Total:",
+                  value: parseFloat((amountUSD).toFixed(3)) + " sUSD",
+                },
+                {
+                  name: ":alarm_clock: Timestamp:",
+                  value: new Date(arbitrumTrade.timestamp*1000),
+                }
+            )
+            .setColor("#0037ff");
+        let newRangeTradeMessage = arbitrumTrade.orderSide.toUpperCase()=="BUY" ? 'New Arbitrum Ranged Market position bought\n' : 'New Arbitrum Ranged Market position sold\n';
+        var date = new Date(arbitrumTrade.timestamp*1000);
+
+        newRangeTradeMessage = newRangeTradeMessage + 'Condition: '+marketMessage+'\n';
+        let amountAMM = parseFloat((amountShortLong).toFixed(3));
+        let paidAMM = parseFloat((amountUSD).toFixed(3));
+        let potentialProfit = (amountAMM-paidAMM)>0.51? Math.round(amountAMM-paidAMM): amountAMM-paidAMM;
+        newRangeTradeMessage = newRangeTradeMessage + 'Maturity date: '+new Date(rangedMarket.maturityDate*1000).toISOString().slice(0, 10)+'\n';
+        newRangeTradeMessage = newRangeTradeMessage + 'Amount: '+parseFloat((amountShortLong).toFixed(3))+' '+arbitrumTrade.optionSide.toUpperCase()+' tokens\n';
+        newRangeTradeMessage = newRangeTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' sUSD\n';
+        newRangeTradeMessage = newRangeTradeMessage + 'Potential profit: '+potentialProfit+' sUSD ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
+        twitterClientAMMMarket.post('statuses/update', { status: newRangeTradeMessage }, function(err, data, response) {
+          console.log(data)
+        });
+        clientNewListings.channels
+            .fetch("1017059106093281400")
+            .then((ammTradesChannel) => {
+              ammTradesChannel.send(message);
+            });
+
+      }
+      else {
+        let market = await getArbitrumMarket(arbitrumTrade);
+
+        var marketMessage =
+            web3.utils.hexToAscii(market.currencyKey).replace(/\0/g, '') +
+            shortLong +
+            Math.round(((market.strikePrice / 1e18) + Number.EPSILON) * 1000) / 1000;
+        marketMessage =
+            marketMessage +
+            "@" +
+            new Date(market.maturityDate * 1000).toISOString().slice(0, 10);
+
+        let messageTitle;
+        messageTitle = ":lock: New Arbitrum Amm Thales Trade :lock:"
+
+
+        var message = new Discord.MessageEmbed()
+            .addFields(
+                {
+                  name: messageTitle,
+                  value: "\u200b",
+                },
+                {
+                  name: ":link: Transaction:",
+                  value:
+                      "[" +
+                      arbitrumTrade.transactionHash +
+                      "](https://arbiscan.io/tx/" +
+                      arbitrumTrade.transactionHash +
+                      ")",
+                },
+                {
+                  name: ":coin: Transaction type:",
+                  value: isBuy ? "Buy" : "Sell",
+                },
+                {
+                  name: ":classical_building: Market:",
+                  value:
+                      "[" +
+                      marketMessage +
+                      "](https://thalesmarket.io/markets/" +
+                      arbitrumTrade.market +
+                      ")",
+                },
+                {
+                  name: isLong ? ":dollar: UP tokens" : ":dollar: DOWN tokens",
+                  value: parseFloat((amountShortLong).toFixed(3)),
+                },
+                {
+                  name: ":dollar: Total:",
+                  value: parseFloat((amountUSD).toFixed(3)) + " USDC",
+                },
+                {
+                  name: ":alarm_clock: Timestamp:",
+                  value: new Date(arbitrumTrade.timestamp * 1000),
+                }
+            )
+            .setColor("#0037ff");
+        clientNewListings.channels
+            .fetch("1017058994973573153")
+            .then((ammTradesChannel) => {
+              ammTradesChannel.send(message);
+            });
+
+
+        let newAMMTradeMessage = isBuy ? 'New Arbitrum AMM position bought\n' : 'New Arbitrum AMM position sold\n';
+        var date = new Date(arbitrumTrade.timestamp * 1000);
+
+        newAMMTradeMessage = newAMMTradeMessage + 'Condition: ' + marketMessage + '\n';
+        let downOrUP;
+        if (isLong) {
+          downOrUP = 'UP';
+        } else {
+          downOrUP = 'DOWN';
+        }
+        ;
+        let amountAMM = parseFloat((amountShortLong).toFixed(3));
+        let paidAMM = parseFloat((amountUSD).toFixed(3));
+        let potentialProfit = (amountAMM - paidAMM) > 0.51 ? Math.round(amountAMM - paidAMM) : amountAMM - paidAMM;
+        newAMMTradeMessage = newAMMTradeMessage + 'Amount: ' + parseFloat((amountShortLong).toFixed(3)) + ' ' + downOrUP + ' tokens\n';
+        newAMMTradeMessage = newAMMTradeMessage + 'Paid: ' + parseFloat((amountUSD).toFixed(3)) + ' USDC\n';
+        newAMMTradeMessage = newAMMTradeMessage + 'Potential profit: ' + potentialProfit + ' USDC (' + calculateProfitPercentageTotal(paidAMM, amountAMM) + '%)\n';
+        twitterClientAMMMarket.post('statuses/update', {status: newAMMTradeMessage}, function (err, data, response) {
+          console.log(data)
+        });
+      }
+      writenArbitrumTrades.push(arbitrumTrade.transactionHash);
+      redisClient.lpush(arbitrumTradesKey, arbitrumTrade.transactionHash);
+      totalAmountOfTradesARB = totalAmountOfTradesARB + Math.round(amountUSD);
+      numberOfTradesARB++;
+      redisClient.set(totalAmountARBKey, totalAmountOfTradesARB, function (err, reply) {
+        console.log(reply); // OK
+      });
+      redisClient.set(totalTradesARBKey, numberOfTradesARB, function (err, reply) {
+        console.log(reply); // OK
+      });
+    }catch (e) {
+      console.log("error in arbitrum trades "+e);
+    }
+    }
+  }
+
+}
+
+async function  getArbitrumMarket(tradeL2) {
+
+  const body = JSON.stringify({
+    query: `{markets(where:{
+    id: "${tradeL2.market}"
+  }) {
+    id
+    timestamp
+    creator
+    currencyKey
+    maturityDate
+    strikePrice
+  }}`,
+    variables: null,
+  });
+
+  const response = await fetch(
+      "https://api.thegraph.com/subgraphs/name/thales-markets/thales-arbitrum",
+      {
+        method: "POST",
+        body,
+      }
+  );
+
+  const json = await response.json();
+  const markets = json.data.markets;
+
+  return markets[0];
+}
+
+async function  getRangedMarketArbitrum(tradeL2) {
+
+  const body = JSON.stringify({
+    query: `{rangedMarkets(where:{
+    id: "${tradeL2.market}"
+  }) {
+    id
+    timestamp
+    currencyKey
+    maturityDate
+    expiryDate
+    leftPrice
+    rightPrice
+    rightMarket{
+    id
+    strikePrice
+      currencyKey
+      maturityDate
+      expiryDate
+    }
+    leftMarket{
+      id
+    strikePrice
+      currencyKey
+      maturityDate
+      expiryDate
+    }
+    
+  }}`,
+    variables: null,
+  });
+
+  const response = await fetch(
+      "https://api.thegraph.com/subgraphs/name/thales-markets/thales-arbitrum",
+      {
+        method: "POST",
+        body,
+      }
+  );
+
+  const json = await response.json();
+  const markets = json.data.rangedMarkets;
+
+  return markets[0];
+}
+
+async function getBSCTrades() {
+
+  const body = JSON.stringify({
+    query: `{
+      trades(
+        orderBy:timestamp,
+        orderDirection:desc,
+      ) {
+    id
+    timestamp
+    transactionHash
+    orderHash
+    maker
+    taker
+    makerToken
+    takerToken
+    makerAmount
+    takerAmount
+    market
+    optionSide
+    orderSide
+  }
+}`,
+    variables: null,
+  });
+
+  const response = await fetch(
+      "https://api.thegraph.com/subgraphs/name/thales-markets/thales-bsc",
+      {
+        method: "POST",
+        body,
+      }
+  );
+  const json = await response.json();
+  const bscTrades = json.data.trades;
+  var startdate = new Date();
+  var durationInMinutes = 30;
+  startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
+  let startDateUnixTime = Math.floor(startdate.getTime()/1000);
+  for (const bscTrade of bscTrades) {
+    if (startDateUnixTime < Number(bscTrade.timestamp) && !writenBSCTrades.includes(bscTrade.transactionHash)) {
+    try{
+      console.log("new bsc trade");
+      var shortLong;
+      const makerToken = new web3BSC.eth.Contract(bscContract, bscTrade.makerToken);
+      const makerTokenName = await makerToken.methods.name().call();
+      const takerToken = new web3BSC.eth.Contract(bscContract, bscTrade.takerToken);
+      const takerTokenName = await takerToken.methods.name().call();
+      var amountUSD;
+      var amountShortLong;
+      var isLong = false;
+      var isBuy = false;
+      var isRanged = false;
+      var makerTokenNamesArray = makerTokenName.split(" ");
+      const lowerMakerTokenNamesArray = makerTokenNamesArray.map(element => {
+        return element.toLowerCase();
+      });
+
+      var takerTokenNamesArray = takerTokenName.split(" ");
+      const lowerTakerTokenNamesArray = takerTokenNamesArray.map(element => {
+        return element.toLowerCase();
+      });
+
+
+      if (
+          lowerMakerTokenNamesArray.includes("in") ||
+          lowerMakerTokenNamesArray.includes("out")
+      ){
+        amountShortLong = bscTrade.makerAmount/1e18;
+        amountUSD = bscTrade.takerAmount / 1e18;
+        isRanged = true;
+      }else if(lowerTakerTokenNamesArray.includes("in") ||
+          lowerTakerTokenNamesArray.includes("out")){
+        isRanged = true;
+        amountUSD =bscTrade.makerAmount / 1e18;
+        amountShortLong = bscTrade.takerAmount / 1e18;
+      }else if (
+          lowerMakerTokenNamesArray.includes("up") ||
+          lowerMakerTokenNamesArray.includes("down")
+      ) {
+        if (lowerMakerTokenNamesArray.includes("up")) {
+          shortLong = " > ";
+          isLong = true;
+        } else {
+          shortLong = " < ";
+          isLong = false;
+        }
+        amountShortLong = bscTrade.makerAmount/1e18;
+        amountUSD = bscTrade.takerAmount / 1e18;
+        isBuy = true;
+      } else {
+        if (lowerTakerTokenNamesArray.includes("up")) {
+          shortLong = " > ";
+          isLong = true;
+        } else {
+          shortLong = " < ";
+          isLong = false;
+        }
+
+        amountUSD =bscTrade.makerAmount / 1e18;
+        amountShortLong = bscTrade.takerAmount / 1e18;
+        shortLong = takerTokenName.toLowerCase().includes("up") ? " > " : " < ";
+      }
+
+      if(isRanged){
+
+        let rangedMarket = await  getRangedMarketBSC(bscTrade);
+        var marketMessage =
+            web3.utils.hexToAscii(rangedMarket.currencyKey).replace(/\0/g, '') +
+            " "+bscTrade.optionSide.toUpperCase() + " > $"+
+            Math.round(((rangedMarket.leftPrice/1e18) + Number.EPSILON) * 1000) / 1000+" < $"+Math.round(((rangedMarket.rightPrice/1e18) + Number.EPSILON) * 1000) / 1000;
+        let discordMarketMessage
+        discordMarketMessage =
+            marketMessage +
+            "@" +
+            new Date(rangedMarket.maturityDate*1000).toISOString().slice(0, 10);
+
+
+        var message = new Discord.MessageEmbed()
+            .addFields(
+                {
+                  name: ":lock: New BSC Ranged Market Thales Trade :lock:",
+                  value: "\u200b",
+                },
+                {
+                  name: ":link: Transaction:",
+                  value:
+                      "[" +
+                      bscTrade.transactionHash +
+                      "](https://bscscan.com/tx/" +
+                      bscTrade.transactionHash +
+                      ")",
+                },
+                {
+                  name: ":coin: Transaction type:",
+                  value: bscTrade.orderSide.toUpperCase(),
+                },
+                {
+                  name: ":classical_building: Market:",
+                  value:
+                      "[" +
+                      discordMarketMessage +
+                      "](https://thalesmarket.io/markets/" +
+                      bscTrade.market +
+                      ")",
+                },
+                {
+                  name: ":dollar: "+bscTrade.optionSide.toUpperCase()+" tokens",
+                  value: parseFloat((amountShortLong).toFixed(3)),
+                },
+                {
+                  name: ":dollar: Total:",
+                  value: parseFloat((amountUSD).toFixed(3)) + " sUSD",
+                },
+                {
+                  name: ":alarm_clock: Timestamp:",
+                  value: new Date(bscTrade.timestamp*1000),
+                }
+            )
+            .setColor("#0037ff");
+        let newRangeTradeMessage = bscTrade.orderSide.toUpperCase()=="BUY" ? 'New BSC Ranged Market position bought\n' : 'New BSC Ranged Market position sold\n';
+        var date = new Date(bscTrade.timestamp*1000);
+
+        newRangeTradeMessage = newRangeTradeMessage + 'Condition: '+marketMessage+'\n';
+        let amountAMM = parseFloat((amountShortLong).toFixed(3));
+        let paidAMM = parseFloat((amountUSD).toFixed(3));
+        let potentialProfit = (amountAMM-paidAMM)>0.51? Math.round(amountAMM-paidAMM): amountAMM-paidAMM;
+        newRangeTradeMessage = newRangeTradeMessage + 'Maturity date: '+new Date(rangedMarket.maturityDate*1000).toISOString().slice(0, 10)+'\n';
+        newRangeTradeMessage = newRangeTradeMessage + 'Amount: '+parseFloat((amountShortLong).toFixed(3))+' '+bscTrade.optionSide.toUpperCase()+' tokens\n';
+        newRangeTradeMessage = newRangeTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' sUSD\n';
+        newRangeTradeMessage = newRangeTradeMessage + 'Potential profit: '+potentialProfit+' sUSD ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
+        twitterClientAMMMarket.post('statuses/update', { status: newRangeTradeMessage }, function(err, data, response) {
+             console.log(data)
+         });
+         clientNewListings.channels
+             .fetch("1017059039085068308")
+             .then((ammTradesChannel) => {
+                 ammTradesChannel.send(message);
+             });
+
+      }
+      else {
+        let market = await getBSCMarket(bscTrade);
+
+        var marketMessage =
+            web3.utils.hexToAscii(market.currencyKey).replace(/\0/g, '') +
+            shortLong +
+            Math.round(((market.strikePrice / 1e18) + Number.EPSILON) * 1000) / 1000;
+        marketMessage =
+            marketMessage +
+            "@" +
+            new Date(market.maturityDate * 1000).toISOString().slice(0, 10);
+
+        let messageTitle;
+        messageTitle = ":lock: New BSC Amm Thales Trade :lock:"
+
+
+        var message = new Discord.MessageEmbed()
+            .addFields(
+                {
+                  name: messageTitle,
+                  value: "\u200b",
+                },
+                {
+                  name: ":link: Transaction:",
+                  value:
+                      "[" +
+                      bscTrade.transactionHash +
+                      "](https://bscscan.com/tx/" +
+                      bscTrade.transactionHash +
+                      ")",
+                },
+                {
+                  name: ":coin: Transaction type:",
+                  value: isBuy ? "Buy" : "Sell",
+                },
+                {
+                  name: ":classical_building: Market:",
+                  value:
+                      "[" +
+                      marketMessage +
+                      "](https://thalesmarket.io/markets/" +
+                      bscTrade.market +
+                      ")",
+                },
+                {
+                  name: isLong ? ":dollar: UP tokens" : ":dollar: DOWN tokens",
+                  value: parseFloat((amountShortLong).toFixed(3)),
+                },
+                {
+                  name: ":dollar: Total:",
+                  value: parseFloat((amountUSD).toFixed(3)) + " USDC",
+                },
+                {
+                  name: ":alarm_clock: Timestamp:",
+                  value: new Date(bscTrade.timestamp * 1000),
+                }
+            )
+            .setColor("#0037ff");
+         clientNewListings.channels
+              .fetch("1017058966842384394")
+              .then((ammTradesChannel) => {
+                  ammTradesChannel.send(message);
+              });
+
+
+        let newAMMTradeMessage = isBuy ? 'New BSC AMM position bought\n' : 'New BSC AMM position sold\n';
+        var date = new Date(bscTrade.timestamp * 1000);
+
+        newAMMTradeMessage = newAMMTradeMessage + 'Condition: ' + marketMessage + '\n';
+        let downOrUP;
+        if (isLong) {
+          downOrUP = 'UP';
+        } else {
+          downOrUP = 'DOWN';
+        }
+        ;
+        let amountAMM = parseFloat((amountShortLong).toFixed(3));
+        let paidAMM = parseFloat((amountUSD).toFixed(3));
+        let potentialProfit = (amountAMM - paidAMM) > 0.51 ? Math.round(amountAMM - paidAMM) : amountAMM - paidAMM;
+        newAMMTradeMessage = newAMMTradeMessage + 'Amount: ' + parseFloat((amountShortLong).toFixed(3)) + ' ' + downOrUP + ' tokens\n';
+        newAMMTradeMessage = newAMMTradeMessage + 'Paid: ' + parseFloat((amountUSD).toFixed(3)) + ' USDC\n';
+        newAMMTradeMessage = newAMMTradeMessage + 'Potential profit: ' + potentialProfit + ' USDC (' + calculateProfitPercentageTotal(paidAMM, amountAMM) + '%)\n';
+        twitterClientAMMMarket.post('statuses/update', {status: newAMMTradeMessage}, function (err, data, response) {
+          console.log(data)
+        });
+      }
+        writenBSCTrades.push(bscTrade.transactionHash);
+        redisClient.lpush(bscTradesKey, bscTrade.transactionHash);
+      totalAmountOfTradesBSC = totalAmountOfTradesBSC + Math.round(amountUSD);
+      numberOfTradesBSC++;
+      redisClient.set(totalAmountBSCKey, totalAmountOfTradesBSC, function (err, reply) {
+        console.log(reply); // OK
+      });
+      redisClient.set(totalTradesBSCKey, numberOfTradesBSC, function (err, reply) {
+        console.log(reply); // OK
+      });
+    }
+    catch (e) {
+      console.log("error in bsc trades "+e);
+    }
+    }
+  }
+
+}
+
+async function  getBSCMarket(tradeL2) {
+
+  const body = JSON.stringify({
+    query: `{markets(where:{
+    id: "${tradeL2.market}"
+  }) {
+    id
+    timestamp
+    creator
+    currencyKey
+    maturityDate
+    strikePrice
+  }}`,
+    variables: null,
+  });
+
+  const response = await fetch(
+      "https://api.thegraph.com/subgraphs/name/thales-markets/thales-bsc",
+      {
+        method: "POST",
+        body,
+      }
+  );
+
+  const json = await response.json();
+  const markets = json.data.markets;
+
+  return markets[0];
+}
+
+async function  getRangedMarketBSC(tradeL2) {
+
+  const body = JSON.stringify({
+    query: `{rangedMarkets(where:{
+    id: "${tradeL2.market}"
+  }) {
+    id
+    timestamp
+    currencyKey
+    maturityDate
+    expiryDate
+    leftPrice
+    rightPrice
+    rightMarket{
+    id
+    strikePrice
+      currencyKey
+      maturityDate
+      expiryDate
+    }
+    leftMarket{
+      id
+    strikePrice
+      currencyKey
+      maturityDate
+      expiryDate
+    }
+    
+  }}`,
+    variables: null,
+  });
+
+  const response = await fetch(
+      "https://api.thegraph.com/subgraphs/name/thales-markets/thales-bsc",
+      {
+        method: "POST",
+        body,
+      }
+  );
+
+  const json = await response.json();
+  const markets = json.data.rangedMarkets;
+
+  return markets[0];
+}
+
+async function updateTotalARBTrades() {
+  try {
+    clientOvertimeTrades.guilds.cache.forEach(function (value, key) {
+      try {
+        console.log("for guild "+value+" value is "+totalAmountOfTradesARB);
+        value.members.cache
+            .get(clientARBTrades.user.id)
+            .setNickname("ARB="+getNumberLabelDecimals(totalAmountOfTradesARB)+"$");
+      } catch (e) {
+        console.log('error while updating amount of trades ARB'+e);
+      }
+    });
+    clientOvertimeTrades.user.setActivity(
+        "Trades ARB="+numberOfTradesARB,
+        { type: "WATCHING" }
+    );
+  }catch (e) {
+    console.log("there was an error while updating total ARB");
+  }
+}
+
+async function updateTotalBSCTrades() {
+  try {
+    clientBSCTrades.guilds.cache.forEach(function (value, key) {
+      try {
+        console.log("for guild "+value+" value is "+totalAmountOfTradesBSC);
+        value.members.cache
+            .get(clientBSCTrades.user.id)
+            .setNickname("BSC="+getNumberLabelDecimals(totalAmountOfTradesBSC)+"$");
+      } catch (e) {
+        console.log('error while updating amount of trades BSC'+e);
+      }
+    });
+    clientBSCTrades.user.setActivity(
+        "Trades BSC="+numberOfTradesBSC,
+        { type: "WATCHING" }
+    );
+  }catch (e) {
+    console.log("there was an error while updating total BSC");
   }
 }
