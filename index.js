@@ -34,9 +34,9 @@ clientTotalL2Trades.login(process.env.BOT_TOKEN_TOTAL_L2);
 const clientOvertimeTrades = new Discord.Client();
 clientOvertimeTrades.login(process.env.BOT_TOKEN_TOTAL_OT);
 const clientBSCTrades = new Discord.Client();
-clientOvertimeTrades.login(process.env.BOT_TOKEN_TOTAL_ARB);
+clientBSCTrades.login(process.env.BOT_TOKEN_TOTAL_BSC);
 const clientARBTrades = new Discord.Client();
-clientOvertimeTrades.login(process.env.BOT_TOKEN_TOTAL_BSC);
+clientARBTrades.login(process.env.BOT_TOKEN_TOTAL_ARB);
 clientCountdownChannel.login(process.env.BOT_TOKEN_COUNTDOWN_CHANNEL);
 const clientTotalPolygonTrades = new Discord.Client();
 clientTotalPolygonTrades.login(process.env.BOT_TOKEN_TOTAL_POLYGON);
@@ -4108,6 +4108,17 @@ function getOvertimeMarketDTO(market) {
   }
 }
 
+function titleCase(str) {
+  var splitStr = str.toLowerCase().split(' ');
+  for (var i = 0; i < splitStr.length; i++) {
+    // You do not need to check if i is larger than splitStr length, as your for does that for you
+    // Assign it back to the array
+    splitStr[i] = splitStr[i].charAt(0).toUpperCase() + splitStr[i].substring(1);
+  }
+  // Directly return the joined string
+  return splitStr.join(' ');
+}
+
 async function getOvertimeMarkets(){
 
   let sportMarkets = await  thalesData.sportMarkets.markets({network:10});
@@ -4156,6 +4167,12 @@ async function getOvertimeMarkets(){
 
       let homeTeam =  await fixDuplicatedTeamName(sportMarket.homeTeam);
       let awayTeam  = await fixDuplicatedTeamName(sportMarket.awayTeam);
+      let contestantName="";
+      if(sportMarket.tags[0]=="9100" || sportMarket.tags[0]=="9101"){
+        contestantName = titleCase(homeTeam) +" - "+titleCase(awayTeam);
+      }else {
+        contestantName = homeTeam +" - "+awayTeam
+      }
 
         var message = new Discord.MessageEmbed()
             .addFields(
@@ -4167,7 +4184,7 @@ async function getOvertimeMarkets(){
                   name: ":classical_building: Overtime market:",
                   value:
                       "[" +
-                      homeTeam +" - "+awayTeam+
+                      contestantName+
                       "](https://overtimemarkets.xyz/#/markets/" +
                       sportMarket.address +
                       ")",
@@ -4200,6 +4217,22 @@ async function getOvertimeMarkets(){
 
       let homeTeam =  await fixDuplicatedTeamName(sportMarket.homeTeam);
       let awayTeam  = await fixDuplicatedTeamName(sportMarket.awayTeam);
+      let finalScore = "";
+      if(sportMarket.tags[0]=="9007"){
+        finalScore = sportMarket.homeScore > sportMarket.awayScore ?
+            homeTeam +" Wins":
+            awayTeam +" Wins";
+      }  else {
+        finalScore = sportMarket.homeScore +" - "+ sportMarket.awayScore;
+      }
+
+      let contestantName="";
+      if(sportMarket.tags[0]=="9100" || sportMarket.tags[0]=="9101"){
+        contestantName = titleCase(homeTeam) +" - "+titleCase(awayTeam);
+      }else {
+        contestantName = homeTeam +" - "+awayTeam
+     }
+
 
       var message = new Discord.MessageEmbed()
           .addFields(
@@ -4211,14 +4244,14 @@ async function getOvertimeMarkets(){
                 name: ":classical_building: Overtime market:",
                 value:
                     "[" +
-                    homeTeam +" - "+awayTeam+
+                    contestantName+
                     "](https://overtimemarkets.xyz/#/markets/" +
                     sportMarket.address +
                     ")",
               },
               {
                 name: ":coin: Final result:",
-                value: sportMarket.homeScore +" - "+ sportMarket.awayScore,
+                value: finalScore,
               },
               {
                 name: ":coin: Home team winning odds:",
@@ -4298,16 +4331,25 @@ async function getOvertimeTrades(){
         });
         let position = overtimeMarketTrade.position;
         let odds;
+
+        let homeTeam =  await fixDuplicatedTeamName(specificMarket[0].homeTeam);
+        let awayTeam  = await fixDuplicatedTeamName(specificMarket[0].awayTeam);
+
+        if(specificMarket[0].tags[0]=="9100" || specificMarket[0].tags[0]=="9101"){
+          homeTeam = titleCase(homeTeam);
+          awayTeam  = titleCase(awayTeam)
+        }
+
         if(position==0){
-          position =  await fixDuplicatedTeamName(specificMarket[0].homeTeam);
+          position =  homeTeam;
         }else if(position==1){
-          position = await fixDuplicatedTeamName(specificMarket[0].awayTeam)
+          position = awayTeam
         }else{
           position = "Draw";
         }
-       let homeTeam =  await fixDuplicatedTeamName(specificMarket[0].homeTeam);
-        let awayTeam  = await fixDuplicatedTeamName(specificMarket[0].awayTeam);
+
         let marketMessage = homeTeam + " - " + awayTeam ;
+
         var message = new Discord.MessageEmbed()
             .addFields(
                 {
@@ -5161,7 +5203,7 @@ async function  getRangedMarketBSC(tradeL2) {
 
 async function updateTotalARBTrades() {
   try {
-    clientOvertimeTrades.guilds.cache.forEach(function (value, key) {
+    clientARBTrades.guilds.cache.forEach(function (value, key) {
       try {
         console.log("for guild "+value+" value is "+totalAmountOfTradesARB);
         value.members.cache
@@ -5171,7 +5213,7 @@ async function updateTotalARBTrades() {
         console.log('error while updating amount of trades ARB'+e);
       }
     });
-    clientOvertimeTrades.user.setActivity(
+    clientARBTrades.user.setActivity(
         "Trades ARB="+numberOfTradesARB,
         { type: "WATCHING" }
     );
