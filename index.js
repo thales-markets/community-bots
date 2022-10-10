@@ -5208,7 +5208,7 @@ async function updateTotalARBTrades() {
         console.log("for guild "+value+" value is "+totalAmountOfTradesARB);
         value.members.cache
             .get(clientARBTrades.user.id)
-            .setNickname("ARB="+getNumberLabelDecimals(totalAmountOfTradesARB)+"$");
+            .setNickname("Arbitrum="+getNumberLabelDecimals(totalAmountOfTradesARB)+"$");
       } catch (e) {
         console.log('error while updating amount of trades ARB'+e);
       }
