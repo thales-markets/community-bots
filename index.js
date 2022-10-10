@@ -4119,6 +4119,24 @@ function titleCase(str) {
   return splitStr.join(' ');
 }
 
+let tagsMAP = new Map( [
+  [9001, "NCAA Men's Football"],
+  [9002, "NFL"],
+  [9003, "MLB"],
+  [9004, "NBA"],
+  [9005, "NCAA Men's Basketball"],
+  [9006, "NHL"],
+  [9007, "UFC"],
+  [9008, "WNBA"],
+  [9010, "MLS"],
+  [9011, "EPL"],
+  [9012, "Ligue 1"],
+  [9013, "Bundesliga"],
+  [9014, "La Liga"],
+  [9015, "Serie A"],
+  [9016, "UEFA Champions League"],
+]);
+
 async function getOvertimeMarkets(){
 
   let sportMarkets = await  thalesData.sportMarkets.markets({network:10});
@@ -4130,6 +4148,7 @@ async function getOvertimeMarkets(){
     if (startDateUnixTime < Number(sportMarket.timestamp)) {
       try {
         console.log("new overtime market");
+        let sportID = tagsMAP.get(Number(sportMarket.tags[0]))? tagsMAP.get(Number(sportMarket.tags[0])):sportMarket.tags[0];
         let messageTitle;
         let channelToSend="";
         let isResolved = false;
@@ -4188,6 +4207,10 @@ async function getOvertimeMarkets(){
                       "](https://overtimemarkets.xyz/#/markets/" +
                       sportMarket.address +
                       ")",
+                },
+                {
+                  name: ":medal: Sport:",
+                  value: sportID,
                 },
                 {
                   name: ":coin: Home team winning odds:",
