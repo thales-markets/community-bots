@@ -4135,6 +4135,8 @@ let tagsMAP = new Map( [
   [9014, "La Liga"],
   [9015, "Serie A"],
   [9016, "UEFA Champions League"],
+  [9100, "Formula 1"],
+  [9101, "MotoGP"]
 ]);
 
 async function getOvertimeMarkets(){
