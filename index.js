@@ -58,6 +58,8 @@ const CoinGecko = require('coingecko-api');
 const CoinGeckoClient = new CoinGecko();
 const clientUniswap = new Discord.Client();
 clientUniswap.login(process.env.BOT_TOKEN_UNISWAP);
+const clientBTC = new Discord.Client();
+clientBTC.login(process.env.BOT_TOKEN_BTC);
 const clientSOL = new Discord.Client();
 clientSOL.login(process.env.BOT_TOKEN_SOL);
 const clientLink = new Discord.Client();
@@ -186,6 +188,10 @@ clientUniswap.on("ready", () => {
   setPriceBot(clientUniswap,"uniswap","UNI Price");
 });
 
+clientBTC.on("ready", () => {
+  setPriceBot(clientBTC,"bitcoin","BTC Price");
+});
+
 clientSOL.on("ready", () => {
   setPriceBot(clientSOL,"solana","SOL Price");
 });
@@ -241,6 +247,7 @@ clientMATICBot.on("ready", () => {
 setInterval(function () {
   console.log("updating price bots");
     setPriceBot(clientUniswap,"uniswap","UNI Price");
+    setPriceBot(clientBTC,"bitcoin","BTC Price");
     setPriceBot(clientSOL,"solana","SOL Price");
     setPriceBot(clientLink,"chainlink","LINK Price");
     setPriceBot(clientAAVE,"aave","AAVE Price");
