@@ -2102,6 +2102,7 @@ let bscTradesKey = "BSCTrades";
 let exoticMarketsKey = "ExoticMarkets";
 let overtimeMarketsKey = "OvertimeMarketsMap";
 let overtimeTradesKey = "OvertimeTrades";
+let overtimeParlaysKey = "OvertimeParlays";
 let exoticMarketPositionsKey = "ExoticMarketPositions";
 let exoticMarketDisputesKey = "ExoticMarketDisputes";
 let exoticMarketResultSet = "ExoticMarketResultSet";
@@ -2122,6 +2123,7 @@ let writenBSCTrades = [];
 let writenExoticMarkets = [];
 let writenOvertimeMarkets = new Map();
 let writenOvertimeTrades = [];
+let writenOvertimeParlays = [];
 let writenExoticDisputes = [];
 let writenExoticPositions = [];
 let writenExoticMarketResultSet = [];
@@ -2244,6 +2246,10 @@ if (process.env.REDIS_URL) {
 
   redisClient.lrange(overtimeTradesKey, 0, -1, function (err, polygonTrades) {
     writenOvertimeTrades = polygonTrades;
+  });
+
+  redisClient.lrange(overtimeParlaysKey, 0, -1, function (err, polygonTrades) {
+    writenOvertimeParlays = polygonTrades;
   });
 
   redisClient.lrange(exoticMarketPositionsKey, 0, -1, function (err, polygonTrades) {
@@ -4077,6 +4083,7 @@ setInterval(function () {
   getExoticMarketResultSet();
   getOvertimeMarkets();
   getOvertimeTrades();
+  getOvertimeParlays();
 }, 2 * 60 * 1000);
 
 
@@ -4265,6 +4272,49 @@ async function getOvertimeMarkets(){
         contestantName = homeTeam +" - "+awayTeam
      }
 
+      let overtimeMarketsTrades = await  thalesData.sportMarkets.marketTransactions({
+        network:10,
+        market:sportMarket.address
+      });
+      let ammHomeTradeSum = 0;
+      let ammAwayTradeSum = 0;
+      let ammDrawTradeSum = 0;
+
+
+      for (const ammTrade of overtimeMarketsTrades) {
+        if(ammTrade.type.toLowerCase()=="buy") {
+          if (ammTrade.position == 0) {
+            ammHomeTradeSum = ammHomeTradeSum + Number(ammTrade.amount);
+          } else if (ammTrade.position == 1) {
+            ammAwayTradeSum = ammAwayTradeSum + Number(ammTrade.amount);
+          } else {
+            ammDrawTradeSum = ammDrawTradeSum + Number(ammTrade.amount);
+          }
+        }
+      }
+      var maxOfSums = Math.max(ammHomeTradeSum, ammAwayTradeSum, ammDrawTradeSum);
+      let ammHomeSumPosition = 0;
+      let ammAwaySumPosition = 0;
+      let ammDrawSumPosition = 0;
+      let homeMessage = "Home AMM options"
+      let awayMessage = "Away AMM options"
+      let drawMessage = "Draw AMM options"
+      let winningMessage = " (winning position):";
+      if(sportMarket.homeScore > sportMarket.awayScore){
+        homeMessage =  homeMessage+winningMessage;
+      }else if(sportMarket.homeScore<sportMarket.awayScore){
+        awayMessage =  awayMessage+winningMessage;
+      }else {
+        drawMessage =  drawMessage+ winningMessage;
+      }
+      //home win
+      ammHomeSumPosition = maxOfSums - ammHomeTradeSum;
+      //away win
+      ammAwaySumPosition = maxOfSums - ammAwayTradeSum;
+      //draw
+      ammDrawSumPosition = sportMarket.drawOdds!=0? maxOfSums - ammDrawTradeSum:0;
+
+
 
       var message = new Discord.MessageEmbed()
           .addFields(
@@ -4296,6 +4346,18 @@ async function getOvertimeMarkets(){
               {
                 name: ":coin: Away team winning odds:",
                 value: sportMarket.awayOdds.toFixed(3),
+              },
+              {
+                name: ":coin: "+homeMessage,
+                value: Math.round(ammHomeSumPosition),
+              },
+              {
+                name: ":coin: "+drawMessage,
+                value: Math.round(ammDrawSumPosition),
+              },
+              {
+                name: ":coin: "+awayMessage,
+                value: Math.round(ammAwaySumPosition),
               },
               {
                 name: ":alarm_clock: Deadline:",
@@ -5272,5 +5334,101 @@ async function updateTotalBSCTrades() {
     );
   }catch (e) {
     console.log("there was an error while updating total BSC");
+  }
+}
+
+
+async function getParlayMessage(parlayPosition) {
+  let specificMarket = parlayPosition.market;
+  let position = parlayPosition.side;
+
+
+  let homeTeam =  await fixDuplicatedTeamName(specificMarket.homeTeam);
+  let awayTeam  = await fixDuplicatedTeamName(specificMarket.awayTeam);
+
+  if(position=="home"){
+    position =  homeTeam;
+  }else if(position=="away"){
+    position = awayTeam
+  }else{
+    position = "Draw";
+  }
+
+  if (specificMarket.tags[0] == "9100" || specificMarket.tags[0] == "9101") {
+    homeTeam = titleCase(homeTeam);
+    awayTeam = titleCase(awayTeam)
+  }
+  return homeTeam + " - " + awayTeam + " @ " + position;
+}
+
+
+async function getOvertimeParlays(){
+
+  let overtimeMarketParlays = await  thalesData.sportMarkets.parlayMarkets({
+    max:100,
+    network:10
+  });
+  var startdate = new Date();
+  var durationInMinutes = 30;
+  startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
+  let startDateUnixTime = Math.floor(startdate.getTime());
+  for (const overtimeMarketParlay of overtimeMarketParlays) {
+    if (startDateUnixTime < Number(overtimeMarketParlay.timestamp) && !writenOvertimeParlays.includes(overtimeMarketParlay.id)) {
+      try {
+
+        var message = new Discord.MessageEmbed()
+            .addFields(
+                {
+                  name: "Overtime Market Parlay",
+                  value: "\u200b",
+                },
+                {
+                  name: ":link: Transaction:",
+                  value:
+                      "[" +
+                      overtimeMarketParlay.txHash +
+                      "](https://optimistic.etherscan.io/tx/" +
+                      overtimeMarketParlay.txHash +
+                      ")",
+                }
+            )
+            .setColor("#0037ff");
+        for (const overmarketParlayPosition of overtimeMarketParlay.positions) {
+          let parlayMessage =   await getParlayMessage(overmarketParlayPosition)
+          message.addField(
+              ":coin: Position:",
+              parlayMessage,false
+          );
+        }
+        await message.addFields(
+            {
+              name: ":coin: Amount:",
+              value: overtimeMarketParlay.totalAmount,
+            },
+            {
+              name: ":coin: Paid:",
+              value: "$"+overtimeMarketParlay.sUSDPaid.toFixed(3),
+            },
+            {
+              name: ":alarm_clock: Timestamp:",
+              value: new Date(overtimeMarketParlay.timestamp),
+            });
+        let overtimeParlaysChannel = await clientNewListings.channels
+            .fetch("1039875869927280711");
+        overtimeParlaysChannel.send(message);
+        writenOvertimeParlays.push(overtimeMarketParlay.id);
+        redisClient.lpush(overtimeParlaysKey, overtimeMarketParlay.id);
+        totalAmountOfTradesOT = totalAmountOfTradesOT + Math.round(overtimeMarketParlay.sUSDPaid);
+        numberOfTradesOT++;
+        redisClient.set(totalAmountOTKey, totalAmountOfTradesOT, function (err, reply) {
+          console.log(reply); // OK
+        });
+        redisClient.set(totalTradesOTKey, numberOfTradesOT, function (err, reply) {
+          console.log(reply); // OK
+        });
+      } catch (e) {
+        console.log("There was a problem while getting overtime parlays",e);
+      }
+    }
   }
 }
