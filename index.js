@@ -14,6 +14,8 @@ const clientRoyalePingingBot = new Discord.Client();
 clientRoyalePingingBot.login(process.env.BOT_TOKEN_ROYALE_PING);
 const clientMATICBot = new Discord.Client();
 clientMATICBot.login(process.env.BOT_TOKEN_MATIC);
+const clientKWENTABot = new Discord.Client();
+clientKWENTABot.login(process.env.BOT_TOKEN_KWENTA);
 var fs = require("fs");
 const client = new Discord.Client();
 let contentRaw = fs.readFileSync("content.json");
@@ -244,6 +246,10 @@ clientMATICBot.on("ready", () => {
   setPriceBot(clientMATICBot,"matic-network","MATIC Price");
 });
 
+clientKWENTABot.once("ready", () => {
+  setPriceBot(clientKWENTABot,"kwenta","KWENTA Price");
+});
+
 setInterval(function () {
   console.log("updating price bots");
     setPriceBot(clientUniswap,"uniswap","UNI Price");
@@ -261,6 +267,7 @@ setInterval(function () {
     setPriceBot(clientCVX,"convex-finance","CVX Price");
     setPriceBot(clientPERP,"perpetual-protocol","PERP Price");
     setPriceBot(clientMATICBot,"matic-network","MATIC Price");
+    setPriceBot(clientKWENTABot,"kwenta","KWENTA Price");
 }, 380 * 1000);
 
 const setPriceBot = async (clientForSetting,tokenForPrice,nameOfTheToken) => {
@@ -4150,7 +4157,8 @@ let tagsMAP = new Map( [
   [9015, "Serie A"],
   [9016, "UEFA Champions League"],
   [9100, "Formula 1"],
-  [9101, "MotoGP"]
+  [9101, "MotoGP"],
+  [9018, "FIFA World Cup 2022"]
 ]);
 
 async function getOvertimeMarkets(){
@@ -5345,27 +5353,26 @@ async function getParlayMessage(parlayPosition) {
 
   let homeTeam =  await fixDuplicatedTeamName(specificMarket.homeTeam);
   let awayTeam  = await fixDuplicatedTeamName(specificMarket.awayTeam);
-
+  let odds;
   if(position=="home"){
-    position =  homeTeam;
+    position =  "1";
+    odds  =  Math.round((((1/(specificMarket.homeOdds /1e18))) + Number.EPSILON) * 100) / 100;
   }else if(position=="away"){
-    position = awayTeam
+    position = "2"
+    odds  = Math.round((((1/(specificMarket.awayOdds /1e18))) + Number.EPSILON) * 100) / 100;
   }else{
-    position = "Draw";
+    position = "X";
+    odds  = Math.round((((1/(specificMarket.drawOdds /1e18))) + Number.EPSILON) * 100) / 100;
   }
 
-  if (specificMarket.tags[0] == "9100" || specificMarket.tags[0] == "9101") {
-    homeTeam = titleCase(homeTeam);
-    awayTeam = titleCase(awayTeam)
-  }
-  return homeTeam + " - " + awayTeam + " @ " + position;
+
+  return homeTeam + " - " + awayTeam + " @ " + position+ " - "+odds +"\n";
 }
 
 
 async function getOvertimeParlays(){
 
   let overtimeMarketParlays = await  thalesData.sportMarkets.parlayMarkets({
-    max:100,
     network:10
   });
   var startdate = new Date();
@@ -5373,7 +5380,7 @@ async function getOvertimeParlays(){
   startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
   let startDateUnixTime = Math.floor(startdate.getTime());
   for (const overtimeMarketParlay of overtimeMarketParlays) {
-    if (startDateUnixTime < Number(overtimeMarketParlay.timestamp) && !writenOvertimeParlays.includes(overtimeMarketParlay.id)) {
+    if (startDateUnixTime < Number(overtimeMarketParlay.timestamp) && !writenOvertimeParlays.includes(overtimeMarketParlay.txHash)) {
       try {
 
         var message = new Discord.MessageEmbed()
@@ -5393,17 +5400,22 @@ async function getOvertimeParlays(){
                 }
             )
             .setColor("#0037ff");
+        let parlayMessage="";
         for (const overmarketParlayPosition of overtimeMarketParlay.positions) {
-          let parlayMessage =   await getParlayMessage(overmarketParlayPosition)
-          message.addField(
-              ":coin: Position:",
-              parlayMessage,false
-          );
+          parlayMessage =  parlayMessage + await getParlayMessage(overmarketParlayPosition)
         }
         await message.addFields(
             {
+              name: ":coin: Positions:",
+              value: parlayMessage,
+            },
+            {
+              name: ":coin: Total Quote:",
+              value: Math.round(((1 / overtimeMarketParlay.totalQuote) + Number.EPSILON) * 100) / 100,
+            },
+            {
               name: ":coin: Amount:",
-              value: overtimeMarketParlay.totalAmount,
+              value: overtimeMarketParlay.totalAmount.toFixed(3),
             },
             {
               name: ":coin: Paid:",
@@ -5416,8 +5428,8 @@ async function getOvertimeParlays(){
         let overtimeParlaysChannel = await clientNewListings.channels
             .fetch("1039875869927280711");
         overtimeParlaysChannel.send(message);
-        writenOvertimeParlays.push(overtimeMarketParlay.id);
-        redisClient.lpush(overtimeParlaysKey, overtimeMarketParlay.id);
+        writenOvertimeParlays.push(overtimeMarketParlay.txHash);
+        redisClient.lpush(overtimeParlaysKey, overtimeMarketParlay.txHash);
         totalAmountOfTradesOT = totalAmountOfTradesOT + Math.round(overtimeMarketParlay.sUSDPaid);
         numberOfTradesOT++;
         redisClient.set(totalAmountOTKey, totalAmountOfTradesOT, function (err, reply) {
