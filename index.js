@@ -5401,8 +5401,8 @@ async function getOvertimeParlays(){
             )
             .setColor("#0037ff");
         let parlayMessage="";
-        for (const overmarketParlayPosition of overtimeMarketParlay.positions) {
-          parlayMessage =  parlayMessage + await getParlayMessage(overmarketParlayPosition)
+        for (const overtimeMarketParlayPosition of overtimeMarketParlay.positions) {
+          parlayMessage =  parlayMessage + await getParlayMessage(overtimeMarketParlayPosition)
         }
         await message.addFields(
             {
@@ -5437,6 +5437,14 @@ async function getOvertimeParlays(){
         });
         redisClient.set(totalTradesOTKey, numberOfTradesOT, function (err, reply) {
           console.log(reply); // OK
+        });
+        let newOvertimeParlayMessage ='New Overtime Market Parlay\n';
+        let potentialProfit = (overtimeMarketParlay.totalAmount-overtimeMarketParlay.sUSDPaid.toFixed(3))>0.51? Math.round(overtimeMarketParlay.totalAmount-overtimeMarketParlay.sUSDPaid.toFixed(3)): overtimeMarketParlay.totalAmount-overtimeMarketParlay.sUSDPaid.toFixed(3);
+        newOvertimeParlayMessage = newOvertimeParlayMessage + 'Paid: '+ "$"+overtimeMarketParlay.sUSDPaid.toFixed(3)+'\n';
+        newOvertimeParlayMessage = newOvertimeParlayMessage + 'Positions:\n'+ parlayMessage;
+        newOvertimeParlayMessage = newOvertimeParlayMessage + 'Potential profit: '+potentialProfit+' sUSD ('+calculatePercentageProfit(overtimeMarketParlay.totalAmount,Number(overtimeMarketParlay.sUSDPaid.toFixed(3)))+'%)\n';
+        twitterClientOvertimeAMMMarket.post('statuses/update', { status: newOvertimeParlayMessage }, function(err, data, response) {
+          console.log(data)
         });
       } catch (e) {
         console.log("There was a problem while getting overtime parlays",e);
