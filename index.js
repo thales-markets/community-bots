@@ -5400,7 +5400,8 @@ async function getParlayMessage(parlayPosition) {
 async function getOvertimeParlays(){
 
   let overtimeMarketParlays = await  thalesData.sportMarkets.parlayMarkets({
-    network:10
+    network:10,
+    max:100
   });
   var startdate = new Date();
   var durationInMinutes = 30;
