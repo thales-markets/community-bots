@@ -4502,9 +4502,15 @@ async function getOvertimeTrades(){
                 }
             )
             .setColor("#0037ff");
-       let overtimeTrades = await clientNewListings.channels
-            .fetch("994914814419808346");
-        overtimeTrades.send(message);
+        if(Math.round(overtimeMarketTrade.paid)>1000){
+          let overtimeTrades = await clientNewListings.channels
+              .fetch("1057735441870241932");
+          overtimeTrades.send(message);
+        } else{
+          let overtimeTrades = await clientNewListings.channels
+              .fetch("994914814419808346");
+          overtimeTrades.send(message);
+        }
         writenOvertimeTrades.push(overtimeMarketTrade.id);
         redisClient.lpush(overtimeTradesKey, overtimeMarketTrade.id);
         totalAmountOfTradesOT = totalAmountOfTradesOT + Math.round(overtimeMarketTrade.paid);
@@ -5434,9 +5440,15 @@ async function getOvertimeParlays(){
               name: ":alarm_clock: Timestamp:",
               value: new Date(overtimeMarketParlay.timestamp),
             });
-        let overtimeParlaysChannel = await clientNewListings.channels
-            .fetch("1039875869927280711");
-        overtimeParlaysChannel.send(message);
+        if(Math.round(overtimeMarketParlay.sUSDPaid)>1000){
+          let overtimeParlaysChannel = await clientNewListings.channels
+              .fetch("1057735441870241932");
+          overtimeParlaysChannel.send(message);
+        } else{
+          let overtimeParlaysChannel = await clientNewListings.channels
+              .fetch("1039875869927280711");
+          overtimeParlaysChannel.send(message);
+        }
         writenOvertimeParlays.push(overtimeMarketParlay.txHash);
         redisClient.lpush(overtimeParlaysKey, overtimeMarketParlay.txHash);
         totalAmountOfTradesOT = totalAmountOfTradesOT + Math.round(overtimeMarketParlay.sUSDPaid);
