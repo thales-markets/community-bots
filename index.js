@@ -4443,9 +4443,22 @@ async function getOvertimeTrades(){
         }
 
         if(position==0){
-          position =  homeTeam;
+          if (specificMarket[0].betType && specificMarket[0].betType == 10002) {
+            position = "O("+Math.round(Number(specificMarket[0].total)/100)+")";
+          } else if (specificMarket[0].betType && specificMarket[0].betType == 10001) {
+            position = "H1("+Math.round(Number(specificMarket[0].spread)/100)+")";
+          } else {
+            position =  homeTeam;
+          }
+
         }else if(position==1){
-          position = awayTeam
+          if (specificMarket[0].betType && specificMarket[0].betType == 10002) {
+            position = "U("+Math.round(Number(specificMarket[0].total)/100)+")";
+          } else if (specificMarket[0].betType && specificMarket[0].betType == 10001) {
+            position = "H2("+Math.round(Number(specificMarket[0].spread)/100)+")";
+          } else {
+            position = awayTeam
+          }
         }else{
           position = "Draw";
         }
@@ -5355,23 +5368,31 @@ async function updateTotalBSCTrades() {
 async function getParlayMessage(parlayPosition) {
   let specificMarket = parlayPosition.market;
   let position = parlayPosition.side;
-
-
   let homeTeam =  await fixDuplicatedTeamName(specificMarket.homeTeam);
   let awayTeam  = await fixDuplicatedTeamName(specificMarket.awayTeam);
   let odds;
   if(position=="home"){
-    position =  "1";
-    odds  =  Math.round((((1/(specificMarket.homeOdds /1e18))) + Number.EPSILON) * 100) / 100;
-  }else if(position=="away"){
-    position = "2"
-    odds  = Math.round((((1/(specificMarket.awayOdds /1e18))) + Number.EPSILON) * 100) / 100;
-  }else{
-    position = "X";
-    odds  = Math.round((((1/(specificMarket.drawOdds /1e18))) + Number.EPSILON) * 100) / 100;
-  }
-
-
+      if (specificMarket.betType && specificMarket.betType == 10002) {
+        position = "O("+Math.round(Number(specificMarket.total)/100)+")";
+      } else if (specificMarket.betType && specificMarket.betType == 10001) {
+        position = "H1("+Math.round(Number(specificMarket.spread)/100)+")";
+      } else {
+        position = "1";
+      }
+      odds = Math.round((((1 / (specificMarket.homeOdds / 1e18))) + Number.EPSILON) * 100) / 100;
+    } else if (position == "away") {
+      if (specificMarket.betType && specificMarket.betType == 10002) {
+        position = "U("+Math.round(Number(specificMarket.total)/100)+")";
+      } else if (specificMarket.betType && specificMarket.betType == 10001) {
+        position = "H2("+Math.round(Number(specificMarket.spread)/100)+")";
+      } else {
+        position = "1";
+      }
+      odds = Math.round((((1 / (specificMarket.awayOdds / 1e18))) + Number.EPSILON) * 100) / 100;
+    } else {
+      position = "X";
+      odds = Math.round((((1 / (specificMarket.drawOdds / 1e18))) + Number.EPSILON) * 100) / 100;
+    }
   return homeTeam + " - " + awayTeam + " @ " + position+ " - "+odds +"\n";
 }
 
