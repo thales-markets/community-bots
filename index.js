@@ -4206,6 +4206,15 @@ async function getOvertimeMarkets(){
           isResolved = true;
         }
 
+        let betType = "";
+        if (sportMarket.betType && sportMarket.betType == 10002) {
+          betType = "O/A("+Math.round(Number(sportMarket.total)/100)+")";
+        } else if (sportMarket.betType && sportMarket.betType == 10001) {
+          betType = "H1/H2("+Math.round(Number(sportMarket.spread)/100)+")";
+        } else {
+          betType =  "1x2";
+        }
+
     if(!isResolved){
 
       let homeTeam =  await fixDuplicatedTeamName(sportMarket.homeTeam);
@@ -4231,6 +4240,10 @@ async function getOvertimeMarkets(){
                       "](https://overtimemarkets.xyz/#/markets/" +
                       sportMarket.address +
                       ")",
+                },
+                {
+                  name: ":medal: Bet type:",
+                  value: betType,
                 },
                 {
                   name: ":medal: Sport:",
@@ -4308,9 +4321,9 @@ async function getOvertimeMarkets(){
       let awayMessage = "Away AMM options"
       let drawMessage = "Draw AMM options"
       let winningMessage = " (winning position):";
-      if(sportMarket.homeScore > sportMarket.awayScore){
+      if(sportMarket.finalResult ==1){
         homeMessage =  homeMessage+winningMessage;
-      }else if(sportMarket.homeScore<sportMarket.awayScore){
+      }else if(sportMarket.finalResult ==2 ){
         awayMessage =  awayMessage+winningMessage;
       }else {
         drawMessage =  drawMessage+ winningMessage;
@@ -4342,6 +4355,10 @@ async function getOvertimeMarkets(){
               {
                 name: ":coin: Final result:",
                 value: finalScore,
+              },
+              {
+                name: ":medal: Bet type:",
+                value: betType,
               },
               {
                 name: ":coin: Home team winning odds:",
