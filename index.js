@@ -132,16 +132,16 @@ let mapMint = new Map();
 let nonMMOrdersMap = new Map();
 let setConcludedTradesPastHour = new Set();
 const twitterConfAMMMarketBot = {
-  consumer_key: "gPzmJnN4LUL3m0MthX6OwIlBK",
-  consumer_secret: "jusQFHYubfkanbqss9nYwRqeKewnTCPyo2kgRTUymiQHt8GNHD",
-  access_token: "1506559867804434433-ubAnRN1H7xmvojRRI1Zaov1Eu5Cad2",
-  access_token_secret: "LAbF90txvWd6WlhJm7UUwuG9VICYaPJwTmukh7HmAKK7s",
+  consumer_key: process.env.TWITTER_AMM_CONSUMER_KEY,
+  consumer_secret: process.env.TWITTER_AMM_CONSUMER_SECRET,
+  access_token: process.env.TWITTER_AMM_ACCESS_TOKEN,
+  access_token_secret: process.env.TWITTER_AMM_TOKEN_SECRET,
 }
 const twitterOvertimeAMMMarketBot = {
-  consumer_key: "Z7llUPViwkuLHyANHVfC4eiGZ",
-  consumer_secret: "9tqnQIfAHCMjIlVlYPNlMNzyQDGRspLsGw12xo813tf7BNsoTV",
-  access_token: "1547957461809737728-5W4MOkhCrf7aATiDeYoBQy6xs3jrSv",
-  access_token_secret: "46mmmChum6vnsYkU0wdTdx5vUtvNp53kyi0YP2SK7y0He",
+  consumer_key: process.env.TWITTER_OVERTIME_AMM_CONSUMER_KEY,
+  consumer_secret: process.env.TWITTER_OVERTIME_AMM_CONSUMER_SECRET,
+  access_token: process.env.TWITTER_OVERTIME_AMM_ACCESS_TOKEN,
+  access_token_secret: process.env.TWITTER_OVERTIME_AMM_TOKEN_SECRET,
 }
 const Twitter = require('twit');
 const twitterClientAMMMarket = new Twitter(twitterConfAMMMarketBot);
@@ -4163,11 +4163,16 @@ let tagsMAP = new Map( [
 
 async function getOvertimeMarkets(){
 
-  let sportMarkets = await  thalesData.sportMarkets.markets({network:10});
+
   var startdate = new Date();
   var durationInMinutes = 30;
   startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
+  let startDateUnixTimeSeconds = Math.floor(startdate.getTime()/1000);
   let startDateUnixTime = Math.floor(startdate.getTime());
+  let sportMarkets = await  thalesData.sportMarkets.markets({network:10,
+    max:100,
+    minTimestamp:startDateUnixTimeSeconds
+  });
   for (const sportMarket of sportMarkets) {
     if (startDateUnixTime < Number(sportMarket.timestamp)) {
       try {
@@ -4200,7 +4205,6 @@ async function getOvertimeMarkets(){
            messageTitle = "Overtime Market Canceled";
           channelToSend = "994917658833190922";
         }else{
-
           messageTitle = "Overtime Market Resolved";
           channelToSend = "994917622640549908";
           isResolved = true;
@@ -4208,9 +4212,9 @@ async function getOvertimeMarkets(){
 
         let betType = "";
         if (sportMarket.betType && sportMarket.betType == 10002) {
-          betType = "O/A("+Math.round(Number(sportMarket.total)/100)+")";
+          betType = "O/U("+Math.round(Number(sportMarket.total)/100)+")";
         } else if (sportMarket.betType && sportMarket.betType == 10001) {
-          betType = "H1/H2("+Math.round(Number(sportMarket.spread)/100)+")";
+          betType = "H1("+Math.round(Number(sportMarket.spread)/100)+")/H2";
         } else {
           betType =  "1x2";
         }
