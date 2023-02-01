@@ -1927,7 +1927,7 @@ async function getETHBurned() {
 setInterval(function () {
   try {
     console.log("starting new mints");
-    getMintData();
+   // getMintData();
   } catch (e) {
     console.log("starting new mints" + e);
   }
@@ -2561,7 +2561,7 @@ async function updateCountdownChannel() {
   }
 }
 
-let ammTradeAddress="0x5ae7454827d83526261f3871c1029792644ef1b1";
+let ammTradeAddress="0x278B5A44397c9D8E52743fEdec263c4760dc1A1A";
 
 async function  getPolygonMarket(tradeL2) {
 
@@ -2741,7 +2741,7 @@ async function getL2Trades() {
         let isAmmTrade = false;
         let messageTitle;
         if (
-            ammTradeAddress == tradeL2.maker.toLowerCase() ||
+            ammTradeAddress.toLowerCase() == tradeL2.maker.toLowerCase() ||
             ammTradeAddress.toLowerCase() == tradeL2.taker.toLowerCase()
         ) {
           isAmmTrade = true;
