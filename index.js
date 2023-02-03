@@ -4468,7 +4468,16 @@ async function getOvertimeTrades(){
             position = "O("+Math.round(Number(specificMarket[0].total)/100)+")";
           } else if (specificMarket[0].betType && specificMarket[0].betType == 10001) {
             position = "H1("+Math.round(Number(specificMarket[0].spread)/100)+")";
-          } else {
+          } else if (specificMarket[0].betType && specificMarket[0].betType == 10003){
+            if(specificMarket[0].doubleChanceMarketType.toLowerCase().includes("hometeam")){
+              position = "1X";
+            }else if(specificMarket[0].doubleChanceMarketType.toLowerCase().includes("awayteam")) {
+              position = "X2";
+            }else {
+              position = "12";
+            }
+          }
+          else {
             position =  homeTeam;
           }
 
@@ -5392,7 +5401,17 @@ async function getParlayMessage(parlayPosition) {
   let homeTeam =  await fixDuplicatedTeamName(specificMarket.homeTeam);
   let awayTeam  = await fixDuplicatedTeamName(specificMarket.awayTeam);
   let odds;
-  if(position=="home"){
+  if (specificMarket.betType && specificMarket.betType == 10003) {
+    if(specificMarket.doubleChanceMarketType.toLowerCase().includes("hometeam")){
+      position = "1X";
+    }else if(specificMarket.doubleChanceMarketType.toLowerCase().includes("awayteam")) {
+      position = "X2";
+    }else {
+      position = "12";
+    }
+    odds = Math.round((((1 / (specificMarket.homeOdds / 1e18))) + Number.EPSILON) * 100) / 100;
+  }
+  else if(position=="home"){
       if (specificMarket.betType && specificMarket.betType == 10002) {
         position = "O("+Math.round(Number(specificMarket.total)/100)+")";
       } else if (specificMarket.betType && specificMarket.betType == 10001) {
