@@ -42,6 +42,8 @@ clientARBTrades.login(process.env.BOT_TOKEN_TOTAL_ARB);
 clientCountdownChannel.login(process.env.BOT_TOKEN_COUNTDOWN_CHANNEL);
 const clientTotalPolygonTrades = new Discord.Client();
 clientTotalPolygonTrades.login(process.env.BOT_TOKEN_TOTAL_POLYGON);
+const triviaBot = new Discord.Client();
+triviaBot.login(process.env.BOT_TOKEN_TRIVIA);
 const Web3 = require("web3");
 let contract = JSON.parse(contractRaw);
 let polygonContract = JSON.parse(polygonRaw);
@@ -2143,6 +2145,30 @@ const totalTradesARBKey = "totalTradesARBKey";
 const totalAmountARBKey = "totalAmountTradesARBKey";
 const totalAmountBSCKey = "totalAmountBSCKey";
 const totalTradesBSCKey = "totalTradesBSCKey";
+
+let triviaParticipants = new Array ();
+let triviaAdmins = new Array();
+let triviaMultichoiceUsers = new Map();
+triviaAdmins.push(
+    "495254971680423947",
+    "330728548908138497",
+    "804078003915063296",
+    "518430369985331203"
+);
+let numberEmojis = new Map();
+numberEmojis.set( 1, "1️⃣");
+numberEmojis.set( 2, "2️⃣");
+numberEmojis.set( 3, "3️⃣");
+numberEmojis.set( 4, "4️⃣");
+numberEmojis.set( 5, "5️⃣");
+numberEmojis.set( 6, "6️⃣");
+let triviaParticipantsKey = "triviaParticipantsKey";
+let triviaKey = "triviaRedisKeyFive";
+let triviaMultichoiceUserKey = "triviaMultichoiceUserRedisKeyTwo";
+let triviaList = new Array();
+let firstToAnswerChannelId = "1072785665491746886";
+let multichoiceChannelId = "1072785587511238666";
+let currentTriviaAnswer;
 if (process.env.REDIS_URL) {
   redisClient = redis.createClient(process.env.REDIS_URL);
   redisClient.on("error", function (error) {
@@ -2155,6 +2181,30 @@ if (process.env.REDIS_URL) {
       verifiedUsersMap = new Map(JSON.parse(verifiedUsersMapRaw));
     }
   });*/
+
+  redisClient.lrange(triviaParticipantsKey, 0, -1, function (err, triviaParticipantsList) {
+    if(triviaParticipantsList && triviaParticipantsList.length>0)
+    triviaParticipants = triviaParticipantsList;
+  });
+
+  redisClient.lrange(triviaKey, 0, -1, function (err, trivias) {
+    for (const trivia of trivias) {
+      triviaList.push(JSON.parse(trivia,reviver));
+    }
+  });
+
+  redisClient.lrange(triviaMultichoiceUserKey, 0, -1, function (err, triviaMultichoice) {
+    if(triviaMultichoice && triviaMultichoice.length>0)
+      triviaMultichoiceUsers = JSON.parse(triviaMultichoice,reviver);
+  });
+
+
+  redisClient.get("currentTriviaAnswer", function (err, obj) {
+    console.log("2redis " + obj);
+    if(obj){
+      currentTriviaAnswer = JSON.parse(obj);
+    }
+  });
 
   redisClient.get(totalAmountL2Key, function (err, obj) {
     if(obj){
@@ -5534,4 +5584,325 @@ async function getOvertimeParlays(){
       }
     }
   }
+}
+
+
+
+function sendTriviaValidationErrorMessage(triviaDTO, msg) {
+  var messageEmbed = new Discord.MessageEmbed()
+      .addFields(
+          {
+            name: 'Trivia Error',
+            value: "Your trivia json format is not okay for type: " + triviaDTO.type
+          }
+      ).setColor("#d32222");
+  msg.channel.send(messageEmbed);
+}
+function sentTriviaAddedSuccessMessage(triviaDTO, msg) {
+  var messageEmbed = new Discord.MessageEmbed()
+      .addFields(
+          {
+            name: 'Trivia added',
+            value: "Your trivia was added for type: " + triviaDTO.type
+          }
+      ).setColor("#224ed3");
+  msg.channel.send(messageEmbed);
+}
+
+async function sendFirstToAnswerQuestion(triviaDTO) {
+  var messageEmbed = new Discord.MessageEmbed()
+      .addFields(
+          {
+            name: 'First to answer question: ',
+            value: triviaDTO.question
+          },
+          {
+            name: 'Reward',
+            value: triviaDTO.reward
+          }
+      ).setColor("#22d325");
+  let firstAnswerChannel = await triviaBot.channels
+      .fetch(firstToAnswerChannelId);
+  firstAnswerChannel.send(messageEmbed);
+}
+
+function saveParticipantAnswerToTrivia(triviaDTO, user, reaction) {
+  let triviaStringList = new Array();
+  for (const trivia of triviaList) {
+    if (triviaDTO.questionNumber == trivia.questionNumber) {
+      let answerNumber;
+      for (var entry of numberEmojis.entries()) {
+        var key = entry[0],
+            value = entry[1];
+        if(value==reaction.emoji.name){
+          answerNumber = key;
+        }
+      }
+
+      if (trivia.answers) {
+        trivia.answers.set(user.id, answerNumber);
+      } else {
+        trivia.answers = new Map();
+        trivia.answers.set(user.id, answerNumber);
+      }
+    }
+    triviaStringList.push(JSON.stringify(trivia,replacer));
+  }
+  redisClient.del(triviaKey);
+  redisClient.lpush(triviaKey, triviaStringList);
+}
+
+
+async function sendMultichoiceMessage(triviaDTO, msg) {
+  let buttonsList = new Array();
+  var messageEmbed = new Discord.MessageEmbed()
+      .addFields(
+          {
+            name: 'Multichoice question: ',
+            value: triviaDTO.question
+          }
+      ).setColor("#0500fd");
+  let br = 1;
+  let choicesString = "";
+  for (const choice of triviaDTO.choices) {
+    choicesString = choicesString + " " + br + ") " + choice + "\n";
+  }
+  messageEmbed.addFields(
+      {
+        name: "Possible choices:",
+        value: choicesString,
+      }, {
+        name: ":coin: Points:",
+        value: triviaDTO.points,
+      }, {
+        name: "Time to answer:",
+        value: triviaDTO.time,
+      });
+  let firstAnswerChannel = await triviaBot.channels
+      .fetch(multichoiceChannelId);
+  let messageSent = await firstAnswerChannel.send(messageEmbed);
+  br = 1;
+  for (const choice of triviaDTO.choices) {
+    await messageSent.react(numberEmojis.get(br));
+    console.log("react is "+numberEmojis.get(br));
+    br ++
+  }
+  const values = [...numberEmojis.values()];
+  const filter = (reaction, user) => {
+    return values.includes(reaction.emoji.name) && triviaParticipants.includes(user.id);
+  };
+  const collector = messageSent.createReactionCollector(filter, { time: 60000 });
+  triviaDTO.timestamp = Date.now();
+  triviaDTO.active = true;
+  triviaDTO.isAnswered = false;
+  let triviaJson = JSON.stringify(triviaDTO);
+  let isAdded = false;
+  let triviaStringList = new Array();
+  for (let trivia of triviaList) {
+    if(trivia.questionNumber == triviaDTO.questionNumber){
+      trivia = triviaDTO;
+      isAdded = true;
+      triviaStringList.push(JSON.stringify(trivia));
+    }
+  }
+  if(!isAdded){
+    triviaList.push(triviaDTO);
+    triviaStringList.push(JSON.stringify(triviaDTO));
+  }
+
+  redisClient.del(triviaKey);
+  redisClient.lpush(triviaKey, triviaStringList);
+
+
+  collector.on('collect', (reaction, user) => {
+    console.log(`Collected ${reaction.emoji.name} from ${user.tag}`);
+    saveParticipantAnswerToTrivia(triviaDTO, user, reaction);
+  });
+
+  collector.on('end', collected => {
+    console.log(`Collected ${collected.size} items`);
+    messageEmbed.setColor("#ff4600");
+    messageSent.edit(messageEmbed);
+  });
+}
+
+
+function addPointsToUser(key, points) {
+
+  if(triviaMultichoiceUsers && triviaMultichoiceUsers.has(key)){
+    let existingPoints = triviaMultichoiceUsers.get(key);
+    if(existingPoints){
+      existingPoints = existingPoints + points;
+      triviaMultichoiceUsers.set(key,existingPoints);
+    } else {
+      triviaMultichoiceUsers.set(key,points);
+    }
+  } else {
+    triviaMultichoiceUsers = new Map();
+    triviaMultichoiceUsers.set(key,points);
+  }
+
+  const triviaUsersString = JSON.stringify(triviaMultichoiceUsers, replacer);
+  redisClient.del(triviaMultichoiceUserKey);
+  redisClient.lpush(triviaMultichoiceUserKey, triviaUsersString);
+}
+
+async function listTop20Users(msg) {
+  const mapSort1 = new Map([...triviaMultichoiceUsers.entries()].sort((a, b) => b[1].points - a[1].points));
+  var messageEmbed = new Discord.MessageEmbed()
+      .addFields(
+          {
+            name: 'Top 20 users: ',
+            value: ' '
+          }
+      ).setColor("#0500fd");
+  let br = 1;
+  for (var entry of mapSort1.entries()) {
+    if (br > 20) {
+      break;
+    }
+    var key = entry[0],
+        value = entry[1];
+    messageEmbed.addFields(
+        {
+          name: br + ") Total points: " +value,
+          value: "<@!" + msg.author.id + ">"
+        }
+    );
+  }
+  let multiChannel = await triviaBot.channels
+      .fetch(multichoiceChannelId);
+   await multiChannel.send(messageEmbed);
+}
+
+async function fastestAnswerLogic(currentTriviaAnswer, msg) {
+  if (currentTriviaAnswer && currentTriviaAnswer.answer.toLowerCase() == msg.content.trim().toLowerCase()) {
+    //this user succesfully answered
+    var messageEmbed = new Discord.MessageEmbed()
+        .addFields(
+            {
+              name: 'First to answer winner!',
+              value: "<@!" + msg.author.id + "> has won " + currentTriviaAnswer.reward
+            }
+        ).setColor("#22d325");
+    msg.channel.send(messageEmbed);
+    redisClient.set("currentTriviaAnswer", "", function (err, reply) {
+      console.log(reply); // OK
+    });
+    currentTriviaAnswer = "";
+  }
+}
+
+function setAnswer(triviaDTO) {
+  let triviaStringList = new Array();
+  for (const trivia of triviaList) {
+    if (triviaDTO.questionNumber == trivia.questionNumber) {
+      trivia.answer = triviaDTO.answer;
+      if(trivia.answers){
+        for (var entry of trivia.answers.entries()) {
+          var key = entry[0],
+              value = entry[1];
+          if (value == triviaDTO.answer) {
+            addPointsToUser(key, trivia.points);
+          }
+        }
+      }
+    }
+    triviaStringList.push(JSON.stringify(trivia,replacer));
+  }
+  redisClient.del(triviaKey);
+  redisClient.lpush(triviaKey, triviaStringList);
+}
+
+
+  triviaBot.on("message", msg => {
+    try{
+    if ((!msg.author.username.includes("trivia-bot"))) {
+
+      if(msg.channel.type == "dm"){
+        if (msg.content.toLowerCase().trim() == "sign me up for the superbowl party") {
+          //add user to triviaUsers
+          triviaParticipants.push(msg.author.id);
+          redisClient.lpush(triviaParticipantsKey, msg.author.id);
+          var messageEmbed = new Discord.MessageEmbed()
+              .addFields(
+                  {
+                    name: 'Trivia user registered',
+                    value: "You have been successfully registered for trivia quizz"
+                  }
+              ).setColor("#224ed3");
+          msg.channel.send(messageEmbed);
+        } else if (msg.content.toLowerCase().trim() == "!list top 20" && triviaAdmins.includes(msg.author.id)) {
+          listTop20Users(msg);
+        }
+        // check if message author is admin
+        else if (triviaAdmins.includes(msg.author.id) && isJsonString(msg.content.toLowerCase().trim())){
+          let triviaDTO =  JSON.parse(msg.content);
+          //check if valid trivia
+          if(triviaDTO.type.toLowerCase() == "first to answer"){
+            if((!triviaDTO.answer || !triviaDTO.reward || !triviaDTO.question)){
+              sendTriviaValidationErrorMessage(triviaDTO, msg);
+            } else {
+              currentTriviaAnswer = triviaDTO;
+              redisClient.set("currentTriviaAnswer", msg.content, function (err, reply) {
+                console.log(reply); // OK
+              });
+              sentTriviaAddedSuccessMessage(triviaDTO, msg);
+              sendFirstToAnswerQuestion(triviaDTO);
+            }
+          } else if (triviaDTO.type.toLowerCase() == "multichoice"){
+            if((!triviaDTO.questionNumber || !triviaDTO.question || !triviaDTO.time || !triviaDTO.choices || !triviaDTO.points )){
+              sendTriviaValidationErrorMessage(triviaDTO, msg);
+            } else {
+              sentTriviaAddedSuccessMessage(triviaDTO, msg);
+              sendMultichoiceMessage(triviaDTO, msg);
+            }
+          } else if (triviaDTO.type.toLowerCase() == "setanswer"){
+            if((!triviaDTO.questionNumber || !triviaDTO.answer )){
+              sendTriviaValidationErrorMessage(triviaDTO, msg);
+            } else {
+              sentTriviaAddedSuccessMessage(triviaDTO, msg);
+              setAnswer(triviaDTO);
+            }
+          }
+        }
+      } else {
+        if (msg.content.toLowerCase().trim() == "!list top 20" && triviaAdmins.includes(msg.author.id)) {
+          listTop20Users(msg);
+        }
+        else if (msg.channel.id == firstToAnswerChannelId &&  triviaParticipants.includes(msg.author.id)) {
+          fastestAnswerLogic(currentTriviaAnswer, msg);
+        }
+      }
+    } }catch (e) {
+      console.log("error while doing trivia")
+    }
+  });
+
+function isJsonString(str) {
+  try {
+    JSON.parse(str);
+  } catch (e) {
+    return false;
+  }
+  return true;
+}
+
+function replacer(key, value) {
+  if(value instanceof Map) {
+    return {
+      dataType: 'Map',
+      value: Array.from(value.entries()), // or with spread: value: [...value]
+    };
+  } else {
+    return value;
+  }
+}
+function reviver(key, value) {
+  if(typeof value === 'object' && value !== null) {
+    if (value.dataType === 'Map') {
+      return new Map(value.value);
+    }
+  }
+  return value;
 }
