@@ -5676,7 +5676,7 @@ async function sendMultichoiceMessage(triviaDTO, msg) {
         value: triviaDTO.points,
       }, {
         name: "Time to answer:",
-        value: triviaDTO.time,
+        value: triviaDTO.time+" minutes",
       });
   let firstAnswerChannel = await triviaBot.channels
       .fetch(multichoiceChannelId);
@@ -5691,7 +5691,8 @@ async function sendMultichoiceMessage(triviaDTO, msg) {
   const filter = (reaction, user) => {
     return values.includes(reaction.emoji.name) && triviaParticipants.includes(user.id);
   };
-  const collector = messageSent.createReactionCollector(filter, { time: 60000 });
+  let timeToAnswerInMiliseconds = Number(triviaDTO.time) * 60 * 1000;
+  const collector = messageSent.createReactionCollector(filter, { time: timeToAnswerInMiliseconds  });
   triviaDTO.timestamp = Date.now();
   triviaDTO.active = true;
   triviaDTO.isAnswered = false;
