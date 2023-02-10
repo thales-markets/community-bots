@@ -5649,6 +5649,7 @@ function saveParticipantAnswerToTrivia(triviaDTO, user, reaction) {
     triviaStringList.push(JSON.stringify(trivia,replacer));
   }
   redisClient.del(triviaKey);
+  console.log("trivia stirng after submiting answers "+triviaStringList);
   redisClient.lpush(triviaKey, triviaStringList);
 }
 
@@ -5666,6 +5667,7 @@ async function sendMultichoiceMessage(triviaDTO, msg) {
   let choicesString = "";
   for (const choice of triviaDTO.choices) {
     choicesString = choicesString + " " + br + ") " + choice + "\n";
+    br++;
   }
   messageEmbed.addFields(
       {
@@ -5685,7 +5687,7 @@ async function sendMultichoiceMessage(triviaDTO, msg) {
   for (const choice of triviaDTO.choices) {
     await messageSent.react(numberEmojis.get(br));
     console.log("react is "+numberEmojis.get(br));
-    br ++
+    br++;
   }
   const values = [...numberEmojis.values()];
   const filter = (reaction, user) => {
@@ -5732,18 +5734,20 @@ function addPointsToUser(key, points) {
 
   if(triviaMultichoiceUsers && triviaMultichoiceUsers.has(key)){
     let existingPoints = triviaMultichoiceUsers.get(key);
+    console.log("for user "+key+" existing points are "+existingPoints);
     if(existingPoints){
-      existingPoints = existingPoints + points;
+      existingPoints = Number(existingPoints) + Number(points);
       triviaMultichoiceUsers.set(key,existingPoints);
+      console.log("for user "+key+" after sum are "+existingPoints);
     } else {
-      triviaMultichoiceUsers.set(key,points);
+      triviaMultichoiceUsers.set(key,Number(points));
     }
   } else {
-    triviaMultichoiceUsers = new Map();
-    triviaMultichoiceUsers.set(key,points);
+    triviaMultichoiceUsers.set(key,Number(points));
   }
 
   const triviaUsersString = JSON.stringify(triviaMultichoiceUsers, replacer);
+  console.log("string is "+triviaUsersString);
   redisClient.del(triviaMultichoiceUserKey);
   redisClient.lpush(triviaMultichoiceUserKey, triviaUsersString);
 }
@@ -5770,6 +5774,7 @@ async function listTop20Users(msg) {
           value: "<@!" + msg.author.id + ">"
         }
     );
+    br++;
   }
   let multiChannel = await triviaBot.channels
       .fetch(multichoiceChannelId);
@@ -5835,6 +5840,11 @@ function setAnswer(triviaDTO) {
           msg.channel.send(messageEmbed);
         } else if (msg.content.toLowerCase().trim() == "!list top 20" && triviaAdmins.includes(msg.author.id)) {
           listTop20Users(msg);
+        }else if (msg.content.toLowerCase().trim() == "!reset trivia" && triviaAdmins.includes(msg.author.id)) {
+          triviaList = new Array();
+          triviaMultichoiceUsers = new Map();
+          redisClient.del(triviaKey);
+          redisClient.del(triviaMultichoiceUserKey);
         }
         // check if message author is admin
         else if (triviaAdmins.includes(msg.author.id) && isJsonString(msg.content.toLowerCase().trim())){
