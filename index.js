@@ -4262,9 +4262,19 @@ async function getOvertimeMarkets(){
 
         let betType = "";
         if (sportMarket.betType && sportMarket.betType == 10002) {
-          betType = "O/U("+Math.round(Number(sportMarket.total)/100)+")";
+          let totalPointsOvertime = Number(sportMarket.total)/100;
+          totalPointsOvertime =  Math.round((totalPointsOvertime + Number.EPSILON) * 100) / 100;
+          betType = "O/U("+totalPointsOvertime+")";
         } else if (sportMarket.betType && sportMarket.betType == 10001) {
           betType = "H1("+Math.round(Number(sportMarket.spread)/100)+")/H2";
+        }  else if (sportMarket.betType && sportMarket.betType == 10003){
+         if(sportMarket.doubleChanceMarketType.toLowerCase().includes("hometeam")){
+           betType = "1X";
+        }else if(sportMarket.doubleChanceMarketType.toLowerCase().includes("awayteam")) {
+           betType = "X2";
+        }else {
+           betType = "12";
+        }
         } else {
           betType =  "1x2";
         }
@@ -4515,7 +4525,9 @@ async function getOvertimeTrades(){
 
         if(position==0){
           if (specificMarket[0].betType && specificMarket[0].betType == 10002) {
-            position = "O("+Math.round(Number(specificMarket[0].total)/100)+")";
+            let totalPointsOvertime = Number(specificMarket[0].total)/100;
+            totalPointsOvertime =  Math.round((totalPointsOvertime + Number.EPSILON) * 100) / 100
+            position = "O("+totalPointsOvertime+")";
           } else if (specificMarket[0].betType && specificMarket[0].betType == 10001) {
             position = "H1("+Math.round(Number(specificMarket[0].spread)/100)+")";
           } else if (specificMarket[0].betType && specificMarket[0].betType == 10003){
@@ -4533,7 +4545,9 @@ async function getOvertimeTrades(){
 
         }else if(position==1){
           if (specificMarket[0].betType && specificMarket[0].betType == 10002) {
-            position = "U("+Math.round(Number(specificMarket[0].total)/100)+")";
+            let totalPointsOvertime = Number(specificMarket[0].total)/100;
+            totalPointsOvertime =  Math.round((totalPointsOvertime + Number.EPSILON) * 100) / 100
+            position = "U("+totalPointsOvertime +")";
           } else if (specificMarket[0].betType && specificMarket[0].betType == 10001) {
             position = "H2("+Math.round(Number(specificMarket[0].spread)/100)+")";
           } else {
@@ -5753,7 +5767,7 @@ function addPointsToUser(key, points) {
 }
 
 async function listTop20Users(msg) {
-  const mapSort1 = new Map([...triviaMultichoiceUsers.entries()].sort((a, b) => b[1].points - a[1].points));
+  const mapSort1 = new Map([...triviaMultichoiceUsers.entries()].sort((a, b) => b[1] - a[1]));
   var messageEmbed = new Discord.MessageEmbed()
       .addFields(
           {
@@ -5771,7 +5785,7 @@ async function listTop20Users(msg) {
     messageEmbed.addFields(
         {
           name: br + ") Total points: " +value,
-          value: "<@!" + msg.author.id + ">"
+          value: "<@!" + key + ">"
         }
     );
     br++;
