@@ -3396,6 +3396,7 @@ async function calculateThalesL2APR() {
   const data1 = await res1.json();
   const data2 = await res2.json();
   const thalesValue = await Number(ethers.utils.formatUnits(data1.toTokenAmount, data1.toToken.decimals)).toFixed(2);
+  if( data2.ethereum){
   const ethValue = data2.ethereum.usd;
   let  gelatoContractThales =  new web3L2.eth.Contract(gelatoContract.gelatoContract.abi, "0xac6705BC7f6a35eb194bdB89066049D6f1B0B1b5");
   const balances = await gelatoContractThales.methods.getUnderlyingBalances().call();
@@ -3416,6 +3417,7 @@ async function calculateThalesL2APR() {
 
   const resOP = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=optimism&vs_currencies=usd');
   const dataOP =  await resOP.json();
+  if(dataOP.optimism){
   const opValue = dataOP.optimism.usd;
   console.log("op value is "+opValue);
   const aprOP = ((100 * (5000 * opValue * 52)) / totalInUSD).toFixed(0);
@@ -3437,6 +3439,7 @@ async function calculateThalesL2APR() {
   clientThalesL2APR.user.setActivity("APR L2 WETH/THALES + OP", {
     type: "WATCHING",
   });
+  } }
 };
 
 
@@ -4138,9 +4141,12 @@ setInterval(function () {
   getPosition();
   getOpenDisputesExotic();
   getExoticMarketResultSet();
-  getOvertimeMarkets();
-  getOvertimeTrades();
-  getOvertimeParlays();
+  getOvertimeMarkets(10);
+  getOvertimeMarkets(42161);
+  getOvertimeTrades(10);
+  getOvertimeTrades(42161);
+  getOvertimeParlays(10);
+  getOvertimeParlays(42161);
 }, 2 * 60 * 1000);
 
 
@@ -4208,18 +4214,19 @@ let tagsMAP = new Map( [
   [9016, "UEFA Champions League"],
   [9100, "Formula 1"],
   [9101, "MotoGP"],
-  [9018, "FIFA World Cup 2022"]
+  [9018, "FIFA World Cup 2022"],
+  [9017, "UEFA League"],
+  [9019, "J1 League"]
 ]);
 
-async function getOvertimeMarkets(){
-
-
+async function getOvertimeMarkets(networkId){
   var startdate = new Date();
   var durationInMinutes = 30;
   startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
   let startDateUnixTimeSeconds = Math.floor(startdate.getTime()/1000);
   let startDateUnixTime = Math.floor(startdate.getTime());
-  let sportMarkets = await  thalesData.sportMarkets.markets({network:10,
+  let sportMarkets = await  thalesData.sportMarkets.markets({
+    network:networkId,
     max:100,
     minTimestamp:startDateUnixTimeSeconds
   });
@@ -4236,27 +4243,51 @@ async function getOvertimeMarkets(){
         if(!existingMarket.isCanceled && sportMarket.isCanceled){
           //cancelled
           messageTitle = "Overtime Market Canceled";
-          channelToSend = "994917658833190922";
+          if(networkId == 10){
+            channelToSend = "994917658833190922";
+          } else {
+            channelToSend = "1075044525971607682";
+          }
         } else if (!existingMarket.isResolved && sportMarket.isResolved){
           //resolved
           messageTitle = "Overtime Market Resolved";
-          channelToSend = "994917622640549908";
+          if(networkId == 10){
+            channelToSend = "994917622640549908";
+          } else {
+            channelToSend = "1075044483768516688";
+          }
           isResolved = true;
         } else if (existingMarket.homeOdds!=sportMarket.homeOdds){
           messageTitle = "New Overtime Market Odds";
-          channelToSend = "997150060959776848";
+          if(networkId == 10){
+            channelToSend = "997150060959776848";
+          } else {
+            channelToSend = "1075437625667756092";
+          }
         }else{
           continue;
         }
         } else if(!sportMarket.isCanceled && !sportMarket.isResolved){
          messageTitle = "New Overtime Market";
-         channelToSend = "994917583302172742";
+          if(networkId == 10){
+            channelToSend = "994917583302172742";
+          } else {
+            channelToSend = "1075439149152211175";
+          }
         }else if(sportMarket.isCanceled){
            messageTitle = "Overtime Market Canceled";
-          channelToSend = "994917658833190922";
+          if(networkId == 10){
+            channelToSend = "994917658833190922";
+          } else {
+            channelToSend = "1075044525971607682";
+          }
         }else{
           messageTitle = "Overtime Market Resolved";
-          channelToSend = "994917622640549908";
+          if(networkId == 10){
+            channelToSend = "994917622640549908";
+          } else {
+            channelToSend = "1075044483768516688";
+          }
           isResolved = true;
         }
 
@@ -4358,7 +4389,7 @@ async function getOvertimeMarkets(){
      }
 
       let overtimeMarketsTrades = await  thalesData.sportMarkets.marketTransactions({
-        network:10,
+        network:networkId,
         market:sportMarket.address
       });
       let ammHomeTradeSum = 0;
@@ -4495,11 +4526,11 @@ async function fixDuplicatedTeamName (name) {
   return name;
 };
 
-async function getOvertimeTrades(){
+async function getOvertimeTrades(networkId){
 
   let overtimeMarketsTrades = await  thalesData.sportMarkets.marketTransactions({
     max:100,
-    network:10
+    network:networkId
   });
   var startdate = new Date();
   var durationInMinutes = 30;
@@ -4509,7 +4540,7 @@ async function getOvertimeTrades(){
     if (startDateUnixTime < Number(overtimeMarketTrade.timestamp) && !writenOvertimeTrades.includes(overtimeMarketTrade.id)) {
       try {
         let specificMarket = await  thalesData.sportMarkets.markets({
-          network:10,
+          network:networkId,
           market:overtimeMarketTrade.market
         });
         let position = overtimeMarketTrade.position;
@@ -4559,6 +4590,12 @@ async function getOvertimeTrades(){
 
         let marketMessage = homeTeam + " - " + awayTeam ;
 
+        let linkTransaction;
+        if(networkId == 10 ){
+          linkTransaction = "https://optimistic.etherscan.io/tx/"
+        } else{
+          linkTransaction = "https://arbiscan.io/tx/"
+        }
         var message = new Discord.MessageEmbed()
             .addFields(
                 {
@@ -4579,7 +4616,7 @@ async function getOvertimeTrades(){
                   value:
                       "[" +
                       overtimeMarketTrade.hash +
-                      "](https://optimistic.etherscan.io/tx/" +
+                      "](" + linkTransaction +
                       overtimeMarketTrade.hash +
                       ")",
                 },
@@ -4609,6 +4646,8 @@ async function getOvertimeTrades(){
                 }
             )
             .setColor("#0037ff");
+
+        if(networkId == 10){
         if(Math.round(overtimeMarketTrade.paid)>1000){
           let overtimeTrades = await clientNewListings.channels
               .fetch("1057735441870241932");
@@ -4617,6 +4656,17 @@ async function getOvertimeTrades(){
           let overtimeTrades = await clientNewListings.channels
               .fetch("994914814419808346");
           overtimeTrades.send(message);
+        }
+        } else {
+          if(Math.round(overtimeMarketTrade.paid)>1000){
+            let overtimeTrades = await clientNewListings.channels
+                .fetch("1075367077940043867");
+            overtimeTrades.send(message);
+          } else{
+            let overtimeTrades = await clientNewListings.channels
+                .fetch("1075044402176725003");
+            overtimeTrades.send(message);
+          }
         }
         writenOvertimeTrades.push(overtimeMarketTrade.id);
         redisClient.lpush(overtimeTradesKey, overtimeMarketTrade.id);
@@ -5501,10 +5551,9 @@ async function getParlayMessage(parlayPosition) {
 }
 
 
-async function getOvertimeParlays(){
-
+async function getOvertimeParlays(networkId){
   let overtimeMarketParlays = await  thalesData.sportMarkets.parlayMarkets({
-    network:10,
+    network:networkId,
     max:100
   });
   var startdate = new Date();
@@ -5515,6 +5564,16 @@ async function getOvertimeParlays(){
     if (startDateUnixTime < Number(overtimeMarketParlay.timestamp) && !writenOvertimeParlays.includes(overtimeMarketParlay.txHash)) {
       try {
 
+
+        let linkAccount ;
+        let linkTransaction;
+        if(networkId == 10 ){
+          linkAccount = "https://optimistic.etherscan.io/address/"
+          linkTransaction = "https://optimistic.etherscan.io/tx/"
+        } else{
+          linkAccount = "https://arbiscan.io/address/"
+          linkTransaction = "https://arbiscan.io/tx/"
+        }
         var message = new Discord.MessageEmbed()
             .addFields(
                 {
@@ -5526,7 +5585,7 @@ async function getOvertimeParlays(){
                   value:
                       "[" +
                       overtimeMarketParlay.account +
-                      "](https://optimistic.etherscan.io/address/" +
+                      "](" + linkAccount +
                       overtimeMarketParlay.account +
                       ")",
                 },
@@ -5535,7 +5594,7 @@ async function getOvertimeParlays(){
                   value:
                       "[" +
                       overtimeMarketParlay.txHash +
-                      "](https://optimistic.etherscan.io/tx/" +
+                      "](" + linkTransaction +
                       overtimeMarketParlay.txHash +
                       ")",
                 }
@@ -5566,6 +5625,8 @@ async function getOvertimeParlays(){
               name: ":alarm_clock: Timestamp:",
               value: new Date(overtimeMarketParlay.timestamp),
             });
+
+        if(networkId == 10){
         if(Math.round(overtimeMarketParlay.sUSDPaid)>1000){
           let overtimeParlaysChannel = await clientNewListings.channels
               .fetch("1057735441870241932");
@@ -5574,6 +5635,17 @@ async function getOvertimeParlays(){
           let overtimeParlaysChannel = await clientNewListings.channels
               .fetch("1039875869927280711");
           overtimeParlaysChannel.send(message);
+        }
+        } else {
+          if(Math.round(overtimeMarketParlay.sUSDPaid)>1000){
+            let overtimeParlaysChannel = await clientNewListings.channels
+                .fetch("1075367077940043867");
+            overtimeParlaysChannel.send(message);
+          } else{
+            let overtimeParlaysChannel = await clientNewListings.channels
+                .fetch("1075044441712250890");
+            overtimeParlaysChannel.send(message);
+          }
         }
         writenOvertimeParlays.push(overtimeMarketParlay.txHash);
         redisClient.lpush(overtimeParlaysKey, overtimeMarketParlay.txHash);
