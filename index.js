@@ -3420,7 +3420,7 @@ async function calculateThalesL2APR() {
   if(dataOP.optimism){
   const opValue = dataOP.optimism.usd;
   console.log("op value is "+opValue);
-  const aprOP = ((100 * (5000 * opValue * 52)) / totalInUSD).toFixed(0);
+  const aprOP = ((100 * (3000 * opValue * 52)) / totalInUSD).toFixed(0);
   let formatedAPROP = Math.round(aprOP*100)/100+"%";
   console.log("formated APR OP is "+formatedAPROP);
 
@@ -5540,7 +5540,7 @@ async function getParlayMessage(parlayPosition) {
       } else if (specificMarket.betType && specificMarket.betType == 10001) {
         position = "H2("+Math.round(Number(specificMarket.spread)/100)+")";
       } else {
-        position = "1";
+        position = "2";
       }
       odds = Math.round((((1 / (specificMarket.awayOdds / 1e18))) + Number.EPSILON) * 100) / 100;
     } else {
