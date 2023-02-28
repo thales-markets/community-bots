@@ -4680,8 +4680,13 @@ async function getOvertimeTrades(networkId){
           console.log(reply); // OK
         });
 
-        let newOvertimeAMMMessage = overtimeMarketTrade.type.toUpperCase()==="BUY" ? 'New Overtime AMM position bought\n' : 'New Overtime AMM position sold\n';
-        let potentialProfit = (overtimeMarketTrade.amount-overtimeMarketTrade.paid.toFixed(3))>0.51? Math.round(overtimeMarketTrade.amount-overtimeMarketTrade.paid.toFixed(3)): overtimeMarketTrade.amount-overtimeMarketTrade.paid.toFixed(3);
+        let newOvertimeAMMMessage ="";
+        if(networkId == 10) {
+          newOvertimeAMMMessage = overtimeMarketTrade.type.toUpperCase() === "BUY" ? 'New Overtime AMM position bought\n' : 'New Overtime AMM position sold\n';
+        } else {
+          newOvertimeAMMMessage = overtimeMarketTrade.type.toUpperCase() === "BUY" ? 'New Overtime Arbitrum AMM position bought\n' : 'New Overtime Arbitrum AMM position sold\n';
+        }
+         let potentialProfit = (overtimeMarketTrade.amount-overtimeMarketTrade.paid.toFixed(3))>0.51? Math.round(overtimeMarketTrade.amount-overtimeMarketTrade.paid.toFixed(3)): overtimeMarketTrade.amount-overtimeMarketTrade.paid.toFixed(3);
         newOvertimeAMMMessage = newOvertimeAMMMessage + marketMessage+'\n';
         newOvertimeAMMMessage = newOvertimeAMMMessage + 'Amount: '+ overtimeMarketTrade.amount+"\n";
         newOvertimeAMMMessage = newOvertimeAMMMessage + 'Paid: '+ overtimeMarketTrade.paid.toFixed(3)+' sUSD\n';
