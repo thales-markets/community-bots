@@ -6,6 +6,8 @@ const clientGameCountdown = new Discord.Client();
 clientGameCountdown.login(process.env.BOT_TOKEN_GAME_COUNTDOWN);
 const clientThalesL2APR = new Discord.Client();
 clientThalesL2APR.login(process.env.BOT_TOKEN_THALES_L2_APR);
+const clientARBAPR = new Discord.Client();
+clientARBAPR.login(process.env.BOT_TOKEN_ARB_APR);
 const clientThalesOPCountdown = new Discord.Client();
 clientThalesOPCountdown.login(process.env.BOT_TOKEN_OPTHALES_COUNTDOWN);
 const clientRoyaleMainnetCountdown = new Discord.Client();
@@ -90,6 +92,8 @@ const clientPERP = new Discord.Client();
 clientPERP.login(process.env.BOT_TOKEN_PERP);
 const clientTotalBurnedThales = new Discord.Client();
 clientTotalBurnedThales.login(process.env.BOT_TOKEN_TOTAL_BURNED_THALES);
+const clientOverTimeArbTotal = new Discord.Client();
+clientOverTimeArbTotal.login(process.env.BOT_TOKEN_OVERTIME_ARB);
 let mapThalesTrades = new Map();
 let mapThalesAsks = new Map();
 let mapThalesBids = new Map();
@@ -127,6 +131,12 @@ const gelatoContract = require("./contracts/GelatoContract.js");
 let contractRoyaleRaw = fs.readFileSync('contracts/royale.json');
 let contractRoyale = JSON.parse(contractRoyaleRaw);
 let royaleContract =  new web3L2.eth.Contract(contractRoyale, "0x3198ab211CdF3E4d13a698E1Fb819507BcA2e579");
+let contractARBThalesRaw = fs.readFileSync('contracts/thalesARB.json');
+let arbThalesContractRaw = JSON.parse(contractARBThalesRaw);
+let arbThalesContract = new web3Arbitrum.eth.Contract(arbThalesContractRaw,"0x160Ca569999601bca06109D42d561D85D6Bb4b57");
+let contractECROWRaw = fs.readFileSync('contracts/thalesECROW.json');
+let ecrowThalesContractRaw = JSON.parse(contractECROWRaw);
+let ecrowThalesContract = new web3Arbitrum.eth.Contract(ecrowThalesContractRaw,"0x391a45F31c1837E3d837c23e05F42A098329D50d");
 let mapSladeMM = new Map();
 let mapAlmaMM = new Map();
 let mapDeckardMM = new Map();
@@ -1077,6 +1087,11 @@ function delay(time) {
 clientNewListings.once("ready", () => {
   console.log("initial new operations");
   getThalesNewOperations();
+});
+
+clientARBAPR.once("ready", () => {
+  console.log("initial arb apr");
+  getARBAPY();
 });
 
 setInterval(function () {
@@ -2116,6 +2131,7 @@ let exoticMarketPositionsKey = "ExoticMarketPositions";
 let exoticMarketDisputesKey = "ExoticMarketDisputes";
 let exoticMarketResultSet = "ExoticMarketResultSet";
 let totalAmountOfTradesL2 = 4992821;
+let totalAmountOvertimeARB= 316925;
 let numberOfTradesL2 = 13110;
 let totalAmountOfTradesOT = 1403;
 let numberOfTradesOT = 245;
@@ -2145,6 +2161,7 @@ const totalTradesARBKey = "totalTradesARBKey";
 const totalAmountARBKey = "totalAmountTradesARBKey";
 const totalAmountBSCKey = "totalAmountBSCKey";
 const totalTradesBSCKey = "totalTradesBSCKey";
+const totalAmountARBOvertimeKey = "totalAmountARBOvertimeKey";
 
 let triviaParticipants = new Array ();
 let triviaAdmins = new Array();
@@ -2210,6 +2227,13 @@ if (process.env.REDIS_URL) {
     if(obj){
       console.log("setting object "+obj);
       totalAmountOfTradesL2 = Number(obj);
+    }
+  });
+
+  redisClient.get(totalAmountARBOvertimeKey, function (err, obj) {
+    if(obj){
+      console.log("setting object "+obj);
+      totalAmountOvertimeARB = Number(obj);
     }
   });
 
@@ -2956,6 +2980,7 @@ async function getL2Trades() {
         }
       writenL2Trades.push(tradeL2.id);
       redisClient.lpush(L2tradesKey, tradeL2.id);
+      console.log("amount for l2 trade is "+amountUSD);
       totalAmountOfTradesL2 = totalAmountOfTradesL2 + Math.round(amountUSD);
       numberOfTradesL2++;
       redisClient.set(totalAmountL2Key, totalAmountOfTradesL2, function (err, reply) {
@@ -3355,12 +3380,14 @@ setTimeout(function () {
   updateTotalOvertimeTrades();
   updateTotalARBTrades();
   updateTotalBSCTrades();
+  updateTotalOvertimeARBTrades();
 }, 1000 * 30 * 1);
 
 setInterval(function () {
   console.log("update l2 trades");
   updateTotalL2Trades();
   updateTotalOvertimeTrades();
+  updateTotalOvertimeARBTrades();
   updateTotalARBTrades();
   updateTotalBSCTrades();
 }, 360 * 1000);
@@ -3382,6 +3409,7 @@ clientThalesL2APR.once("ready", () => {
 setInterval(function () {
   console.log("calculate L2 APR");
   calculateThalesL2APR();
+  getARBAPY();
 }, 360 * 1000);
 
 async function calculateThalesL2APR() {
@@ -4217,7 +4245,9 @@ let tagsMAP = new Map( [
   [9018, "FIFA World Cup 2022"],
   [9017, "UEFA League"],
   [9019, "J1 League"],
-  [9005,"NCAA"]
+  [9005,"NCAA"],
+  [9153,"Grand Slam Tennis"],
+  [9156,"ATP Tournament"]
 ]);
 
 async function getOvertimeMarkets(networkId){
@@ -4668,6 +4698,10 @@ async function getOvertimeTrades(networkId){
                 .fetch("1075044402176725003");
             overtimeTrades.send(message);
           }
+          totalAmountOvertimeARB = totalAmountOvertimeARB + Math.round(overtimeMarketTrade.paid);
+          redisClient.set(totalAmountARBOvertimeKey, totalAmountOvertimeARB, function (err, reply) {
+            console.log(reply); // OK
+          });
         }
         writenOvertimeTrades.push(overtimeMarketTrade.id);
         redisClient.lpush(overtimeTradesKey, overtimeMarketTrade.id);
@@ -4742,6 +4776,27 @@ async function updateTotalOvertimeTrades() {
     });
     clientOvertimeTrades.user.setActivity(
         "Trades OT="+numberOfTradesOT,
+        { type: "WATCHING" }
+    );
+  }catch (e) {
+    console.log("there was an error while updating total OT");
+  }
+}
+
+async function updateTotalOvertimeARBTrades() {
+  try {
+    clientOverTimeArbTotal.guilds.cache.forEach(function (value, key) {
+      try {
+        console.log("for guild "+value+" value is "+totalAmountOvertimeARB);
+        value.members.cache
+            .get(clientOverTimeArbTotal.user.id)
+            .setNickname(getNumberLabelDecimals(totalAmountOvertimeARB)+"$");
+      } catch (e) {
+        console.log('error while updating amount of trades OT'+e);
+      }
+    });
+    clientOverTimeArbTotal.user.setActivity(
+        "ARB OT Total Vol",
         { type: "WATCHING" }
     );
   }catch (e) {
@@ -5652,6 +5707,10 @@ async function getOvertimeParlays(networkId){
                 .fetch("1075044441712250890");
             overtimeParlaysChannel.send(message);
           }
+          totalAmountOvertimeARB = totalAmountOvertimeARB + Math.round(overtimeMarketParlay.sUSDPaid);
+          redisClient.set(totalAmountARBOvertimeKey, totalAmountOvertimeARB, function (err, reply) {
+            console.log(reply); // OK
+          });
         }
         writenOvertimeParlays.push(overtimeMarketParlay.txHash);
         redisClient.lpush(overtimeParlaysKey, overtimeMarketParlay.txHash);
@@ -6008,4 +6067,46 @@ function reviver(key, value) {
     }
   }
   return value;
+}
+
+
+async function getARBAPY(){
+  let fixedPeriodReward =  await arbThalesContract.methods.fixedPeriodReward().call();
+  let totalStakedAmount =  await arbThalesContract.methods.totalStakedAmount().call();
+  let totalEscrowedRewards =  await ecrowThalesContract.methods.totalEscrowedRewards().call();
+  let totalEscrowBalanceNotIncludedInStaking =  await ecrowThalesContract.methods.totalEscrowBalanceNotIncludedInStaking().call();
+  let maxAMMVolumeRewardsPercentage =  await arbThalesContract.methods.maxAMMVolumeRewardsPercentage().call();
+
+
+  let APR = (Number(fixedPeriodReward) * 52 * 100) /
+      (Number(totalStakedAmount) +
+          Number(totalEscrowedRewards) -
+          Number(totalEscrowBalanceNotIncludedInStaking));
+  const bonusAPR = (APR * maxAMMVolumeRewardsPercentage) / 100;
+  const APY = await aprToApy(APR)
+  const bonusAPY = await aprToApy(bonusAPR+APR);
+  const formattedBonusAPY = Math.round(bonusAPY);
+
+    clientARBAPR.guilds.cache.forEach(function (value, key) {
+      try {
+        value.members.cache
+            .get(clientARBAPR.user.id)
+            .setNickname(Math.round(APY)+"% APY / "+Math.round(formattedBonusAPY)+"% Max. APY");
+      } catch (e) {
+        console.log(e);
+      }
+    });
+  clientARBAPR.user.setActivity(numberWithCommas(Math.round(Number(totalStakedAmount)/1e18))+" staked", {
+    type: "WATCHING",
+  });
+}
+
+function numberWithCommas(x) {
+  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+
+async function aprToApy(interest){
+  let APR_FREQUENCY = 52;
+  return ((1 + interest / 100 / APR_FREQUENCY) ** APR_FREQUENCY - 1) * 100;
 }
