@@ -18,6 +18,12 @@ const clientMATICBot = new Discord.Client();
 clientMATICBot.login(process.env.BOT_TOKEN_MATIC);
 const clientKWENTABot = new Discord.Client();
 clientKWENTABot.login(process.env.BOT_TOKEN_KWENTA);
+const clientARBPriceBot = new Discord.Client();
+clientARBPriceBot.login(process.env.BOT_TOKEN_ARB_PRICE);
+const clientGMXBot = new Discord.Client();
+clientGMXBot.login(process.env.BOT_TOKEN_GMX);
+const clientMagicBot = new Discord.Client();
+clientMagicBot.login(process.env.BOT_TOKEN_MAGIC);
 var fs = require("fs");
 const client = new Discord.Client();
 let contentRaw = fs.readFileSync("content.json");
@@ -198,61 +204,65 @@ client.on("ready", () => {
   console.log(`Logged in as ${client.user.tag}!`);
 });
 
-clientUniswap.on("ready", () => {
-  setPriceBot(clientUniswap,"uniswap","UNI Price");
+clientMagicBot.once("ready", () => {
+  setPriceBot(clientMagicBot,"magic","Magic Price");
 });
+
+/*clientUniswap.on("ready", () => {
+  setPriceBot(clientUniswap,"uniswap","UNI Price");
+});*/
 
 clientBTC.on("ready", () => {
   setPriceBot(clientBTC,"bitcoin","BTC Price");
 });
 
-clientSOL.on("ready", () => {
+/*clientSOL.on("ready", () => {
   setPriceBot(clientSOL,"solana","SOL Price");
-});
+});*/
 
 clientLink.on("ready", () => {
   setPriceBot(clientLink,"chainlink","LINK Price");
 });
 
-clientAAVE.on("ready", () => {
+/*clientAAVE.on("ready", () => {
   setPriceBot(clientAAVE,"aave","AAVE Price");
 });
 
 clientCURVE.on("ready", () => {
   setPriceBot(clientCURVE,"curve-dao-token","CURVE Price");
-});
+});*/
 
-clientSTARGATE.on("ready", () => {
+/*clientSTARGATE.on("ready", () => {
   setPriceBot(clientSTARGATE,"stargate-finance","STG Price");
-});
+});*/
 
-clientLYRA.on("ready", () => {
+/*clientLYRA.on("ready", () => {
   setPriceBot(clientLYRA,"lyra-finance","LYRA Price");
-});
+});*/
 
-clientLUNA.on("ready", () => {
+/*clientLUNA.on("ready", () => {
   setPriceBot(clientLUNA,"terra-luna","LUNA Price");
-});
+});*/
 
 clientOP.on("ready", () => {
   setPriceBot(clientOP,"optimism","OP Price");
 });
 
-clientOHM.on("ready", () => {
+/*clientOHM.on("ready", () => {
   setPriceBot(clientOHM,"olympus","OHM Price");
-});
+});*/
 
-clientAPE.on("ready", () => {
+/*clientAPE.on("ready", () => {
   setPriceBot(clientAPE,"apecoin","APE Price");
-});
+});*/
 
 clientCVX.on("ready", () => {
   setPriceBot(clientCVX,"convex-finance","CVX Price");
 });
 
-clientPERP.on("ready", () => {
+/*clientPERP.on("ready", () => {
   setPriceBot(clientPERP,"perpetual-protocol","PERP Price");
-});
+});*/
 
 clientMATICBot.on("ready", () => {
   setPriceBot(clientMATICBot,"matic-network","MATIC Price");
@@ -262,24 +272,37 @@ clientKWENTABot.once("ready", () => {
   setPriceBot(clientKWENTABot,"kwenta","KWENTA Price");
 });
 
+clientARBPriceBot.once("ready", () => {
+  setPriceBot(clientARBPriceBot,"arbitrum","ARB Price");
+});
+
+clientGMXBot.once("ready", () => {
+  setPriceBot(clientGMXBot,"gmx","GMX Price");
+});
+
+
+
 setInterval(function () {
   console.log("updating price bots");
-    setPriceBot(clientUniswap,"uniswap","UNI Price");
+    //setPriceBot(clientUniswap,"uniswap","UNI Price");
     setPriceBot(clientBTC,"bitcoin","BTC Price");
-    setPriceBot(clientSOL,"solana","SOL Price");
+    //setPriceBot(clientSOL,"solana","SOL Price");
     setPriceBot(clientLink,"chainlink","LINK Price");
-    setPriceBot(clientAAVE,"aave","AAVE Price");
-    setPriceBot(clientCURVE,"curve-dao-token","CURVE Price");
+    //setPriceBot(clientAAVE,"aave","AAVE Price");
+    //setPriceBot(clientCURVE,"curve-dao-token","CURVE Price");
     setPriceBot(clientSTARGATE,"stargate-finance","STG Price");
-    setPriceBot(clientLYRA,"lyra-finance","LYRA Price");
-    setPriceBot(clientLUNA,"terra-luna","LUNA Price");
+    //setPriceBot(clientLYRA,"lyra-finance","LYRA Price");
+    //setPriceBot(clientLUNA,"terra-luna","LUNA Price");
     setPriceBot(clientOP,"optimism","OP Price");
-    setPriceBot(clientOHM,"olympus","OHM Price");
-    setPriceBot(clientAPE,"apecoin","APE Price");
+    //setPriceBot(clientOHM,"olympus","OHM Price");
+    //setPriceBot(clientAPE,"apecoin","APE Price");
     setPriceBot(clientCVX,"convex-finance","CVX Price");
-    setPriceBot(clientPERP,"perpetual-protocol","PERP Price");
+    //setPriceBot(clientPERP,"perpetual-protocol","PERP Price");
     setPriceBot(clientMATICBot,"matic-network","MATIC Price");
     setPriceBot(clientKWENTABot,"kwenta","KWENTA Price");
+    setPriceBot(clientARBPriceBot,"arbitrum","ARB Price");
+    setPriceBot(clientGMXBot,"gmx","GMX Price");
+    setPriceBot(clientMagicBot,"magic","Magic Price");
 }, 380 * 1000);
 
 const setPriceBot = async (clientForSetting,tokenForPrice,nameOfTheToken) => {
@@ -3340,7 +3363,7 @@ async function updateTotalL2Trades() {
         console.log("for guild "+value+" value is "+totalAmountOfTradesL2);
         value.members.cache
             .get(clientTotalL2Trades.user.id)
-            .setNickname("OP="+getNumberLabelDecimals(totalAmountOfTradesL2)+"$");
+            .setNickname("Optimism="+getNumberLabelDecimals(totalAmountOfTradesL2)+"$");
       } catch (e) {
         console.log('error while updating amount of trades '+e);
       }
@@ -4247,7 +4270,8 @@ let tagsMAP = new Map( [
   [9019, "J1 League"],
   [9005,"NCAA"],
   [9153,"Grand Slam Tennis"],
-  [9156,"ATP Tournament"]
+  [9156,"ATP Tournament"],
+  [9977,"CSGO"]
 ]);
 
 async function getOvertimeMarkets(networkId){
@@ -4328,7 +4352,8 @@ async function getOvertimeMarkets(networkId){
           totalPointsOvertime =  Math.round((totalPointsOvertime + Number.EPSILON) * 100) / 100;
           betType = "O/U("+totalPointsOvertime+")";
         } else if (sportMarket.betType && sportMarket.betType == 10001) {
-          betType = "H1("+Math.round(Number(sportMarket.spread)/100)+")/H2";
+          var rounded = Math.round(Number(sportMarket.spread)/10)/10;
+          betType = "H1("+rounded+")/H2";
         }  else if (sportMarket.betType && sportMarket.betType == 10003){
          if(sportMarket.doubleChanceMarketType.toLowerCase().includes("hometeam")){
            betType = "1X";
@@ -4591,7 +4616,8 @@ async function getOvertimeTrades(networkId){
             totalPointsOvertime =  Math.round((totalPointsOvertime + Number.EPSILON) * 100) / 100
             position = "O("+totalPointsOvertime+")";
           } else if (specificMarket[0].betType && specificMarket[0].betType == 10001) {
-            position = "H1("+Math.round(Number(specificMarket[0].spread)/100)+")";
+            var rounded = Math.round(Number(specificMarket[0].spread)/10)/10;
+            position = "H1("+rounded+")";
           } else if (specificMarket[0].betType && specificMarket[0].betType == 10003){
             if(specificMarket[0].doubleChanceMarketType.toLowerCase().includes("hometeam")){
               position = "1X";
@@ -4611,7 +4637,8 @@ async function getOvertimeTrades(networkId){
             totalPointsOvertime =  Math.round((totalPointsOvertime + Number.EPSILON) * 100) / 100
             position = "U("+totalPointsOvertime +")";
           } else if (specificMarket[0].betType && specificMarket[0].betType == 10001) {
-            position = "H2("+Math.round(Number(specificMarket[0].spread)/100)+")";
+            var rounded = Math.round(Number(specificMarket[0].spread)/10)/10;
+            position = "H2("+rounded+")";
           } else {
             position = awayTeam
           }
@@ -4769,7 +4796,7 @@ async function updateTotalOvertimeTrades() {
         console.log("for guild "+value+" value is "+totalAmountOfTradesOT);
         value.members.cache
             .get(clientOvertimeTrades.user.id)
-            .setNickname("Overtime="+getNumberLabelDecimals(totalAmountOfTradesOT)+"$");
+            .setNickname("OT Op="+getNumberLabelDecimals(totalAmountOfTradesOT)+"$");
       } catch (e) {
         console.log('error while updating amount of trades OT'+e);
       }
@@ -4790,7 +4817,7 @@ async function updateTotalOvertimeARBTrades() {
         console.log("for guild "+value+" value is "+totalAmountOvertimeARB);
         value.members.cache
             .get(clientOverTimeArbTotal.user.id)
-            .setNickname(getNumberLabelDecimals(totalAmountOvertimeARB)+"$");
+            .setNickname("OT Arb="+getNumberLabelDecimals(totalAmountOvertimeARB)+"$");
       } catch (e) {
         console.log('error while updating amount of trades OT'+e);
       }
@@ -5590,7 +5617,8 @@ async function getParlayMessage(parlayPosition) {
       if (specificMarket.betType && specificMarket.betType == 10002) {
         position = "O("+Math.round(Number(specificMarket.total)/100)+")";
       } else if (specificMarket.betType && specificMarket.betType == 10001) {
-        position = "H1("+Math.round(Number(specificMarket.spread)/100)+")";
+        var rounded = Math.round(Number(specificMarket.spread)/10)/10;
+        position = "H1("+rounded+")";
       } else {
         position = "1";
       }
@@ -5599,7 +5627,8 @@ async function getParlayMessage(parlayPosition) {
       if (specificMarket.betType && specificMarket.betType == 10002) {
         position = "U("+Math.round(Number(specificMarket.total)/100)+")";
       } else if (specificMarket.betType && specificMarket.betType == 10001) {
-        position = "H2("+Math.round(Number(specificMarket.spread)/100)+")";
+        var rounded = Math.round(Number(specificMarket.spread)/10)/10;
+        position = "H2("+rounded+")";
       } else {
         position = "2";
       }
