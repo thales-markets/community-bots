@@ -24,6 +24,8 @@ const clientGMXBot = new Discord.Client();
 clientGMXBot.login(process.env.BOT_TOKEN_GMX);
 const clientMagicBot = new Discord.Client();
 clientMagicBot.login(process.env.BOT_TOKEN_MAGIC);
+const clientThalesBot = new Discord.Client();
+clientThalesBot.login(process.env.BOT_TOKEN_THLS_PRICE);
 var fs = require("fs");
 const client = new Discord.Client();
 let contentRaw = fs.readFileSync("content.json");
@@ -208,6 +210,10 @@ clientMagicBot.once("ready", () => {
   setPriceBot(clientMagicBot,"magic","Magic Price");
 });
 
+clientThalesBot.once("ready", () => {
+  setPriceBot(clientThalesBot,"thales","Thales Price");
+});
+
 /*clientUniswap.on("ready", () => {
   setPriceBot(clientUniswap,"uniswap","UNI Price");
 });*/
@@ -286,6 +292,7 @@ setInterval(function () {
   console.log("updating price bots");
     //setPriceBot(clientUniswap,"uniswap","UNI Price");
     setPriceBot(clientBTC,"bitcoin","BTC Price");
+    setPriceBot(clientThalesBot,"thales","Thales Price");
     //setPriceBot(clientSOL,"solana","SOL Price");
     setPriceBot(clientLink,"chainlink","LINK Price");
     //setPriceBot(clientAAVE,"aave","AAVE Price");
