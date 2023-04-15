@@ -3011,11 +3011,13 @@ async function getL2Trades() {
       writenL2Trades.push(tradeL2.id);
       redisClient.lpush(L2tradesKey, tradeL2.id);
       console.log("amount for l2 trade is "+amountUSD);
+      if(Math.round(amountUSD)<1000000){
       totalAmountOfTradesL2 = totalAmountOfTradesL2 + Math.round(amountUSD);
+        redisClient.set(totalAmountL2Key, totalAmountOfTradesL2, function (err, reply) {
+          console.log(reply); // OK
+        });
+      }
       numberOfTradesL2++;
-      redisClient.set(totalAmountL2Key, totalAmountOfTradesL2, function (err, reply) {
-            console.log(reply); // OK
-      });
       redisClient.set(totalTradesL2Key, numberOfTradesL2, function (err, reply) {
           console.log(reply); // OK
         });
@@ -4278,7 +4280,9 @@ let tagsMAP = new Map( [
   [9005,"NCAA"],
   [9153,"Grand Slam Tennis"],
   [9156,"ATP Tournament"],
-  [9977,"CSGO"]
+  [9977,"CSGO"],
+  [9020,"Cricket"],
+  [9399,"EuroLeague"]
 ]);
 
 async function getOvertimeMarkets(networkId){
