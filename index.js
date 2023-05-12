@@ -24,6 +24,8 @@ const clientGMXBot = new Discord.Client();
 clientGMXBot.login(process.env.BOT_TOKEN_GMX);
 const clientMagicBot = new Discord.Client();
 clientMagicBot.login(process.env.BOT_TOKEN_MAGIC);
+const clientILVBot = new Discord.Client();
+clientILVBot.login(process.env.BOT_TOKEN_ILV);
 const clientThalesBot = new Discord.Client();
 clientThalesBot.login(process.env.BOT_TOKEN_THLS_PRICE);
 var fs = require("fs");
@@ -170,10 +172,6 @@ answersContent.forEach((a) => {
   qaMaps.set(a.number, a.content);
 });
 
-clientETHBurned.once("ready", () => {
-  console.log("updating ETH burned on ready");
-  getETHBurned();
-});
 
 clientTotalBurnedThales.once("ready", () => {
   console.log("updating Burned Thales on ready");
@@ -199,7 +197,7 @@ clientRoyaleMainnetCountdown.once("ready", () => {
 
 clientThalesOPCountdown.once("ready", () => {
   console.log("update clientThalesOPCountdown Countdown on ready");
-  updateThalesOPCountdown();
+  //updateThalesOPCountdown();
 });
 
 client.on("ready", () => {
@@ -212,6 +210,10 @@ clientMagicBot.once("ready", () => {
 
 clientThalesBot.once("ready", () => {
   setPriceBot(clientThalesBot,"thales","Thales Price");
+});
+
+clientILVBot.once("ready", () => {
+  setPriceBot(clientILVBot,"illuvium","ILV Price");
 });
 
 /*clientUniswap.on("ready", () => {
@@ -293,6 +295,7 @@ setInterval(function () {
     //setPriceBot(clientUniswap,"uniswap","UNI Price");
     setPriceBot(clientBTC,"bitcoin","BTC Price");
     setPriceBot(clientThalesBot,"thales","Thales Price");
+    setPriceBot(clientILVBot,"illuvium","ILV Price");
     //setPriceBot(clientSOL,"solana","SOL Price");
     setPriceBot(clientLink,"chainlink","LINK Price");
     //setPriceBot(clientAAVE,"aave","AAVE Price");
@@ -427,7 +430,7 @@ const updateThalesRoyaleMainnetCountdown = async () => {
 };
 
 
-const updateThalesOPCountdown = async () => {
+/*const updateThalesOPCountdown = async () => {
   let response = await axios.get('https://api.1inch.exchange/v3.0/10/quote?fromTokenAddress=0x217D47011b23BB961eB6D93cA9945B7501a5BB11&toTokenAddress=0x7f5c764cbc14f9669b88837ca1490cca17c31607&amount=1000000000000000000000');
   let  thalesOPValue= Math.round((response.data.toTokenAmount/1000000000) * 100) / 100;
   if (thalesOPValue) {
@@ -446,14 +449,13 @@ const updateThalesOPCountdown = async () => {
   clientThalesOPCountdown.user.setActivity("OpTHALES", {
     type: "WATCHING",
   });
-};
+};*/
 
 setInterval(function () {
   console.log("updateCountdown and eth burned");
-  getETHBurned();
   updateCountdown();
   updateThalesRoyaleMainnetCountdown();
-  updateThalesOPCountdown();
+  //updateThalesOPCountdown();
   updateGameCountdown();
   getBurnedThalesBalance();
 }, 360 * 1000);
@@ -1950,35 +1952,6 @@ async function getThalesNewTrades(market, startDateUnixTime) {
 
 clientNewListings.login(process.env.BOT_TOKEN_LISTINGS);
 
-async function getETHBurned() {
-  try {
-    var response = await axios.get("https://ethburned.info/api/v1/burned");
-    clientETHBurned.guilds.cache.forEach(function (value, key) {
-      try {
-        value.members.cache
-          .get(clientETHBurned.user.id)
-          .setNickname(getNumberLabelDecimals(response.data.total) + " ETH burned");
-      } catch (e) {
-        console.log(e);
-      }
-    });
-    clientETHBurned.user.setActivity(
-      getNumberLabel(response.data.totalUSD) + "$",
-      { type: "WATCHING" }
-    );
-  } catch (e) {
-    console.log("error in eth burned", e);
-  }
-}
-
-setInterval(function () {
-  try {
-    console.log("starting new mints");
-   // getMintData();
-  } catch (e) {
-    console.log("starting new mints" + e);
-  }
-}, 60 * 4.8 * 1000);
 
 clientCountdownChannel.once("ready", () => {
     try {
@@ -2185,7 +2158,7 @@ let writenExoticMarketResultSet = [];
 let verifiedUsersMap = new Map();
 let totalAmountOTKey = "totalAmountOTKey";
 let totalTradesOTKey = "totalTradesOTKey";
-const totalAmountL2Key = "totalAmountL2Key";
+const totalAmountL2Key = "totalAmountL2OPKey";
 const totalTradesL2Key = "totalNumberTradesL2Key";
 const totalTradesARBKey = "totalTradesARBKey";
 const totalAmountARBKey = "totalAmountTradesARBKey";
@@ -3010,13 +2983,8 @@ async function getL2Trades() {
         }
       writenL2Trades.push(tradeL2.id);
       redisClient.lpush(L2tradesKey, tradeL2.id);
-      console.log("amount for l2 trade is "+amountUSD);
-      if(Math.round(amountUSD)<1000000){
-      totalAmountOfTradesL2 = totalAmountOfTradesL2 + Math.round(amountUSD);
-        redisClient.set(totalAmountL2Key, totalAmountOfTradesL2, function (err, reply) {
-          console.log(reply); // OK
-        });
-      }
+      console.log("###### amount for l2 trade is "+amountUSD);
+      amountUSD = Math.trunc(amountUSD);
       numberOfTradesL2++;
       redisClient.set(totalTradesL2Key, numberOfTradesL2, function (err, reply) {
           console.log(reply); // OK
@@ -3365,6 +3333,19 @@ async function  getRangedMarketPolygon(tradeL2) {
   return markets[0];
 }
 
+const getL2TotalVolume = async () => {
+  try {
+    let response = await axios.get('https://api.dune.com/api/v1/query/323926/results?api_key=3Qen5RZeSwOpwE3616qSNIqYVTJ7j9dj');
+    if(!isNaN(response.data.result.rows[0]["Total Volume"])){
+      totalAmountOfTradesL2 =  Math.trunc((response.data.result.rows[0]["Total Volume"]));
+      console.log("OP amount is "+totalAmountOfTradesL2);
+      await redisClient.set(totalAmountL2Key,totalAmountOfTradesL2);
+    }
+  }catch (e) {
+    console.log("error while updating dune "+e);
+  }
+};
+
 async function updateTotalL2Trades() {
   try {
     clientTotalL2Trades.guilds.cache.forEach(function (value, key) {
@@ -3424,6 +3405,13 @@ setInterval(function () {
   updateTotalBSCTrades();
 }, 360 * 1000);
 
+setInterval(function () {
+  console.log("get total l2 volume");
+  getL2TotalVolume();
+}, 360 * 2 * 1000);
+
+
+
 setTimeout(function () {
   updateTotalPolygonTrades();
 }, 1000 * 30 * 1);
@@ -3447,7 +3435,7 @@ setInterval(function () {
 async function calculateThalesL2APR() {
 
   const priceL2ThalesURL =
-      'https://api.1inch.exchange/v3.0/10/quote?fromTokenAddress=0x217D47011b23BB961eB6D93cA9945B7501a5BB11&toTokenAddress=0x7f5c764cbc14f9669b88837ca1490cca17c31607&amount=1000000000000000000';
+      'https://api.coingecko.com/api/v3/simple/price?ids=thales&vs_currencies=usd';
 
   const [res1, res2] = await Promise.all([
     fetch(priceL2ThalesURL),
@@ -3455,9 +3443,9 @@ async function calculateThalesL2APR() {
   ]);
   const data1 = await res1.json();
   const data2 = await res2.json();
-  const thalesValue = await Number(ethers.utils.formatUnits(data1.toTokenAmount, data1.toToken.decimals)).toFixed(2);
-  if( data2.ethereum){
-  const ethValue = data2.ethereum.usd;
+  if( data2.ethereum && data1.thales){
+   const ethValue = data2.ethereum.usd;
+   const thalesValue = data1.thales.usd;
   let  gelatoContractThales =  new web3L2.eth.Contract(gelatoContract.gelatoContract.abi, "0xac6705BC7f6a35eb194bdB89066049D6f1B0B1b5");
   const balances = await gelatoContractThales.methods.getUnderlyingBalances().call();
   let wethBalance = await web3.utils.fromWei(balances[1],"ether");
@@ -4281,8 +4269,14 @@ let tagsMAP = new Map( [
   [9153,"Grand Slam Tennis"],
   [9156,"ATP Tournament"],
   [9977,"CSGO"],
+  [18977,"CSGO"],
   [9020,"Cricket"],
-  [9399,"EuroLeague"]
+  [9399,"EuroLeague"],
+  [9196,"Boxing"],
+  [9033,"IIHF World Championship"],
+  [9045,"Copa Libertadores"],
+  [9057,"Eredivisie"],
+  [9061,"Liga Portugal"]
 ]);
 
 async function getOvertimeMarkets(networkId){
@@ -5626,7 +5620,9 @@ async function getParlayMessage(parlayPosition) {
   }
   else if(position=="home"){
       if (specificMarket.betType && specificMarket.betType == 10002) {
-        position = "O("+Math.round(Number(specificMarket.total)/100)+")";
+        let totalPointsOvertime = Number(specificMarket.total)/100;
+        totalPointsOvertime =  Math.round((totalPointsOvertime + Number.EPSILON) * 100) / 100
+        position = "O("+totalPointsOvertime+")";
       } else if (specificMarket.betType && specificMarket.betType == 10001) {
         var rounded = Math.round(Number(specificMarket.spread)/10)/10;
         position = "H1("+rounded+")";
@@ -5636,7 +5632,9 @@ async function getParlayMessage(parlayPosition) {
       odds = Math.round((((1 / (specificMarket.homeOdds / 1e18))) + Number.EPSILON) * 100) / 100;
     } else if (position == "away") {
       if (specificMarket.betType && specificMarket.betType == 10002) {
-        position = "U("+Math.round(Number(specificMarket.total)/100)+")";
+        let totalPointsOvertime = Number(specificMarket.total)/100;
+        totalPointsOvertime =  Math.round((totalPointsOvertime + Number.EPSILON) * 100) / 100
+        position = "U("+totalPointsOvertime+")";
       } else if (specificMarket.betType && specificMarket.betType == 10001) {
         var rounded = Math.round(Number(specificMarket.spread)/10)/10;
         position = "H2("+rounded+")";
