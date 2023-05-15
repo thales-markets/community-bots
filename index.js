@@ -28,6 +28,8 @@ const clientILVBot = new Discord.Client();
 clientILVBot.login(process.env.BOT_TOKEN_ILV);
 const clientThalesBot = new Discord.Client();
 clientThalesBot.login(process.env.BOT_TOKEN_THLS_PRICE);
+const clientETHPriceBot = new Discord.Client();
+clientETHPriceBot.login(process.env.BOT_TOKEN_ETH_PRICE);
 var fs = require("fs");
 const client = new Discord.Client();
 let contentRaw = fs.readFileSync("content.json");
@@ -212,6 +214,10 @@ clientThalesBot.once("ready", () => {
   setPriceBot(clientThalesBot,"thales","Thales Price");
 });
 
+clientThalesBot.once("ready", () => {
+  setPriceBot(clientETHPriceBot,"ethereum","ETH Price");
+});
+
 clientILVBot.once("ready", () => {
   setPriceBot(clientILVBot,"illuvium","ILV Price");
 });
@@ -292,28 +298,25 @@ clientGMXBot.once("ready", () => {
 
 setInterval(function () {
   console.log("updating price bots");
-    //setPriceBot(clientUniswap,"uniswap","UNI Price");
     setPriceBot(clientBTC,"bitcoin","BTC Price");
     setPriceBot(clientThalesBot,"thales","Thales Price");
+    setPriceBot(clientETHPriceBot,"ethereum","ETH Price");
     setPriceBot(clientILVBot,"illuvium","ILV Price");
-    //setPriceBot(clientSOL,"solana","SOL Price");
     setPriceBot(clientLink,"chainlink","LINK Price");
-    //setPriceBot(clientAAVE,"aave","AAVE Price");
-    //setPriceBot(clientCURVE,"curve-dao-token","CURVE Price");
     setPriceBot(clientSTARGATE,"stargate-finance","STG Price");
-    //setPriceBot(clientLYRA,"lyra-finance","LYRA Price");
-    //setPriceBot(clientLUNA,"terra-luna","LUNA Price");
-    setPriceBot(clientOP,"optimism","OP Price");
-    //setPriceBot(clientOHM,"olympus","OHM Price");
-    //setPriceBot(clientAPE,"apecoin","APE Price");
-    setPriceBot(clientCVX,"convex-finance","CVX Price");
-    //setPriceBot(clientPERP,"perpetual-protocol","PERP Price");
-    setPriceBot(clientMATICBot,"matic-network","MATIC Price");
-    setPriceBot(clientKWENTABot,"kwenta","KWENTA Price");
-    setPriceBot(clientARBPriceBot,"arbitrum","ARB Price");
-    setPriceBot(clientGMXBot,"gmx","GMX Price");
-    setPriceBot(clientMagicBot,"magic","Magic Price");
 }, 380 * 1000);
+
+setInterval(function () {
+  console.log("updating price 2 bots");
+
+  setPriceBot(clientOP,"optimism","OP Price");
+  setPriceBot(clientCVX,"convex-finance","CVX Price");
+  setPriceBot(clientMATICBot,"matic-network","MATIC Price");
+  setPriceBot(clientKWENTABot,"kwenta","KWENTA Price");
+  setPriceBot(clientARBPriceBot,"arbitrum","ARB Price");
+  setPriceBot(clientGMXBot,"gmx","GMX Price");
+  setPriceBot(clientMagicBot,"magic","Magic Price");
+}, 470 * 1000);
 
 const setPriceBot = async (clientForSetting,tokenForPrice,nameOfTheToken) => {
 
@@ -1551,7 +1554,7 @@ async function getThalesNewOperations() {
       // console.log("Doing a request market " + times);
       getThalesNewTrades(markets[times - 1], startDateUnixTime);
       waitAndDo(times - 1);
-    }, 1000);
+    }, 10000);
   }
 
   for (const market of markets) {
@@ -6015,7 +6018,7 @@ function setAnswer(triviaDTO) {
     if ((!msg.author.username.includes("trivia-bot"))) {
 
       if(msg.channel.type == "dm"){
-        if (msg.content.toLowerCase().trim() == "sign me up for the superbowl party") {
+        if (msg.content.toLowerCase().trim() == "sign me up for the sport party") {
           //add user to triviaUsers
           triviaParticipants.push(msg.author.id);
           redisClient.lpush(triviaParticipantsKey, msg.author.id);
