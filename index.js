@@ -30,6 +30,18 @@ const clientThalesBot = new Discord.Client();
 clientThalesBot.login(process.env.BOT_TOKEN_THLS_PRICE);
 const clientETHPriceBot = new Discord.Client();
 clientETHPriceBot.login(process.env.BOT_TOKEN_ETH_PRICE);
+const clientLiqOPOT = new Discord.Client();
+clientLiqOPOT.login(process.env.BOT_TOKEN_LQ_OP_OT);
+const clientLiqOPTHLS = new Discord.Client();
+clientLiqOPTHLS.login(process.env.BOT_TOKEN_LQ_OP_THLS);
+const clientLiqARBOT = new Discord.Client();
+clientLiqARBOT.login(process.env.BOT_TOKEN_LQ_ARB_OT);
+const clientLiqARBThales = new Discord.Client();
+clientLiqARBThales.login(process.env.BOT_TOKEN_LQ_ARB_THLS);
+const clientLiqParlayOP = new Discord.Client();
+clientLiqParlayOP.login(process.env.BOT_TOKEN_LQ_PARLAY_OP);
+const clientLiqParlayThales = new Discord.Client();
+clientLiqParlayThales.login(process.env.BOT_TOKEN_LQ_PARLAY_THLS);
 var fs = require("fs");
 const client = new Discord.Client();
 let contentRaw = fs.readFileSync("content.json");
@@ -106,6 +118,7 @@ const clientTotalBurnedThales = new Discord.Client();
 clientTotalBurnedThales.login(process.env.BOT_TOKEN_TOTAL_BURNED_THALES);
 const clientOverTimeArbTotal = new Discord.Client();
 clientOverTimeArbTotal.login(process.env.BOT_TOKEN_OVERTIME_ARB);
+
 let mapThalesTrades = new Map();
 let mapThalesAsks = new Map();
 let mapThalesBids = new Map();
@@ -3433,6 +3446,10 @@ setInterval(function () {
   console.log("calculate L2 APR");
   calculateThalesL2APR();
   getARBAPY();
+  getLiqOPThales();
+  getLiqOPOvertime();
+  getLiqARBThales();
+  getLiqARBOvertime();
 }, 360 * 1000);
 
 async function calculateThalesL2APR() {
@@ -4279,7 +4296,14 @@ let tagsMAP = new Map( [
   [9033,"IIHF World Championship"],
   [9045,"Copa Libertadores"],
   [9057,"Eredivisie"],
-  [9061,"Liga Portugal"]
+  [9061,"Liga Portugal"],
+  [9296,"FIFA World Cup U20"],
+  [9445,"Formula 1"],
+  [9050,"EURO Qualification"],
+  [9021,"T20 Blast"],
+  [9806,"UEFA Nations League "],
+  [9821,"CONCACAF Nations League"],
+  [9497,"MotoGp"]
 ]);
 
 async function getOvertimeMarkets(networkId){
@@ -4376,11 +4400,15 @@ async function getOvertimeMarkets(networkId){
 
     if(!isResolved){
 
+      let homeOddsMessage = "Home team winning odds:";
+      let awayOdds = sportMarket.awayOdds.toFixed(3);
       let homeTeam =  await fixDuplicatedTeamName(sportMarket.homeTeam);
       let awayTeam  = await fixDuplicatedTeamName(sportMarket.awayTeam);
       let contestantName="";
-      if(sportMarket.tags[0]=="9100" || sportMarket.tags[0]=="9101"){
-        contestantName = titleCase(homeTeam) +" - "+titleCase(awayTeam);
+      if(sportMarket.tags[0]=="9100" || sportMarket.tags[0]=="9101" || sportMarket.tags[0]=="9445"){
+        contestantName = titleCase(homeTeam).replace('YES','')+" will win the race" ;
+        homeOddsMessage = "Will win odds";
+        awayOdds = "No away available";
       }else {
         contestantName = homeTeam +" - "+awayTeam
       }
@@ -4409,7 +4437,7 @@ async function getOvertimeMarkets(networkId){
                   value: sportID,
                 },
                 {
-                  name: ":coin: Home team winning odds:",
+                  name: ":coin: "+homeOddsMessage,
                   value: sportMarket.homeOdds.toFixed(3),
                 },
                 {
@@ -4418,7 +4446,7 @@ async function getOvertimeMarkets(networkId){
                 },
                 {
                   name: ":coin: Away team winning odds:",
-                  value: sportMarket.awayOdds.toFixed(3),
+                  value: awayOdds,
                 },
                 {
                   name: ":alarm_clock: Deadline:",
@@ -4714,7 +4742,7 @@ async function getOvertimeTrades(networkId){
             .setColor("#0037ff");
 
         if(networkId == 10){
-        if(Math.round(overtimeMarketTrade.paid)>1000){
+        if(Math.round(overtimeMarketTrade.paid)>500){
           let overtimeTrades = await clientNewListings.channels
               .fetch("1057735441870241932");
           overtimeTrades.send(message);
@@ -4724,7 +4752,7 @@ async function getOvertimeTrades(networkId){
           overtimeTrades.send(message);
         }
         } else {
-          if(Math.round(overtimeMarketTrade.paid)>1000){
+          if(Math.round(overtimeMarketTrade.paid)>500){
             let overtimeTrades = await clientNewListings.channels
                 .fetch("1075367077940043867");
             overtimeTrades.send(message);
@@ -6151,3 +6179,207 @@ async function aprToApy(interest){
   let APR_FREQUENCY = 52;
   return ((1 + interest / 100 / APR_FREQUENCY) ** APR_FREQUENCY - 1) * 100;
 }
+
+
+let liqArbitrumThalesRaw = fs.readFileSync('contracts/liqARBThales.json');
+let liqArbitrumThalesContract = JSON.parse(liqArbitrumThalesRaw);
+
+let liqArbitrumOTRaw = fs.readFileSync('contracts/liqARB.json');
+let liqArbitrumOTContract = JSON.parse(liqArbitrumOTRaw);
+
+let liqOPThalesRAW = fs.readFileSync('contracts/liqOPThales.json');
+let liqOPThalesContract = JSON.parse(liqOPThalesRAW);
+
+let liqOPOTRaw = fs.readFileSync('contracts/liqOP.json');
+let liqOPOTContract = JSON.parse(liqOPOTRaw);
+
+
+async function getLiqOPOvertime(){
+
+  const liqContract = new web3L2.eth.Contract(liqOPOTContract, "0x842e89b7a7eF8Ce099540b3613264C933cE0eBa5");
+  const round = await liqContract.methods.round().call();
+  let cumulativeProfitAndLoss = 0;
+  if(round>1)
+    cumulativeProfitAndLoss = await liqContract.methods.cumulativeProfitAndLoss(round-1).call();
+  else
+    cumulativeProfitAndLoss = await liqContract.methods.cumulativeProfitAndLoss(round).call();
+  cumulativeProfitAndLoss = Math.round(cumulativeProfitAndLoss/1e16) - 100;
+  if(cumulativeProfitAndLoss<0){
+    cumulativeProfitAndLoss = 0;
+  }
+  let allocationPerRound = await liqContract.methods.allocationPerRound(round).call();
+  allocationPerRound = Math.round(allocationPerRound / 1e18);
+  clientLiqOPOT.guilds.cache.forEach(function (value, key) {
+    try {
+      value.members.cache
+          .get(clientLiqOPOT.user.id)
+          .setNickname("OP OT PNL="+getNumberLabelDecimals(cumulativeProfitAndLoss)+"%");
+    } catch (e) {
+      console.log('error while clientLiqARBThales '+e);
+    }
+  });
+  clientLiqOPOT.user.setActivity(
+      "Total LP= $"+getNumberLabelDecimals(allocationPerRound),
+      { type: "WATCHING" }
+  );
+}
+
+
+
+async function getLiqOPThales(){
+
+  const liqContract = new web3L2.eth.Contract(liqOPThalesContract, "0xC10a0A6fF6496E0BD896F9f6da5a7B640b85ea40");
+  const round = await liqContract.methods.round().call();
+  let cumulativeProfitAndLoss = 0;
+  if(round>1)
+    cumulativeProfitAndLoss = await liqContract.methods.cumulativeProfitAndLoss(round-1).call();
+  else
+    cumulativeProfitAndLoss = await liqContract.methods.cumulativeProfitAndLoss(round).call();
+  cumulativeProfitAndLoss = Math.round(cumulativeProfitAndLoss/1e16) - 100;
+  if(cumulativeProfitAndLoss<0){
+    cumulativeProfitAndLoss = 0;
+  }
+  let allocationPerRound = await liqContract.methods.allocationPerRound(round).call();
+  allocationPerRound = Math.round(allocationPerRound / 1e18);
+  clientLiqOPTHLS.guilds.cache.forEach(function (value, key) {
+    try {
+      value.members.cache
+          .get(clientLiqOPTHLS.user.id)
+          .setNickname("Thales PNL="+getNumberLabelDecimals(cumulativeProfitAndLoss)+"%");
+    } catch (e) {
+      console.log('error while clientLiqARBThales '+e);
+    }
+  });
+  clientLiqOPTHLS.user.setActivity(
+      "Total LP= $"+getNumberLabelDecimals(allocationPerRound),
+      { type: "WATCHING" }
+  );
+
+}
+
+async function getLiqARBOvertime(){
+
+  const liqContract = new web3Arbitrum.eth.Contract(liqArbitrumOTContract, "0x8e9018b48456202aA9bb3E485192B8475822B874");
+  const round = await liqContract.methods.round().call();
+  let cumulativeProfitAndLoss = 0;
+  if(round>1)
+    cumulativeProfitAndLoss = await liqContract.methods.cumulativeProfitAndLoss(round-1).call();
+  else
+    cumulativeProfitAndLoss = await liqContract.methods.cumulativeProfitAndLoss(round).call();
+  cumulativeProfitAndLoss = Math.round(cumulativeProfitAndLoss/1e16) - 100;
+  if(cumulativeProfitAndLoss<0){
+    cumulativeProfitAndLoss = 0;
+  }
+  let allocationPerRound = await liqContract.methods.allocationPerRound(round).call();
+  allocationPerRound = Math.round(allocationPerRound / 1e6);
+  clientLiqARBOT.guilds.cache.forEach(function (value, key) {
+    try {
+      value.members.cache
+          .get(clientLiqARBOT.user.id)
+          .setNickname("ARB OT PNL="+getNumberLabelDecimals(cumulativeProfitAndLoss)+"%");
+    } catch (e) {
+      console.log('error while clientLiqARBThales '+e);
+    }
+  });
+  clientLiqARBOT.user.setActivity(
+      "Total LP= $"+getNumberLabelDecimals(allocationPerRound),
+      { type: "WATCHING" }
+  );
+
+}
+
+async function getLiqARBThales(){
+
+  const liqContract = new web3Arbitrum.eth.Contract(liqArbitrumThalesContract, "0xea4c2343Fd3C239c23Dd37dd3ee51AEc84544735");
+  const round = await liqContract.methods.round().call();
+  let cumulativeProfitAndLoss = 0;
+  if(round>1)
+    cumulativeProfitAndLoss = await liqContract.methods.cumulativeProfitAndLoss(round-1).call();
+  else
+    cumulativeProfitAndLoss = await liqContract.methods.cumulativeProfitAndLoss(round).call();
+  cumulativeProfitAndLoss = Math.round(cumulativeProfitAndLoss/1e16) - 100;
+  if(cumulativeProfitAndLoss<0){
+    cumulativeProfitAndLoss = 0;
+  }
+  let allocationPerRound = await liqContract.methods.allocationPerRound(round).call();
+  allocationPerRound = Math.round(allocationPerRound / 1e6);
+
+  clientLiqARBThales.guilds.cache.forEach(function (value, key) {
+    try {
+      value.members.cache
+          .get(clientLiqARBThales.user.id)
+          .setNickname("ARB Thales PNL="+getNumberLabelDecimals(cumulativeProfitAndLoss)+"%");
+    } catch (e) {
+      console.log('error while clientLiqARBThales '+e);
+    }
+  });
+  clientLiqARBThales.user.setActivity(
+      "Total LP= $"+getNumberLabelDecimals(allocationPerRound),
+      { type: "WATCHING" }
+  );
+
+}
+
+async function getLiqParlayOvertime(){
+
+  const liqContract = new web3Arbitrum.eth.Contract(liqArbitrumOTContract, "0x8e9018b48456202aA9bb3E485192B8475822B874");
+  const round = await liqContract.methods.round().call();
+  let cumulativeProfitAndLoss = 0;
+  if(round>1)
+    cumulativeProfitAndLoss = await liqContract.methods.cumulativeProfitAndLoss(round-1).call();
+  else
+    cumulativeProfitAndLoss = await liqContract.methods.cumulativeProfitAndLoss(round).call();
+  cumulativeProfitAndLoss = Math.round(cumulativeProfitAndLoss/1e16) - 100;
+  if(cumulativeProfitAndLoss<0){
+    cumulativeProfitAndLoss = 0;
+  }
+  let allocationPerRound = await liqContract.methods.allocationPerRound(round).call();
+  allocationPerRound = Math.round(allocationPerRound / 1e6);
+  clientLiqARBOT.guilds.cache.forEach(function (value, key) {
+    try {
+      value.members.cache
+          .get(clientLiqARBOT.user.id)
+          .setNickname("Parlay OT PNL="+getNumberLabelDecimals(cumulativeProfitAndLoss)+"%");
+    } catch (e) {
+      console.log('error while clientLiqARBThales '+e);
+    }
+  });
+  clientLiqARBOT.user.setActivity(
+      "Total LP= $"+getNumberLabelDecimals(allocationPerRound),
+      { type: "WATCHING" }
+  );
+
+}
+
+async function getLiqParlayThales(){
+
+  const liqContract = new web3Arbitrum.eth.Contract(liqArbitrumThalesContract, "0xea4c2343Fd3C239c23Dd37dd3ee51AEc84544735");
+  const round = await liqContract.methods.round().call();
+  let cumulativeProfitAndLoss = 0;
+  if(round>1)
+    cumulativeProfitAndLoss = await liqContract.methods.cumulativeProfitAndLoss(round-1).call();
+  else
+    cumulativeProfitAndLoss = await liqContract.methods.cumulativeProfitAndLoss(round).call();
+  cumulativeProfitAndLoss = Math.round(cumulativeProfitAndLoss/1e16) - 100;
+  if(cumulativeProfitAndLoss<0){
+    cumulativeProfitAndLoss = 0;
+  }
+  let allocationPerRound = await liqContract.methods.allocationPerRound(round).call();
+  allocationPerRound = Math.round(allocationPerRound / 1e6);
+
+  clientLiqARBThales.guilds.cache.forEach(function (value, key) {
+    try {
+      value.members.cache
+          .get(clientLiqARBThales.user.id)
+          .setNickname("Thales PNL="+getNumberLabelDecimals(cumulativeProfitAndLoss)+"%");
+    } catch (e) {
+      console.log('error while clientLiqARBThales '+e);
+    }
+  });
+  clientLiqARBThales.user.setActivity(
+      "Total LP= $"+getNumberLabelDecimals(allocationPerRound),
+      { type: "WATCHING" }
+  );
+
+}
+
