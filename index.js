@@ -40,8 +40,8 @@ const clientLiqARBThales = new Discord.Client();
 clientLiqARBThales.login(process.env.BOT_TOKEN_LQ_ARB_THLS);
 const clientLiqParlayOP = new Discord.Client();
 clientLiqParlayOP.login(process.env.BOT_TOKEN_LQ_PARLAY_OP);
-const clientLiqParlayThales = new Discord.Client();
-clientLiqParlayThales.login(process.env.BOT_TOKEN_LQ_PARLAY_THLS);
+const clientLiqParlayARB = new Discord.Client();
+clientLiqParlayARB.login(process.env.BOT_TOKEN_LQ_PARLAY_ARB);
 var fs = require("fs");
 const client = new Discord.Client();
 let contentRaw = fs.readFileSync("content.json");
@@ -3450,6 +3450,8 @@ setInterval(function () {
   getLiqOPOvertime();
   getLiqARBThales();
   getLiqARBOvertime();
+  getLiqParlayOP();
+  getLiqParlayARB();
 }, 360 * 1000);
 
 async function calculateThalesL2APR() {
@@ -6193,6 +6195,11 @@ let liqOPThalesContract = JSON.parse(liqOPThalesRAW);
 let liqOPOTRaw = fs.readFileSync('contracts/liqOP.json');
 let liqOPOTContract = JSON.parse(liqOPOTRaw);
 
+let liqParlayThalesRAW = fs.readFileSync('contracts/liqParlayARB.json');
+let liqParlayARBContract = JSON.parse(liqParlayThalesRAW);
+
+let liqParlayOTRaw = fs.readFileSync('contracts/liqParlayOP.json');
+let liqParlayOPContract = JSON.parse(liqParlayOTRaw);
 
 async function getLiqOPOvertime(){
 
@@ -6320,9 +6327,9 @@ async function getLiqARBThales(){
 
 }
 
-async function getLiqParlayOvertime(){
+async function getLiqParlayOP(){
 
-  const liqContract = new web3Arbitrum.eth.Contract(liqArbitrumOTContract, "0x8e9018b48456202aA9bb3E485192B8475822B874");
+  const liqContract = new web3Arbitrum.eth.Contract(liqParlayOPContract, "0x2Dc1fe64Afa2281FF38dF998bE029E94C561937f");
   const round = await liqContract.methods.round().call();
   let cumulativeProfitAndLoss = 0;
   if(round>1)
@@ -6334,26 +6341,26 @@ async function getLiqParlayOvertime(){
     cumulativeProfitAndLoss = 0;
   }
   let allocationPerRound = await liqContract.methods.allocationPerRound(round).call();
-  allocationPerRound = Math.round(allocationPerRound / 1e6);
-  clientLiqARBOT.guilds.cache.forEach(function (value, key) {
+  allocationPerRound = Math.round(allocationPerRound / 1e18);
+  clientLiqParlayOP.guilds.cache.forEach(function (value, key) {
     try {
       value.members.cache
-          .get(clientLiqARBOT.user.id)
-          .setNickname("Parlay OT PNL="+getNumberLabelDecimals(cumulativeProfitAndLoss)+"%");
+          .get(clientLiqParlayOP.user.id)
+          .setNickname("Parlay OP PNL="+getNumberLabelDecimals(cumulativeProfitAndLoss)+"%");
     } catch (e) {
       console.log('error while clientLiqARBThales '+e);
     }
   });
-  clientLiqARBOT.user.setActivity(
+  clientLiqParlayOP.user.setActivity(
       "Total LP= $"+getNumberLabelDecimals(allocationPerRound),
       { type: "WATCHING" }
   );
 
 }
 
-async function getLiqParlayThales(){
+async function getLiqParlayARB(){
 
-  const liqContract = new web3Arbitrum.eth.Contract(liqArbitrumThalesContract, "0xea4c2343Fd3C239c23Dd37dd3ee51AEc84544735");
+  const liqContract = new web3Arbitrum.eth.Contract(liqParlayARBContract, "0x6848f7C1B5aa2da86F6529bed9d641A67663f0bE");
   const round = await liqContract.methods.round().call();
   let cumulativeProfitAndLoss = 0;
   if(round>1)
@@ -6367,16 +6374,16 @@ async function getLiqParlayThales(){
   let allocationPerRound = await liqContract.methods.allocationPerRound(round).call();
   allocationPerRound = Math.round(allocationPerRound / 1e6);
 
-  clientLiqARBThales.guilds.cache.forEach(function (value, key) {
+  clientLiqParlayARB.guilds.cache.forEach(function (value, key) {
     try {
       value.members.cache
-          .get(clientLiqARBThales.user.id)
-          .setNickname("Thales PNL="+getNumberLabelDecimals(cumulativeProfitAndLoss)+"%");
+          .get(clientLiqParlayARB.user.id)
+          .setNickname("Parlay ARB PNL="+getNumberLabelDecimals(cumulativeProfitAndLoss)+"%");
     } catch (e) {
       console.log('error while clientLiqARBThales '+e);
     }
   });
-  clientLiqARBThales.user.setActivity(
+  clientLiqParlayARB.user.setActivity(
       "Total LP= $"+getNumberLabelDecimals(allocationPerRound),
       { type: "WATCHING" }
   );
