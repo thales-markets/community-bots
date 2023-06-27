@@ -6195,11 +6195,11 @@ let liqOPThalesContract = JSON.parse(liqOPThalesRAW);
 let liqOPOTRaw = fs.readFileSync('contracts/liqOP.json');
 let liqOPOTContract = JSON.parse(liqOPOTRaw);
 
-let liqParlayThalesRAW = fs.readFileSync('contracts/liqParlayARB.json');
-let liqParlayARBContract = JSON.parse(liqParlayThalesRAW);
+let liqParlayARBRAW = fs.readFileSync('contracts/liqParlayARB.json');
+let liqParlayARBContract = JSON.parse(liqParlayARBRAW);
 
-let liqParlayOTRaw = fs.readFileSync('contracts/liqParlayOP.json');
-let liqParlayOPContract = JSON.parse(liqParlayOTRaw);
+let liqParlayOPRaw = fs.readFileSync('contracts/liqParlayOP.json');
+let liqParlayOPContract = JSON.parse(liqParlayOPRaw);
 
 async function getLiqOPOvertime(){
 
