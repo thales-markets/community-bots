@@ -22,11 +22,11 @@ const clientARBPriceBot = new Discord.Client();
 clientARBPriceBot.login(process.env.BOT_TOKEN_ARB_PRICE);
 const clientGMXBot = new Discord.Client();
 clientGMXBot.login(process.env.BOT_TOKEN_GMX);
-const clientMagicBot = new Discord.Client();
-clientMagicBot.login(process.env.BOT_TOKEN_MAGIC);
 const clientILVBot = new Discord.Client();
 clientILVBot.login(process.env.BOT_TOKEN_ILV);
 const clientThalesBot = new Discord.Client();
+const clientMagicBot = new Discord.Client();
+clientMagicBot.login(process.env.BOT_TOKEN_MAGIC);
 clientThalesBot.login(process.env.BOT_TOKEN_THLS_PRICE);
 const clientETHPriceBot = new Discord.Client();
 clientETHPriceBot.login(process.env.BOT_TOKEN_ETH_PRICE);
@@ -90,8 +90,6 @@ const clientUniswap = new Discord.Client();
 clientUniswap.login(process.env.BOT_TOKEN_UNISWAP);
 const clientBTC = new Discord.Client();
 clientBTC.login(process.env.BOT_TOKEN_BTC);
-const clientSOL = new Discord.Client();
-clientSOL.login(process.env.BOT_TOKEN_SOL);
 const clientLink = new Discord.Client();
 clientLink.login(process.env.BOT_TOKEN_LINK);
 const clientAAVE = new Discord.Client();
@@ -219,132 +217,94 @@ client.on("ready", () => {
   console.log(`Logged in as ${client.user.tag}!`);
 });
 
-clientMagicBot.once("ready", () => {
-  setPriceBot(clientMagicBot,"magic","Magic Price");
-});
+/*clientMagicBot.once("ready", () => {
+  setPriceBot(clientMagicBot,"magic","Magic");
+});*/
 
 clientThalesBot.once("ready", () => {
-  setPriceBot(clientThalesBot,"thales","Thales Price");
+  setPriceBot(clientThalesBot,"thales","Thales");
 });
 
-clientThalesBot.once("ready", () => {
-  setPriceBot(clientETHPriceBot,"ethereum","ETH Price");
-});
+/*clientThalesBot.once("ready", () => {
+  setPriceBot(clientETHPriceBot,"ethereum","ETH");
+});*/
 
 clientILVBot.once("ready", () => {
-  setPriceBot(clientILVBot,"illuvium","ILV Price");
+  setPriceBot(clientILVBot,"illuvium","ILV");
 });
 
-/*clientUniswap.on("ready", () => {
-  setPriceBot(clientUniswap,"uniswap","UNI Price");
+/*clientBTC.on("ready", () => {
+  setPriceBot(clientBTC,"bitcoin","BTC");
 });*/
 
-clientBTC.on("ready", () => {
-  setPriceBot(clientBTC,"bitcoin","BTC Price");
-});
-
-/*clientSOL.on("ready", () => {
-  setPriceBot(clientSOL,"solana","SOL Price");
+/*clientLink.on("ready", () => {
+  setPriceBot(clientLink,"chainlink","LINK");
 });*/
 
-clientLink.on("ready", () => {
-  setPriceBot(clientLink,"chainlink","LINK Price");
-});
-
-/*clientAAVE.on("ready", () => {
-  setPriceBot(clientAAVE,"aave","AAVE Price");
-});
-
-clientCURVE.on("ready", () => {
-  setPriceBot(clientCURVE,"curve-dao-token","CURVE Price");
+/*clientOP.on("ready", () => {
+  setPriceBot(clientOP,"optimism","OP");
 });*/
 
-/*clientSTARGATE.on("ready", () => {
-  setPriceBot(clientSTARGATE,"stargate-finance","STG Price");
+/*clientMATICBot.on("ready", () => {
+  setPriceBot(clientMATICBot,"matic-network","MATIC");
 });*/
-
-/*clientLYRA.on("ready", () => {
-  setPriceBot(clientLYRA,"lyra-finance","LYRA Price");
-});*/
-
-/*clientLUNA.on("ready", () => {
-  setPriceBot(clientLUNA,"terra-luna","LUNA Price");
-});*/
-
-clientOP.on("ready", () => {
-  setPriceBot(clientOP,"optimism","OP Price");
-});
-
-/*clientOHM.on("ready", () => {
-  setPriceBot(clientOHM,"olympus","OHM Price");
-});*/
-
-/*clientAPE.on("ready", () => {
-  setPriceBot(clientAPE,"apecoin","APE Price");
-});*/
-
-clientCVX.on("ready", () => {
-  setPriceBot(clientCVX,"convex-finance","CVX Price");
-});
-
-/*clientPERP.on("ready", () => {
-  setPriceBot(clientPERP,"perpetual-protocol","PERP Price");
-});*/
-
-clientMATICBot.on("ready", () => {
-  setPriceBot(clientMATICBot,"matic-network","MATIC Price");
-});
 
 clientKWENTABot.once("ready", () => {
-  setPriceBot(clientKWENTABot,"kwenta","KWENTA Price");
+  setPriceBot(clientKWENTABot,"kwenta","KWENTA");
 });
 
-clientARBPriceBot.once("ready", () => {
-  setPriceBot(clientARBPriceBot,"arbitrum","ARB Price");
-});
+/*clientARBPriceBot.once("ready", () => {
+  setPriceBot(clientARBPriceBot,"arbitrum","ARB");
+});*/
 
-clientGMXBot.once("ready", () => {
-  setPriceBot(clientGMXBot,"gmx","GMX Price");
-});
+/*clientGMXBot.once("ready", () => {
+  setPriceBot(clientGMXBot,"gmx","GMX");
+});*/
+
 
 
 
 setInterval(function () {
   console.log("updating price bots");
-    setPriceBot(clientBTC,"bitcoin","BTC Price");
-    setPriceBot(clientThalesBot,"thales","Thales Price");
-    setPriceBot(clientETHPriceBot,"ethereum","ETH Price");
-    setPriceBot(clientILVBot,"illuvium","ILV Price");
-    setPriceBot(clientLink,"chainlink","LINK Price");
-    setPriceBot(clientSTARGATE,"stargate-finance","STG Price");
-}, 380 * 1000);
+   /* setPriceBot(clientBTC,"bitcoin","BTC");
+    setPriceBot(clientThalesBot,"thales","Thales");
+    setPriceBot(clientETHPriceBot,"ethereum","ETH");*/
+    setPriceBot(clientILVBot,"illuvium","ILV");
+   // setPriceBot(clientLink,"chainlink","LINK");
+}, 30 * 60 * 1000);
 
 setInterval(function () {
   console.log("updating price 2 bots");
 
-  setPriceBot(clientOP,"optimism","OP Price");
-  setPriceBot(clientCVX,"convex-finance","CVX Price");
-  setPriceBot(clientMATICBot,"matic-network","MATIC Price");
-  setPriceBot(clientKWENTABot,"kwenta","KWENTA Price");
-  setPriceBot(clientARBPriceBot,"arbitrum","ARB Price");
-  setPriceBot(clientGMXBot,"gmx","GMX Price");
-  setPriceBot(clientMagicBot,"magic","Magic Price");
-}, 470 * 1000);
+ /* setPriceBot(clientOP,"optimism","OP");
+  setPriceBot(clientMATICBot,"matic-network","MATIC");*/
+  setPriceBot(clientKWENTABot,"kwenta","KWENTA");
+/*  setPriceBot(clientARBPriceBot,"arbitrum","ARB");
+  setPriceBot(clientGMXBot,"gmx","GMX");
+  setPriceBot(clientMagicBot,"magic","Magic");*/
+}, 10 * 60 *  1000);
 
 const setPriceBot = async (clientForSetting,tokenForPrice,nameOfTheToken) => {
 
   let data = await CoinGeckoClient.coins.fetch(tokenForPrice);
   if(data.data && data.data.market_data){
-
   clientForSetting.guilds.cache.forEach(function (value, key) {
     try {
       console.log("Updating "+nameOfTheToken+" Price info " + data.data.market_data.current_price.usd);
-      value.members.cache.get(clientForSetting.user.id).setNickname("$" + round(data.data.market_data.current_price.usd));
+      if(data.data.market_data.price_change_percentage_24h>0){
+        value.members.cache.get(clientForSetting.user.id).setNickname(nameOfTheToken.toUpperCase() +" $"+ data.data.market_data.current_price.usd+"(↗)");
+      }else{
+        value.members.cache.get(clientForSetting.user.id).setNickname(nameOfTheToken.toUpperCase() +" $"+ data.data.market_data.current_price.usd+"(↘)");
+      }
     } catch (e) {
       console.log(e);
     }
   });
-  clientForSetting.user.setActivity(nameOfTheToken, {type: 'WATCHING'});
+    if(data.data.market_data.price_change_percentage_24h>0){
+      clientForSetting.user.setActivity("24h:+"+Math.round(data.data.market_data.price_change_percentage_24h * 100) / 100+"%", {type: 'WATCHING'});
+    }else{
+      clientForSetting.user.setActivity("24h:"+Math.round(data.data.market_data.price_change_percentage_24h * 100) / 100+"%", {type: 'WATCHING'});
+    }
   }
 }
 
@@ -1218,6 +1178,25 @@ function getNumberLabel(labelValue) {
     Math.abs(Number(labelValue)) >= 1.0e3
     ? Math.round(Math.abs(Number(labelValue)) / 1.0e3) + "K"
     : Math.round(Math.abs(Number(labelValue)));
+}
+
+function getNumberLabelDecimalsMil(labelValue) {
+
+  // Nine Zeroes for Billions
+  return Math.abs(Number(labelValue)) >= 1.0e+9
+
+      ? Math.round(Math.abs(Number(labelValue)) / 1.0e+9) + "B"
+      // Six Zeroes for Millions
+      : Math.abs(Number(labelValue)) >= 1.0e+6
+
+          ? Math.round((Math.abs(Number(labelValue)) / 1.0e+6) * 100000) / 100000 + "M"
+          // Three Zeroes for Thousands
+          : Math.abs(Number(labelValue)) >= 1.0e+3
+
+              ? Math.round(Math.abs(Number(labelValue)) / 1.0e+3) + "K"
+
+              : Math.abs(Number(labelValue));
+
 }
 
 function getNumberLabelDecimals(labelValue) {
@@ -3375,7 +3354,7 @@ async function updateTotalL2Trades() {
       }
     });
     clientTotalL2Trades.user.setActivity(
-        "Trades OP="+numberOfTradesL2,
+        "Trades OP="+numberWithCommas(numberOfTradesL2),
         { type: "WATCHING" }
     );
   }catch (e) {
@@ -3396,7 +3375,7 @@ async function updateTotalPolygonTrades() {
       }
     });
     clientTotalPolygonTrades.user.setActivity(
-        "Trades Polygon="+numberOfTradesPolygon,
+        "Trades Polygon="+numberWithCommas(numberOfTradesPolygon),
         { type: "WATCHING" }
     );
   }catch (e) {
@@ -4233,7 +4212,7 @@ async  function getBurnedThalesBalance (){
       try {
         value.members.cache
             .get(clientTotalBurnedThales.user.id)
-            .setNickname(getNumberLabelDecimals(sumOfAllBurnedThales));
+            .setNickname(getNumberLabelDecimalsMil(sumOfAllBurnedThales));
       } catch (e) {
         console.log('error while updating amount of thales'+e);
       }
@@ -4305,7 +4284,13 @@ let tagsMAP = new Map( [
   [9021,"T20 Blast"],
   [9806,"UEFA Nations League "],
   [9821,"CONCACAF Nations League"],
-  [9497,"MotoGp"]
+  [9497,"MotoGp"],
+  [9288,"UEFA EURO U21"],
+  [9042,"Champions League Qualification"],
+  [9076,"Female World Cup Soccer"],
+  [19216,"Europa Conference League Qualification"],
+  [109121,"GOLF Tournament Winner"],
+  [109021,"GOLF H2H"]
 ]);
 
 async function getOvertimeMarkets(networkId){
@@ -4744,7 +4729,7 @@ async function getOvertimeTrades(networkId){
             .setColor("#0037ff");
 
         if(networkId == 10){
-        if(Math.round(overtimeMarketTrade.paid)>500){
+        if(Math.round(overtimeMarketTrade.amount)>500){
           let overtimeTrades = await clientNewListings.channels
               .fetch("1057735441870241932");
           overtimeTrades.send(message);
@@ -4754,7 +4739,7 @@ async function getOvertimeTrades(networkId){
           overtimeTrades.send(message);
         }
         } else {
-          if(Math.round(overtimeMarketTrade.paid)>500){
+          if(Math.round(overtimeMarketTrade.amount)>500){
             let overtimeTrades = await clientNewListings.channels
                 .fetch("1075367077940043867");
             overtimeTrades.send(message);
@@ -4840,7 +4825,7 @@ async function updateTotalOvertimeTrades() {
       }
     });
     clientOvertimeTrades.user.setActivity(
-        "Trades OT="+numberOfTradesOT,
+        "Trades OT="+numberWithCommas(numberOfTradesOT),
         { type: "WATCHING" }
     );
   }catch (e) {
@@ -5605,7 +5590,7 @@ async function updateTotalARBTrades() {
       }
     });
     clientARBTrades.user.setActivity(
-        "Trades ARB="+numberOfTradesARB,
+        "Trades ARB="+numberWithCommas(numberOfTradesARB),
         { type: "WATCHING" }
     );
   }catch (e) {
@@ -6167,7 +6152,7 @@ async function getARBAPY(){
         console.log(e);
       }
     });
-  clientARBAPR.user.setActivity(numberWithCommas(Math.round(Number(totalStakedAmount)/1e18))+" staked", {
+  clientARBAPR.user.setActivity(getNumberLabelDecimals((Math.round(Number(totalStakedAmount)/1e18)))+" staked", {
     type: "WATCHING",
   });
 }
@@ -6220,7 +6205,7 @@ async function getLiqOPOvertime(){
     try {
       value.members.cache
           .get(clientLiqOPOT.user.id)
-          .setNickname("OP OT PNL="+getNumberLabelDecimals(cumulativeProfitAndLoss)+"%");
+          .setNickname("OP OT PNL +"+getNumberLabelDecimals(cumulativeProfitAndLoss)+"%");
     } catch (e) {
       console.log('error while clientLiqARBThales '+e);
     }
@@ -6252,7 +6237,7 @@ async function getLiqOPThales(){
     try {
       value.members.cache
           .get(clientLiqOPTHLS.user.id)
-          .setNickname("Thales PNL="+getNumberLabelDecimals(cumulativeProfitAndLoss)+"%");
+          .setNickname("Thales PNL +"+getNumberLabelDecimals(cumulativeProfitAndLoss)+"%");
     } catch (e) {
       console.log('error while clientLiqARBThales '+e);
     }
@@ -6283,7 +6268,7 @@ async function getLiqARBOvertime(){
     try {
       value.members.cache
           .get(clientLiqARBOT.user.id)
-          .setNickname("ARB OT PNL="+getNumberLabelDecimals(cumulativeProfitAndLoss)+"%");
+          .setNickname("ARB OT PNL +"+getNumberLabelDecimals(cumulativeProfitAndLoss)+"%");
     } catch (e) {
       console.log('error while clientLiqARBThales '+e);
     }
@@ -6315,7 +6300,7 @@ async function getLiqARBThales(){
     try {
       value.members.cache
           .get(clientLiqARBThales.user.id)
-          .setNickname("ARB Thales PNL="+getNumberLabelDecimals(cumulativeProfitAndLoss)+"%");
+          .setNickname("Thales PNL +"+getNumberLabelDecimals(cumulativeProfitAndLoss)+"%");
     } catch (e) {
       console.log('error while clientLiqARBThales '+e);
     }
@@ -6329,7 +6314,7 @@ async function getLiqARBThales(){
 
 async function getLiqParlayOP(){
 
-  const liqContract = new web3Arbitrum.eth.Contract(liqParlayOPContract, "0x2Dc1fe64Afa2281FF38dF998bE029E94C561937f");
+  const liqContract = new web3L2.eth.Contract(liqParlayOPContract, "0x2Dc1fe64Afa2281FF38dF998bE029E94C561937f");
   const round = await liqContract.methods.round().call();
   let cumulativeProfitAndLoss = 0;
   if(round>1)
@@ -6346,7 +6331,7 @@ async function getLiqParlayOP(){
     try {
       value.members.cache
           .get(clientLiqParlayOP.user.id)
-          .setNickname("Parlay OP PNL="+getNumberLabelDecimals(cumulativeProfitAndLoss)+"%");
+          .setNickname("Parlay PNL +"+getNumberLabelDecimals(cumulativeProfitAndLoss)+"%");
     } catch (e) {
       console.log('error while clientLiqARBThales '+e);
     }
@@ -6378,7 +6363,7 @@ async function getLiqParlayARB(){
     try {
       value.members.cache
           .get(clientLiqParlayARB.user.id)
-          .setNickname("Parlay ARB PNL="+getNumberLabelDecimals(cumulativeProfitAndLoss)+"%");
+          .setNickname("Parlay PNL +"+getNumberLabelDecimals(cumulativeProfitAndLoss)+"%");
     } catch (e) {
       console.log('error while clientLiqARBThales '+e);
     }
