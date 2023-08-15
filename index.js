@@ -6411,10 +6411,12 @@ async function speedMarkets(speedMarketsContract,givenSpeedMarketType){
 
   const numActiveMarkets = await speedMarketsContract.methods.numActiveMarkets().call();
   const activeMarkets = await speedMarketsContract.methods.activeMarkets(0, numActiveMarkets).call();
-  const speedMarketsDataArray = await speedMarketsContract.methods.getMarketsData(activeMarkets).call();
-  for (const speedMarket of speedMarketsDataArray) {
-    if(!writenSpeedMarkets.includes(speedMarket.strikeTime)){
-    let side = speedMarket.direction == 0 ? "UP" : "DOWN";
+  for (const activeMarket of activeMarkets) {
+    if(!writenSpeedMarkets.includes(activeMarket)){
+
+      let speedMarket = await speedMarketsContract.methods.getMarketsData(Array(activeMarket)).call();
+      speedMarket = speedMarket [0];
+      let side = speedMarket.direction == 0 ? "UP" : "DOWN";
     const [lpFee, safeBoxImpact, numActiveMarkets] = await Promise.all([
       speedMarketsContract.methods.lpFee().call(),
       speedMarketsContract.methods.safeBoxImpact().call(),
@@ -6473,8 +6475,8 @@ async function speedMarkets(speedMarketsContract,givenSpeedMarketType){
             .fetch("1139487451568680970");
         speedMarketChannel.send(message);
       }
-      writenSpeedMarkets.push(speedMarket.strikeTime);
-      redisClient.lpush(speedMarketsKey, speedMarket.strikeTime);
+      writenSpeedMarkets.push(activeMarket);
+      redisClient.lpush(speedMarketsKey, activeMarket);
 
     }
   }
