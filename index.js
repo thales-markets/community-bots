@@ -6499,7 +6499,8 @@ async function speedMarkets(speedMarketsContract,givenSpeedMarketType){
 async function speedResolvedMarkets(speedMarketsContract,givenSpeedMarketType){
 
   const numMaturedMarkets = await speedMarketsContract.methods.numMaturedMarkets().call();
-  const maturedMarkets = await speedMarketsContract.methods.maturedMarkets(numMaturedMarkets - 10, numMaturedMarkets).call();
+  let index = numMaturedMarkets < 20 ? numMaturedMarkets : 20;
+  const maturedMarkets = await speedMarketsContract.methods.maturedMarkets(numMaturedMarkets - index, numMaturedMarkets).call();
   for (const maturedMarket of maturedMarkets) {
     if(!writenMaturedMarkets.includes(maturedMarket)){
 
@@ -6578,7 +6579,7 @@ async function speedResolvedMarkets(speedMarketsContract,givenSpeedMarketType){
 }
 
 function getDefaultDecimalsForNetwork (givenSpeedMarket) {
-  if (givenSpeedMarket == speedMarketType.ARB || givenSpeedMarket == speedMarketType.POLYGON) return 1e6;
+  if (givenSpeedMarket == speedMarketType.ARB || givenSpeedMarket == speedMarketType.POLYGON || givenSpeedMarket == speedMarketType.BASE) return 1e6;
   return 1e18;
 };
 
