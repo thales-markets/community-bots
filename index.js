@@ -2122,6 +2122,7 @@ const redis = require("redis");
 let redisClient = null;
 let L2tradesKey = "L2Trades";
 let speedMarketsKey = "speedMarketsKey";
+let speedMaturedMarketsKey = "speedMaturedMarketsKey";
 let polygonTradesKey = "PolygonTrades";
 let arbitrumTradesKey = "ArbitrumTrades";
 let bscTradesKey = "BSCTrades";
@@ -2155,6 +2156,7 @@ let writenExoticDisputes = [];
 let writenExoticPositions = [];
 let writenExoticMarketResultSet = [];
 let writenSpeedMarkets = [];
+let writenMaturedMarkets = [];
 let verifiedUsersMap = new Map();
 let totalAmountOTKey = "totalAmountOTKey";
 let totalTradesOTKey = "totalTradesOTKey";
@@ -2308,6 +2310,10 @@ if (process.env.REDIS_URL) {
 
   redisClient.lrange(speedMarketsKey, 0, -1, function (err, l2Trades) {
     writenSpeedMarkets = l2Trades;
+  });
+
+  redisClient.lrange(speedMaturedMarketsKey, 0, -1, function (err, l2Trades) {
+    writenMaturedMarkets = l2Trades;
   });
 
   redisClient.lrange(polygonTradesKey, 0, -1, function (err, polygonTrades) {
@@ -6405,6 +6411,12 @@ setInterval(function () {
   speedMarkets(speedMarketBSCContract,speedMarketType.BSC);
   speedMarkets(speedMarketPOLYGONContract,speedMarketType.POLYGON);
   speedMarkets(speedMarketBASEContract,speedMarketType.BASE);
+
+  speedResolvedMarkets(speedMarketOPContract,speedMarketType.OP);
+  speedResolvedMarkets(speedMarketARBContract,speedMarketType.ARB);
+  speedResolvedMarkets(speedMarketBSCContract,speedMarketType.BSC);
+  speedResolvedMarkets(speedMarketPOLYGONContract,speedMarketType.POLYGON);
+  speedResolvedMarkets(speedMarketBASEContract,speedMarketType.BASE);
 }, 2 * 60 * 1000);
 
 async function speedMarkets(speedMarketsContract,givenSpeedMarketType){
@@ -6482,6 +6494,87 @@ async function speedMarkets(speedMarketsContract,givenSpeedMarketType){
   }
 
 
+}
+
+async function speedResolvedMarkets(speedMarketsContract,givenSpeedMarketType){
+
+  const numMaturedMarkets = await speedMarketsContract.methods.numMaturedMarkets().call();
+  const maturedMarkets = await speedMarketsContract.methods.maturedMarkets(numMaturedMarkets - 10, numMaturedMarkets).call();
+  for (const maturedMarket of maturedMarkets) {
+    if(!writenMaturedMarkets.includes(maturedMarket)){
+
+      let speedMarket = await speedMarketsContract.methods.getMarketsData(Array(maturedMarket)).call();
+      speedMarket = speedMarket [0];
+      let side = speedMarket.direction == 0 ? "UP" : "DOWN";
+      const [lpFee, safeBoxImpact, numActiveMarkets] = await Promise.all([
+        speedMarketsContract.methods.lpFee().call(),
+        speedMarketsContract.methods.safeBoxImpact().call(),
+        speedMarketsContract.methods.numActiveMarkets().call(),
+      ]);
+      const fees = (lpFee/1e18) + (safeBoxImpact/1e18);
+      let SPEED_MARKETS_QUOTE = 2;
+      const payout = (speedMarket.buyinAmount / getDefaultDecimalsForNetwork (givenSpeedMarketType)) * SPEED_MARKETS_QUOTE;
+
+      let size = (speedMarket.buyinAmount / getDefaultDecimalsForNetwork (givenSpeedMarketType)) * (1 + fees);
+
+      var message = new Discord.MessageEmbed()
+          .addFields(
+              {
+                name: "New Speed Market Trade",
+                value: "\u200b",
+              },
+              {
+                name: ":link: Account",
+                value: speedMarket.user,
+              },
+              {
+                name: ":coin: Asset and strike price :",
+                value: web3.utils.toAscii(speedMarket.asset).replace(/\0/g, '') + " $"+  Math.round(speedMarket.strikePrice / 1e8)
+              },
+              {
+                name: ":coin: Size:",
+                value: payout + " "+side,
+              },{
+                name: ":coin: Paid:",
+                value: size,
+              },{
+                name: ":coin: Final price:",
+                value: " $"+Math.round(speedMarket.finalPrice / 1e8),
+              },{
+                name: ":coin: User won:",
+                value: speedMarket.isUserWinner,
+              },{
+                name: ":alarm_clock: End time:",
+                value: timeConverter(speedMarket.strikeTime)
+              },
+          )
+          .setColor("#0037ff");
+      if(givenSpeedMarketType == speedMarketType.OP){
+        let speedMarketChannel = await clientNewListings.channels
+            .fetch("1140924764127494225");
+        speedMarketChannel.send(message);
+      } else if(givenSpeedMarketType == speedMarketType.ARB){
+        let speedMarketChannel = await clientNewListings.channels
+            .fetch("1140924860336439406");
+        speedMarketChannel.send(message);
+      }if(givenSpeedMarketType == speedMarketType.BSC){
+        let speedMarketChannel = await clientNewListings.channels
+            .fetch("1140924950438477834");
+        speedMarketChannel.send(message);
+      }if(givenSpeedMarketType == speedMarketType.BASE){
+        let speedMarketChannel = await clientNewListings.channels
+            .fetch("1140924993774034944");
+        speedMarketChannel.send(message);
+      }if(givenSpeedMarketType == speedMarketType.POLYGON){
+        let speedMarketChannel = await clientNewListings.channels
+            .fetch("1140924911716671488");
+        speedMarketChannel.send(message);
+      }
+      writenMaturedMarkets.push(maturedMarket);
+      redisClient.lpush(speedMaturedMarketsKey, maturedMarket);
+
+    }
+  }
 }
 
 function getDefaultDecimalsForNetwork (givenSpeedMarket) {
