@@ -4305,7 +4305,9 @@ let tagsMAP = new Map( [
   [9076,"Female World Cup Soccer"],
   [19216,"Europa Conference League Qualification"],
   [109121,"GOLF Tournament Winner"],
-  [109021,"GOLF H2H"]
+  [109021,"GOLF H2H"],
+  [9536,"Saudi league"],
+  [9268,"Brasil league"]
 ]);
 
 async function getOvertimeMarkets(networkId){
