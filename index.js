@@ -4321,6 +4321,12 @@ let tagsMAP = new Map( [
   [9268,"Brasil league"]
 ]);
 
+let ppMAP = new Map( [
+  [11051, "Player passing yards: How many passing yards will this player record?"],
+  [11052, "Player passing touchdowns: How many passing touchdowns will this player record?"],
+  [11053, "Player rushing yards: How many rushing yards will this player record?"],
+]);
+
 async function getOvertimeMarkets(networkId){
   var startdate = new Date();
   var durationInMinutes = 30;
@@ -4409,7 +4415,9 @@ async function getOvertimeMarkets(networkId){
         }else {
            betType = "12";
         }
-        } else {
+        } else if(ppMAP.has(Number(sportMarket.betType))){
+          betType = 'Player props O/U '+sportMarket.playerPropsLine;
+        }else {
           betType =  "1x2";
         }
 
@@ -4424,6 +4432,10 @@ async function getOvertimeMarkets(networkId){
         contestantName = titleCase(homeTeam).replace('YES','')+" will win the race" ;
         homeOddsMessage = "Will win odds";
         awayOdds = "No away available";
+      } else if (ppMAP.has(Number(sportMarket.betType))){
+        contestantName = sportMarket.playerName+" "+ppMAP.get(Number(sportMarket.betType))
+        homeOddsMessage = "Over odds";
+        awayOdds = "Under odds";
       }else {
         contestantName = homeTeam +" - "+awayTeam
       }
@@ -4666,6 +4678,8 @@ async function getOvertimeTrades(networkId){
             let totalPointsOvertime = Number(specificMarket[0].total)/100;
             totalPointsOvertime =  Math.round((totalPointsOvertime + Number.EPSILON) * 100) / 100
             position = "O("+totalPointsOvertime+")";
+          } else if(ppMAP.has(Number(specificMarket[0].betType))){
+            position = "O("+specificMarket[0].playerPropsLine+")";
           } else if (specificMarket[0].betType && specificMarket[0].betType == 10001) {
             var rounded = Math.round(Number(specificMarket[0].spread)/10)/10;
             position = "H1("+rounded+")";
@@ -4687,6 +4701,8 @@ async function getOvertimeTrades(networkId){
             let totalPointsOvertime = Number(specificMarket[0].total)/100;
             totalPointsOvertime =  Math.round((totalPointsOvertime + Number.EPSILON) * 100) / 100
             position = "U("+totalPointsOvertime +")";
+          }else if(ppMAP.has(Number(specificMarket[0].betType))){
+            position = "U("+specificMarket[0].playerPropsLine+")";
           } else if (specificMarket[0].betType && specificMarket[0].betType == 10001) {
             var rounded = Math.round(Number(specificMarket[0].spread)/10)/10;
             position = "H2("+rounded+")";
@@ -4697,7 +4713,7 @@ async function getOvertimeTrades(networkId){
           position = "Draw";
         }
 
-        let marketMessage = homeTeam + " - " + awayTeam ;
+        let marketMessage = ppMAP.has(Number(specificMarket[0].betType))? specificMarket[0].playerName+": "+ppMAP.get(Number(specificMarket[0].betType)) : homeTeam + " - " + awayTeam;
 
         let linkTransaction;
         if(networkId == 10 ){
@@ -5677,7 +5693,9 @@ async function getParlayMessage(parlayPosition) {
         let totalPointsOvertime = Number(specificMarket.total)/100;
         totalPointsOvertime =  Math.round((totalPointsOvertime + Number.EPSILON) * 100) / 100
         position = "O("+totalPointsOvertime+")";
-      } else if (specificMarket.betType && specificMarket.betType == 10001) {
+      } else if(ppMAP.has(Number(specificMarket.betType))){
+        position = "O("+specificMarket.playerPropsLine+")";
+      }else if (specificMarket.betType && specificMarket.betType == 10001) {
         var rounded = Math.round(Number(specificMarket.spread)/10)/10;
         position = "H1("+rounded+")";
       } else {
@@ -5689,7 +5707,9 @@ async function getParlayMessage(parlayPosition) {
         let totalPointsOvertime = Number(specificMarket.total)/100;
         totalPointsOvertime =  Math.round((totalPointsOvertime + Number.EPSILON) * 100) / 100
         position = "U("+totalPointsOvertime+")";
-      } else if (specificMarket.betType && specificMarket.betType == 10001) {
+      } else if(ppMAP.has(Number(specificMarket.betType))){
+        position = "U("+specificMarket.playerPropsLine+")";
+      }else if (specificMarket.betType && specificMarket.betType == 10001) {
         var rounded = Math.round(Number(specificMarket.spread)/10)/10;
         position = "H2("+rounded+")";
       } else {
@@ -5700,7 +5720,8 @@ async function getParlayMessage(parlayPosition) {
       position = "X";
       odds = Math.round((((1 / (specificMarket.drawOdds / 1e18))) + Number.EPSILON) * 100) / 100;
     }
-  return homeTeam + " - " + awayTeam + " @ " + position+ " - "+odds +"\n";
+
+  return ppMAP.has(Number(specificMarket.betType))? specificMarket.playerName+": "+ppMAP.get(Number(specificMarket.betType)) : homeTeam + " - " + awayTeam + " @ " + position+ " - "+odds +"\n";
 }
 
 
