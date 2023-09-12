@@ -2883,11 +2883,22 @@ async function getL2Trades() {
         if (
            isAmmTrade
         ) {
-          clientNewListings.channels
-              .fetch("922816179276488736")
-              .then((ammTradesChannel) => {
-                ammTradesChannel.send(message);
-              });
+
+          if(parseFloat((amountUSD).toFixed(3))>1000){
+            clientNewListings.channels
+                .fetch("1143883712921075742")
+                .then((ammTradesChannel) => {
+                  ammTradesChannel.send(message);
+                });
+          }else{
+            clientNewListings.channels
+                .fetch("922816179276488736")
+                .then((ammTradesChannel) => {
+                  ammTradesChannel.send(message);
+                });
+          }
+
+
           let newAMMTradeMessage = isBuy ? 'New Optimism AMM position bought\n' : 'New Optimism AMM position sold\n';
           var date = new Date(tradeL2.timestamp*1000);
 
@@ -5110,12 +5121,20 @@ async function getArbitrumTrades() {
                 }
             )
             .setColor("#0037ff");
+
+        if(parseFloat((amountUSD).toFixed(3))>1000){
         clientNewListings.channels
-            .fetch("1017058994973573153")
+            .fetch("1143886623289909388")
             .then((ammTradesChannel) => {
               ammTradesChannel.send(message);
             });
-
+        }{
+          clientNewListings.channels
+              .fetch("1017058994973573153")
+              .then((ammTradesChannel) => {
+                ammTradesChannel.send(message);
+              });
+        }
 
         let newAMMTradeMessage = isBuy ? 'New Arbitrum AMM position bought\n' : 'New Arbitrum AMM position sold\n';
         var date = new Date(arbitrumTrade.timestamp * 1000);
@@ -6410,13 +6429,13 @@ setInterval(function () {
   console.log("get speedMarkets");
   speedMarkets(speedMarketOPContract,speedMarketType.OP);
   speedMarkets(speedMarketARBContract,speedMarketType.ARB);
-  speedMarkets(speedMarketBSCContract,speedMarketType.BSC);
+  //speedMarkets(speedMarketBSCContract,speedMarketType.BSC);
   speedMarkets(speedMarketPOLYGONContract,speedMarketType.POLYGON);
   speedMarkets(speedMarketBASEContract,speedMarketType.BASE);
 
   speedResolvedMarkets(speedMarketOPContract,speedMarketType.OP);
   speedResolvedMarkets(speedMarketARBContract,speedMarketType.ARB);
-  speedResolvedMarkets(speedMarketBSCContract,speedMarketType.BSC);
+  //speedResolvedMarkets(speedMarketBSCContract,speedMarketType.BSC);
   speedResolvedMarkets(speedMarketPOLYGONContract,speedMarketType.POLYGON);
   speedResolvedMarkets(speedMarketBASEContract,speedMarketType.BASE);
 }, 2 * 60 * 1000);
