@@ -4322,9 +4322,9 @@ let tagsMAP = new Map( [
 ]);
 
 let ppMAP = new Map( [
-  [11051, "Player passing yards: How many passing yards will this player record?"],
-  [11052, "Player passing touchdowns: How many passing touchdowns will this player record?"],
-  [11053, "Player rushing yards: How many rushing yards will this player record?"],
+  [11051, "Player passing yards"],
+  [11052, "Player passing touchdowns"],
+  [11053, "Player rushing yards"],
 ]);
 
 async function getOvertimeMarkets(networkId){
@@ -4428,6 +4428,7 @@ async function getOvertimeMarkets(networkId){
       let homeTeam =  await fixDuplicatedTeamName(sportMarket.homeTeam);
       let awayTeam  = await fixDuplicatedTeamName(sportMarket.awayTeam);
       let contestantName="";
+      let awayOddsMessage = "Away team winning odds:"
       if(sportMarket.tags[0]=="9100" || sportMarket.tags[0]=="9101" || sportMarket.tags[0]=="9445"){
         contestantName = titleCase(homeTeam).replace('YES','')+" will win the race" ;
         homeOddsMessage = "Will win odds";
@@ -4435,7 +4436,7 @@ async function getOvertimeMarkets(networkId){
       } else if (ppMAP.has(Number(sportMarket.betType))){
         contestantName = sportMarket.playerName+" "+ppMAP.get(Number(sportMarket.betType))
         homeOddsMessage = "Over odds";
-        awayOdds = "Under odds";
+        awayOddsMessage = "Under odds";
       }else {
         contestantName = homeTeam +" - "+awayTeam
       }
@@ -4472,7 +4473,7 @@ async function getOvertimeMarkets(networkId){
                   value: sportMarket.drawOdds!=0?sportMarket.drawOdds.toFixed(3):"No draw available",
                 },
                 {
-                  name: ":coin: Away team winning odds:",
+                  name: ":coin: "+awayOddsMessage,
                   value: awayOdds,
                 },
                 {
