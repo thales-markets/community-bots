@@ -153,6 +153,7 @@ const stakingContract = new ethers.Contract(
 );
 let  burnedContract =  new web3L2.eth.Contract(contractBurned, "0x217D47011b23BB961eB6D93cA9945B7501a5BB11");
 let  deadburnedContract =  new web3.eth.Contract(contractBurned, "0x8947da500eb47f82df21143d0c01a29862a8c3c5");
+let  deadARBburnedContract =  new web3Arbitrum.eth.Contract(contractBurned, "0xe85b662fe97e8562f4099d8a1d5a92d4b453bf30");
 const gelatoContract = require("./contracts/GelatoContract.js");
 let contractRoyaleRaw = fs.readFileSync('contracts/royale.json');
 let contractRoyale = JSON.parse(contractRoyaleRaw);
@@ -1097,7 +1098,7 @@ function delay(time) {
 
 clientNewListings.once("ready", () => {
   console.log("initial new operations");
-  getThalesNewOperations();
+ // getThalesNewOperations();
 });
 
 clientARBAPR.once("ready", () => {
@@ -1108,7 +1109,7 @@ clientARBAPR.once("ready", () => {
 setInterval(function () {
   try {
     console.log("starting new operations");
-    getThalesNewOperations();
+    //getThalesNewOperations();
   } catch (e) {
     console.log("problem with new operations" + e);
   }
@@ -4218,10 +4219,13 @@ setInterval(function () {
   getExoticMarketResultSet();
   getOvertimeMarkets(10);
   getOvertimeMarkets(42161);
+  getOvertimeMarkets(8453);
   getOvertimeTrades(10);
   getOvertimeTrades(42161);
+  getOvertimeTrades(8453);
   getOvertimeParlays(10);
   getOvertimeParlays(42161);
+  getOvertimeParlays(8453);
 }, 2 * 60 * 1000);
 
 
@@ -4231,7 +4235,10 @@ async  function getBurnedThalesBalance (){
   let amountOfThales = tokenBalance / 1e18;
   const deadTokenBalance = await deadburnedContract.methods.balanceOf("0x000000000000000000000000000000000000dEaD").call();
   let amountOfDeadTokens = deadTokenBalance / 1e18;
-  let sumOfAllBurnedThales = amountOfThales+amountOfDeadTokens;
+  const deadArbTokenBalance = await deadARBburnedContract.methods.balanceOf("0xE9F5E7579931a46e4beaC08Ca9ab52961AD66203").call();
+  let amountOfArbDeadTokens = deadArbTokenBalance / 1e18;
+  let sumOfAllBurnedThales = amountOfThales+amountOfDeadTokens + amountOfArbDeadTokens;
+
 
   try {
     clientTotalBurnedThales.guilds.cache.forEach(function (value, key) {
@@ -4353,6 +4360,8 @@ async function getOvertimeMarkets(networkId){
           messageTitle = "Overtime Market Canceled";
           if(networkId == 10){
             channelToSend = "994917658833190922";
+          } else if(networkId == 8453){
+            channelToSend = "1154039272077283368";
           } else {
             channelToSend = "1075044525971607682";
           }
@@ -4361,6 +4370,8 @@ async function getOvertimeMarkets(networkId){
           messageTitle = "Overtime Market Resolved";
           if(networkId == 10){
             channelToSend = "994917622640549908";
+          } else if(networkId == 8453){
+            channelToSend = "1154039156184461402";
           } else {
             channelToSend = "1075044483768516688";
           }
@@ -4369,6 +4380,8 @@ async function getOvertimeMarkets(networkId){
           messageTitle = "New Overtime Market Odds";
           if(networkId == 10){
             channelToSend = "997150060959776848";
+          } else if(networkId == 8453){
+            channelToSend = "1154039479712092270";
           } else {
             channelToSend = "1075437625667756092";
           }
@@ -4379,6 +4392,8 @@ async function getOvertimeMarkets(networkId){
          messageTitle = "New Overtime Market";
           if(networkId == 10){
             channelToSend = "994917583302172742";
+          } else if(networkId == 8453){
+            channelToSend = "1154039387269644298";
           } else {
             channelToSend = "1075439149152211175";
           }
@@ -4386,6 +4401,8 @@ async function getOvertimeMarkets(networkId){
            messageTitle = "Overtime Market Canceled";
           if(networkId == 10){
             channelToSend = "994917658833190922";
+          } else if(networkId == 8453){
+            channelToSend = "1154039272077283368";
           } else {
             channelToSend = "1075044525971607682";
           }
@@ -4393,6 +4410,8 @@ async function getOvertimeMarkets(networkId){
           messageTitle = "Overtime Market Resolved";
           if(networkId == 10){
             channelToSend = "994917622640549908";
+          }else if(networkId == 8453){
+            channelToSend = "1154039156184461402";
           } else {
             channelToSend = "1075044483768516688";
           }
@@ -4719,6 +4738,8 @@ async function getOvertimeTrades(networkId){
         let linkTransaction;
         if(networkId == 10 ){
           linkTransaction = "https://optimistic.etherscan.io/tx/"
+        } else if(networkId == 8453){
+          linkTransaction = "https://basescan.org/tx/";
         } else{
           linkTransaction = "https://arbiscan.io/tx/"
         }
@@ -4783,6 +4804,16 @@ async function getOvertimeTrades(networkId){
               .fetch("994914814419808346");
           overtimeTrades.send(message);
         }
+        } else if(networkId == 8453){
+          if(Math.round(overtimeMarketTrade.amount)>500){
+            let overtimeTrades = await clientNewListings.channels
+                .fetch("1154038984368984084");
+            overtimeTrades.send(message);
+          } else{
+            let overtimeTrades = await clientNewListings.channels
+                .fetch("1154038914563178586");
+            overtimeTrades.send(message);
+          }
         } else {
           if(Math.round(overtimeMarketTrade.amount)>500){
             let overtimeTrades = await clientNewListings.channels
@@ -4812,6 +4843,8 @@ async function getOvertimeTrades(networkId){
         let newOvertimeAMMMessage ="";
         if(networkId == 10) {
           newOvertimeAMMMessage = overtimeMarketTrade.type.toUpperCase() === "BUY" ? 'New Overtime AMM position bought\n' : 'New Overtime AMM position sold\n';
+        } else if(networkId == 8453){
+          newOvertimeAMMMessage = overtimeMarketTrade.type.toUpperCase() === "BUY" ? 'New Overtime Base AMM position bought\n' : 'New Overtime Base AMM position sold\n';
         } else {
           newOvertimeAMMMessage = overtimeMarketTrade.type.toUpperCase() === "BUY" ? 'New Overtime Arbitrum AMM position bought\n' : 'New Overtime Arbitrum AMM position sold\n';
         }
@@ -5738,14 +5771,15 @@ async function getOvertimeParlays(networkId){
   for (const overtimeMarketParlay of overtimeMarketParlays) {
     if (startDateUnixTime < Number(overtimeMarketParlay.timestamp) && !writenOvertimeParlays.includes(overtimeMarketParlay.txHash)) {
       try {
-
-
         let linkAccount ;
         let linkTransaction;
         if(networkId == 10 ){
           linkAccount = "https://optimistic.etherscan.io/address/"
           linkTransaction = "https://optimistic.etherscan.io/tx/"
-        } else{
+        } else if(networkId == 8453){
+          linkAccount = "https://basescan.org/address/"
+          linkTransaction = "https://basescan.org/tx"
+        }  else{
           linkAccount = "https://arbiscan.io/address/"
           linkTransaction = "https://arbiscan.io/tx/"
         }
@@ -5811,6 +5845,16 @@ async function getOvertimeParlays(networkId){
               .fetch("1039875869927280711");
           overtimeParlaysChannel.send(message);
         }
+        } else if(networkId == 8453){
+          if(Math.round(overtimeMarketParlay.sUSDPaid)>1000){
+            let overtimeParlaysChannel = await clientNewListings.channels
+                .fetch("1155009733049188415");
+            overtimeParlaysChannel.send(message);
+          } else{
+            let overtimeParlaysChannel = await clientNewListings.channels
+                .fetch("1154039064387924099");
+            overtimeParlaysChannel.send(message);
+          }
         } else {
           if(Math.round(overtimeMarketParlay.sUSDPaid)>1000){
             let overtimeParlaysChannel = await clientNewListings.channels
