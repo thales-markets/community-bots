@@ -120,6 +120,12 @@ clientTotalBurnedThales.login(process.env.BOT_TOKEN_TOTAL_BURNED_THALES);
 const clientOverTimeArbTotal = new Discord.Client();
 clientOverTimeArbTotal.login(process.env.BOT_TOKEN_OVERTIME_ARB);
 
+const clientOPSTAKE = new Discord.Client();
+clientOPSTAKE.login(process.env.BOT_OP_STAKE);
+
+const clientBASESTAKE = new Discord.Client();
+clientBASESTAKE.login(process.env.BOT_BASE_STAKE);
+
 let mapThalesTrades = new Map();
 let mapThalesAsks = new Map();
 let mapThalesBids = new Map();
@@ -164,6 +170,10 @@ let arbThalesContract = new web3Arbitrum.eth.Contract(arbThalesContractRaw,"0x16
 let contractECROWRaw = fs.readFileSync('contracts/thalesECROW.json');
 let ecrowThalesContractRaw = JSON.parse(contractECROWRaw);
 let ecrowThalesContract = new web3Arbitrum.eth.Contract(ecrowThalesContractRaw,"0x391a45F31c1837E3d837c23e05F42A098329D50d");
+let opThalesContract = new web3L2.eth.Contract(arbThalesContractRaw,"0xC392133eEa695603B51a5d5de73655d571c2CE51");
+let ecrowOPThalesContract = new web3L2.eth.Contract(ecrowThalesContractRaw,"0xa25816b9605009aa446d4d597F0AA46FD828f056");
+let baseThalesContract = new web3Base.eth.Contract(arbThalesContractRaw,"0x84aB38e42D8Da33b480762cCa543eEcA6135E040");
+let ecrowBASEThalesContract = new web3Base.eth.Contract(ecrowThalesContractRaw,"0x29dfc5fee05578CD913c75fF1C7A0d315595939A");
 let mapSladeMM = new Map();
 let mapAlmaMM = new Map();
 let mapDeckardMM = new Map();
@@ -1098,18 +1108,28 @@ function delay(time) {
 
 clientNewListings.once("ready", () => {
   console.log("initial new operations");
- // getThalesNewOperations();
 });
 
 clientARBAPR.once("ready", () => {
   console.log("initial arb apr");
-  getARBAPY();
+  getStakingAPY(arbThalesContract,ecrowThalesContract,clientARBAPR);
 });
+
+clientOPSTAKE.once("ready", () => {
+  console.log("initial op apr");
+  getStakingAPY(opThalesContract,ecrowOPThalesContract,clientOPSTAKE);
+});
+
+
+clientBASESTAKE.once("ready", () => {
+  console.log("initial base apr");
+  getStakingAPY(baseThalesContract,ecrowBASEThalesContract,clientBASESTAKE);
+});
+
 
 setInterval(function () {
   try {
     console.log("starting new operations");
-    //getThalesNewOperations();
   } catch (e) {
     console.log("problem with new operations" + e);
   }
@@ -3451,7 +3471,9 @@ clientThalesL2APR.once("ready", () => {
 setInterval(function () {
   console.log("calculate L2 APR");
   calculateThalesL2APR();
-  getARBAPY();
+  getStakingAPY(arbThalesContract,ecrowThalesContract,clientARBAPR);
+  getStakingAPY(opThalesContract,ecrowOPThalesContract,clientOPSTAKE);
+  getStakingAPY(baseThalesContract,ecrowBASEThalesContract,clientBASESTAKE);
   getLiqOPThales();
   getLiqOPOvertime();
   getLiqARBThales();
@@ -6228,33 +6250,35 @@ function reviver(key, value) {
 }
 
 
-async function getARBAPY(){
-  let fixedPeriodReward =  await arbThalesContract.methods.fixedPeriodReward().call();
-  let totalStakedAmount =  await arbThalesContract.methods.totalStakedAmount().call();
-  let totalEscrowedRewards =  await ecrowThalesContract.methods.totalEscrowedRewards().call();
-  let totalEscrowBalanceNotIncludedInStaking =  await ecrowThalesContract.methods.totalEscrowBalanceNotIncludedInStaking().call();
-  let maxAMMVolumeRewardsPercentage =  await arbThalesContract.methods.maxAMMVolumeRewardsPercentage().call();
+async function getStakingAPY(thalesContract,totalEscrowedContract,clientForStaking){
+  let fixedPeriodReward =  await thalesContract.methods.fixedPeriodReward().call();
+  let totalStakedAmount =  await thalesContract.methods.totalStakedAmount().call();
+  let totalEscrowedRewards =  await totalEscrowedContract.methods.totalEscrowedRewards().call();
+  let totalEscrowBalanceNotIncludedInStaking =  await totalEscrowedContract.methods.totalEscrowBalanceNotIncludedInStaking().call();
+  let maxAMMVolumeRewardsPercentage =  await thalesContract.methods.maxAMMVolumeRewardsPercentage().call();
 
 
   let APR = (Number(fixedPeriodReward) * 52 * 100) /
       (Number(totalStakedAmount) +
           Number(totalEscrowedRewards) -
           Number(totalEscrowBalanceNotIncludedInStaking));
+  APR = Math.round(APR);
+  console.log("APR is "+APR);
   const bonusAPR = (APR * maxAMMVolumeRewardsPercentage) / 100;
   const APY = await aprToApy(APR)
   const bonusAPY = await aprToApy(bonusAPR+APR);
   const formattedBonusAPY = Math.round(bonusAPY);
-
-    clientARBAPR.guilds.cache.forEach(function (value, key) {
+  console.log("APY "+APY+" and MAX APY"+formattedBonusAPY);
+  clientForStaking.guilds.cache.forEach(function (value, key) {
       try {
         value.members.cache
-            .get(clientARBAPR.user.id)
+            .get(clientForStaking.user.id)
             .setNickname(Math.round(APY)+"% APY / "+Math.round(formattedBonusAPY)+"% Max. APY");
       } catch (e) {
         console.log(e);
       }
     });
-  clientARBAPR.user.setActivity(getNumberLabelDecimals((Math.round(Number(totalStakedAmount)/1e18)))+" staked", {
+  clientForStaking.user.setActivity(getNumberLabelDecimals((Math.round(Number(totalStakedAmount)/1e18)))+" staked", {
     type: "WATCHING",
   });
 }
@@ -6268,7 +6292,6 @@ async function aprToApy(interest){
   let APR_FREQUENCY = 52;
   return ((1 + interest / 100 / APR_FREQUENCY) ** APR_FREQUENCY - 1) * 100;
 }
-
 
 let liqArbitrumThalesRaw = fs.readFileSync('contracts/liqARBThales.json');
 let liqArbitrumThalesContract = JSON.parse(liqArbitrumThalesRaw);
