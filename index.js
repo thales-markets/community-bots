@@ -160,6 +160,7 @@ const stakingContract = new ethers.Contract(
 let  burnedContract =  new web3L2.eth.Contract(contractBurned, "0x217D47011b23BB961eB6D93cA9945B7501a5BB11");
 let  deadburnedContract =  new web3.eth.Contract(contractBurned, "0x8947da500eb47f82df21143d0c01a29862a8c3c5");
 let  deadARBburnedContract =  new web3Arbitrum.eth.Contract(contractBurned, "0xe85b662fe97e8562f4099d8a1d5a92d4b453bf30");
+let  baseburnedContract =  new web3Base.eth.Contract(contractBurned, "0xf34e0cff046e154cafcae502c7541b9e5fd8c249");
 const gelatoContract = require("./contracts/GelatoContract.js");
 let contractRoyaleRaw = fs.readFileSync('contracts/royale.json');
 let contractRoyale = JSON.parse(contractRoyaleRaw);
@@ -4259,7 +4260,9 @@ async  function getBurnedThalesBalance (){
   let amountOfDeadTokens = deadTokenBalance / 1e18;
   const deadArbTokenBalance = await deadARBburnedContract.methods.balanceOf("0xE9F5E7579931a46e4beaC08Ca9ab52961AD66203").call();
   let amountOfArbDeadTokens = deadArbTokenBalance / 1e18;
-  let sumOfAllBurnedThales = amountOfThales+amountOfDeadTokens + amountOfArbDeadTokens;
+  const baseBurnedTokens = await baseburnedContract.methods.balanceOf("0x860C4DD827DdDd98755e0843b89d909f5A0347Ff").call();
+  let amountOfbaseBurnedTokens = baseBurnedTokens / 1e18;
+  let sumOfAllBurnedThales = amountOfThales+amountOfDeadTokens + amountOfArbDeadTokens + amountOfbaseBurnedTokens;
 
 
   try {
@@ -4354,6 +4357,15 @@ let ppMAP = new Map( [
   [11051, "Player passing yards"],
   [11052, "Player passing touchdowns"],
   [11053, "Player rushing yards"],
+  [11010, "Home runs"],
+  [11011, "Bases"],
+  [11012, "Hits"],
+  [11019, "Pitcher strikeouts"],
+  [11029, "How many points player will have?"],
+  [11047, "Pitcher hits allowed"],
+  [11055, "Touchdowns"],
+  [11057, "Player receiving yards"],
+  [11060, "Player field goals"]
 ]);
 
 async function getOvertimeMarkets(networkId){
