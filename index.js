@@ -73,6 +73,8 @@ triviaBot.login(process.env.BOT_TOKEN_TRIVIA);
 const Web3 = require("web3");
 let speedMarketRaw = fs.readFileSync('contracts/speedMarket.json');
 let speedMarketContract = JSON.parse(speedMarketRaw);
+let speedMarketDataRaw = fs.readFileSync('contracts/speedMarketDataContract.json');
+let speedMarketDataContract = JSON.parse(speedMarketDataRaw);
 let contract = JSON.parse(contractRaw);
 let polygonContract = JSON.parse(polygonRaw);
 let burnedRaw = fs.readFileSync('contracts/burned.json');
@@ -181,21 +183,27 @@ let mapDeckardMM = new Map();
 let mapMint = new Map();
 let nonMMOrdersMap = new Map();
 let setConcludedTradesPastHour = new Set();
-const twitterConfAMMMarketBot = {
-  consumer_key: process.env.TWITTER_AMM_CONSUMER_KEY,
-  consumer_secret: process.env.TWITTER_AMM_CONSUMER_SECRET,
-  access_token: process.env.TWITTER_AMM_ACCESS_TOKEN,
-  access_token_secret: process.env.TWITTER_AMM_TOKEN_SECRET,
-}
-const twitterOvertimeAMMMarketBot = {
-  consumer_key: process.env.TWITTER_OVERTIME_AMM_CONSUMER_KEY,
-  consumer_secret: process.env.TWITTER_OVERTIME_AMM_CONSUMER_SECRET,
-  access_token: process.env.TWITTER_OVERTIME_AMM_ACCESS_TOKEN,
-  access_token_secret: process.env.TWITTER_OVERTIME_AMM_TOKEN_SECRET,
-}
-const Twitter = require('twit');
-const twitterClientAMMMarket = new Twitter(twitterConfAMMMarketBot);
-const twitterClientOvertimeAMMMarket = new Twitter(twitterOvertimeAMMMarketBot);
+const Twitter = require('twitter-api-v2');
+// Instantiate with desired auth type (here's Bearer v2 auth)
+const twitterClientOvertimeAMMMarket = new Twitter.TwitterApi(
+    {
+      appKey: process.env.TWITTER_OVERTIME_AMM_CONSUMER_KEY,
+      appSecret: process.env.TWITTER_OVERTIME_AMM_CONSUMER_SECRET,
+      accessToken: process.env.TWITTER_OVERTIME_AMM_ACCESS_TOKEN,
+      accessSecret: process.env.TWITTER_OVERTIME_AMM_TOKEN_SECRET,
+    }
+);
+
+const twitterClientAMMMarket = new Twitter.TwitterApi(
+    {
+      appKey: process.env.TWITTER_AMM_CONSUMER_KEY,
+      appSecret: process.env.TWITTER_AMM_CONSUMER_SECRET,
+      accessToken: process.env.TWITTER_AMM_ACCESS_TOKEN,
+      accessSecret: process.env.TWITTER_AMM_TOKEN_SECRET,
+    }
+);
+
+
 answersContent.forEach((a) => {
   qaMaps.set(a.number, a.content);
 });
@@ -2937,10 +2945,8 @@ async function getL2Trades() {
           newAMMTradeMessage = newAMMTradeMessage + 'Amount: '+parseFloat((amountShortLong).toFixed(3))+' '+downOrUP+' tokens\n';
           newAMMTradeMessage = newAMMTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' sUSD\n';
           newAMMTradeMessage = newAMMTradeMessage + 'Potential profit: '+potentialProfit+' sUSD ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
+          let tweetV2PostTweetResult = await twitterClientAMMMarket.v2.tweet(newAMMTradeMessage);
 
-          twitterClientAMMMarket.post('statuses/update', { status: newAMMTradeMessage }, function(err, data, response) {
-            console.log(data)
-          });
         }else {
           clientNewListings.channels
               .fetch("906872836235362306")
@@ -3019,9 +3025,9 @@ async function getL2Trades() {
           newRangeTradeMessage = newRangeTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' sUSD\n';
           newRangeTradeMessage = newRangeTradeMessage + 'Potential profit: '+potentialProfit+' sUSD ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
 
-          twitterClientAMMMarket.post('statuses/update', { status: newRangeTradeMessage }, function(err, data, response) {
-            console.log(data)
-          });
+
+
+          let tweetV2PostTweetResult = await twitterClientAMMMarket.v2.tweet(newRangeTradeMessage);
 
         }
       writenL2Trades.push(tradeL2.id);
@@ -3214,9 +3220,9 @@ async function getPolygonTrades() {
           newRangeTradeMessage = newRangeTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' sUSD\n';
           newRangeTradeMessage = newRangeTradeMessage + 'Potential profit: '+potentialProfit+' sUSD ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
 
-          twitterClientAMMMarket.post('statuses/update', { status: newRangeTradeMessage }, function(err, data, response) {
-            console.log(data)
-          });
+
+          let tweetV2PostTweetResult = await twitterClientAMMMarket.v2.tweet(newRangeTradeMessage);
+
           clientNewListings.channels
               .fetch("1006161731837501461")
               .then((ammTradesChannel) => {
@@ -3306,10 +3312,8 @@ async function getPolygonTrades() {
           newAMMTradeMessage = newAMMTradeMessage + 'Amount: ' + parseFloat((amountShortLong).toFixed(3)) + ' ' + downOrUP + ' tokens\n';
           newAMMTradeMessage = newAMMTradeMessage + 'Paid: ' + parseFloat((amountUSD).toFixed(3)) + ' USDC\n';
           newAMMTradeMessage = newAMMTradeMessage + 'Potential profit: ' + potentialProfit + ' USDC (' + calculateProfitPercentageTotal(paidAMM, amountAMM) + '%)\n';
+          let tweetV2PostTweetResult = await twitterClientAMMMarket.v2.tweet(newAMMTradeMessage);
 
-          twitterClientAMMMarket.post('statuses/update', {status: newAMMTradeMessage}, function (err, data, response) {
-            console.log(data)
-          });
         }
         writenPolygonTrades.push(polygonTrade.transactionHash);
         redisClient.lpush(polygonTradesKey, polygonTrade.transactionHash);
@@ -4889,9 +4893,8 @@ async function getOvertimeTrades(networkId){
         newOvertimeAMMMessage = newOvertimeAMMMessage + 'Position: '+ position+'\n';
         newOvertimeAMMMessage = newOvertimeAMMMessage + 'Potential profit: '+potentialProfit+' sUSD ('+calculatePercentageProfit(overtimeMarketTrade.amount,Number(overtimeMarketTrade.paid.toFixed(3)))+'%)\n';
 
-        twitterClientOvertimeAMMMarket.post('statuses/update', { status: newOvertimeAMMMessage }, function(err, data, response) {
-          console.log(data)
-        });
+        let tweetV2PostTweetResult = await twitterClientOvertimeAMMMarket.v2.tweet(newOvertimeAMMMessage);
+
 
       } catch (e) {
         console.log("There was a problem while getting overtime trades",e);
@@ -5137,9 +5140,9 @@ async function getArbitrumTrades() {
         newRangeTradeMessage = newRangeTradeMessage + 'Amount: '+parseFloat((amountShortLong).toFixed(3))+' '+arbitrumTrade.optionSide.toUpperCase()+' tokens\n';
         newRangeTradeMessage = newRangeTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' sUSD\n';
         newRangeTradeMessage = newRangeTradeMessage + 'Potential profit: '+potentialProfit+' sUSD ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
-        twitterClientAMMMarket.post('statuses/update', { status: newRangeTradeMessage }, function(err, data, response) {
-          console.log(data)
-        });
+
+        let tweetV2PostTweetResult = await twitterClientAMMMarket.v2.tweet(newRangeTradeMessage);
+
         clientNewListings.channels
             .fetch("1017059106093281400")
             .then((ammTradesChannel) => {
@@ -5237,9 +5240,7 @@ async function getArbitrumTrades() {
         newAMMTradeMessage = newAMMTradeMessage + 'Amount: ' + parseFloat((amountShortLong).toFixed(3)) + ' ' + downOrUP + ' tokens\n';
         newAMMTradeMessage = newAMMTradeMessage + 'Paid: ' + parseFloat((amountUSD).toFixed(3)) + ' USDC\n';
         newAMMTradeMessage = newAMMTradeMessage + 'Potential profit: ' + potentialProfit + ' USDC (' + calculateProfitPercentageTotal(paidAMM, amountAMM) + '%)\n';
-        twitterClientAMMMarket.post('statuses/update', {status: newAMMTradeMessage}, function (err, data, response) {
-          console.log(data)
-        });
+        let tweetV2PostTweetResult = await twitterClientAMMMarket.v2.tweet(newAMMTradeMessage);
       }
       writenArbitrumTrades.push(arbitrumTrade.transactionHash);
       redisClient.lpush(arbitrumTradesKey, arbitrumTrade.transactionHash);
@@ -5506,9 +5507,9 @@ async function getBSCTrades() {
         newRangeTradeMessage = newRangeTradeMessage + 'Amount: '+parseFloat((amountShortLong).toFixed(3))+' '+bscTrade.optionSide.toUpperCase()+' tokens\n';
         newRangeTradeMessage = newRangeTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' sUSD\n';
         newRangeTradeMessage = newRangeTradeMessage + 'Potential profit: '+potentialProfit+' sUSD ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
-        twitterClientAMMMarket.post('statuses/update', { status: newRangeTradeMessage }, function(err, data, response) {
-             console.log(data)
-         });
+
+        let tweetV2PostTweetResult = await twitterClientAMMMarket.v2.tweet(newRangeTradeMessage);
+
          clientNewListings.channels
              .fetch("1017059039085068308")
              .then((ammTradesChannel) => {
@@ -5598,9 +5599,7 @@ async function getBSCTrades() {
         newAMMTradeMessage = newAMMTradeMessage + 'Amount: ' + parseFloat((amountShortLong).toFixed(3)) + ' ' + downOrUP + ' tokens\n';
         newAMMTradeMessage = newAMMTradeMessage + 'Paid: ' + parseFloat((amountUSD).toFixed(3)) + ' USDC\n';
         newAMMTradeMessage = newAMMTradeMessage + 'Potential profit: ' + potentialProfit + ' USDC (' + calculateProfitPercentageTotal(paidAMM, amountAMM) + '%)\n';
-        twitterClientAMMMarket.post('statuses/update', {status: newAMMTradeMessage}, function (err, data, response) {
-          console.log(data)
-        });
+        let tweetV2PostTweetResult = await twitterClientAMMMarket.v2.tweet(newAMMTradeMessage);
       }
         writenBSCTrades.push(bscTrade.transactionHash);
         redisClient.lpush(bscTradesKey, bscTrade.transactionHash);
@@ -5919,9 +5918,10 @@ async function getOvertimeParlays(networkId){
         newOvertimeParlayMessage = newOvertimeParlayMessage + 'Paid: '+ "$"+overtimeMarketParlay.sUSDPaid.toFixed(3)+'\n';
         newOvertimeParlayMessage = newOvertimeParlayMessage + 'Positions:\n'+ parlayMessage;
         newOvertimeParlayMessage = newOvertimeParlayMessage + 'Potential profit: '+potentialProfit+' sUSD ('+calculatePercentageProfit(overtimeMarketParlay.totalAmount,Number(overtimeMarketParlay.sUSDPaid.toFixed(3)))+'%)\n';
-        twitterClientOvertimeAMMMarket.post('statuses/update', { status: newOvertimeParlayMessage }, function(err, data, response) {
-          console.log(data)
-        });
+
+        let tweetV2PostTweetResult = await twitterClientOvertimeAMMMarket.v2.tweet(newOvertimeParlayMessage);
+
+
       } catch (e) {
         console.log("There was a problem while getting overtime parlays",e);
       }
@@ -6526,35 +6526,39 @@ const speedMarketBASEContract = new web3Base.eth.Contract(speedMarketContract, "
 const speedMarketBSCContract = new web3BSC.eth.Contract(speedMarketContract, "0x72ca0765d4bE0529377d656c9645600606214610");
 const speedMarketPOLYGONContract = new web3Polygon.eth.Contract(speedMarketContract, "0x4B1aED25f1877E1E9fBECBd77EeE95BB1679c361");
 
+const speedDataMarketOPContract = new web3L2.eth.Contract(speedMarketDataContract, "0x467e14ac025499d60c417D7F00A7D9E83293F43c");
+const speedDataMarketARBContract = new web3Arbitrum.eth.Contract(speedMarketDataContract, "0xbbE161Bf57799104eFd6524133e305BBcB7C07EA");
+const speedDataMarketBASEContract = new web3Base.eth.Contract(speedMarketDataContract, "0xD6155E7C948458D6Ab58f9D63E1566493b9304C1");
+const speedDataMarketPOLYGONContract = new web3Polygon.eth.Contract(speedMarketDataContract, "0xA30200A8eD9655d7096814D0cC1f76639aa42AED");
+
 setInterval(function () {
   console.log("get speedMarkets");
-  speedMarkets(speedMarketOPContract,speedMarketType.OP);
-  speedMarkets(speedMarketARBContract,speedMarketType.ARB);
-  //speedMarkets(speedMarketBSCContract,speedMarketType.BSC);
-  speedMarkets(speedMarketPOLYGONContract,speedMarketType.POLYGON);
-  speedMarkets(speedMarketBASEContract,speedMarketType.BASE);
+  speedMarkets(speedMarketOPContract,speedMarketType.OP,speedMarketDataContract,speedDataMarketOPContract);
+  speedMarkets(speedMarketARBContract,speedMarketType.ARB,speedDataMarketARBContract);
+  //speedMarkets(speedMarketBSCContract,speedMarketType.BSC,speedMarketDataContract);
+  speedMarkets(speedMarketPOLYGONContract,speedMarketType.POLYGON,speedDataMarketPOLYGONContract);
+  speedMarkets(speedMarketBASEContract,speedMarketType.BASE,speedDataMarketBASEContract);
 
-  speedResolvedMarkets(speedMarketOPContract,speedMarketType.OP);
-  speedResolvedMarkets(speedMarketARBContract,speedMarketType.ARB);
-  //speedResolvedMarkets(speedMarketBSCContract,speedMarketType.BSC);
-  speedResolvedMarkets(speedMarketPOLYGONContract,speedMarketType.POLYGON);
-  speedResolvedMarkets(speedMarketBASEContract,speedMarketType.BASE);
+  speedResolvedMarkets(speedMarketOPContract,speedMarketType.OP,speedDataMarketOPContract);
+  speedResolvedMarkets(speedMarketARBContract,speedMarketType.ARB,speedDataMarketARBContract);
+  //speedResolvedMarkets(speedMarketBSCContract,speedMarketType.BSC,speedMarketDataContract);
+  speedResolvedMarkets(speedMarketPOLYGONContract,speedMarketType.POLYGON,speedDataMarketPOLYGONContract);
+  speedResolvedMarkets(speedMarketBASEContract,speedMarketType.BASE,speedDataMarketBASEContract);
 }, 2 * 60 * 1000);
 
-async function speedMarkets(speedMarketsContract,givenSpeedMarketType){
+async function speedMarkets(speedMarketsContract,givenSpeedMarketType,speedDataMarketContract){
 
-  const numActiveMarkets = await speedMarketsContract.methods.numActiveMarkets().call();
-  const activeMarkets = await speedMarketsContract.methods.activeMarkets(0, numActiveMarkets).call();
+  const ammParams = await speedDataMarketContract.methods.getSpeedMarketsAMMParameters('0x0000000000000000000000000000000000000000').call();
+  const activeMarkets = await speedMarketsContract.methods.activeMarkets(0, ammParams.numActiveMarkets).call();
   for (const activeMarket of activeMarkets) {
     if(!writenSpeedMarkets.includes(activeMarket)){
 
-      let speedMarket = await speedMarketsContract.methods.getMarketsData(Array(activeMarket)).call();
+      let speedMarket = await speedDataMarketContract.methods.getMarketsData(Array(activeMarket)).call();
       speedMarket = speedMarket [0];
       let side = speedMarket.direction == 0 ? "UP" : "DOWN";
-    const [lpFee, safeBoxImpact, numActiveMarkets] = await Promise.all([
+    const [lpFee, safeBoxImpact] = await Promise.all([
       speedMarketsContract.methods.lpFee().call(),
-      speedMarketsContract.methods.safeBoxImpact().call(),
-      speedMarketsContract.methods.numActiveMarkets().call(),
+      speedMarketsContract.methods.safeBoxImpact().call()
     ]);
     const fees = (lpFee/1e18) + (safeBoxImpact/1e18);
     let SPEED_MARKETS_QUOTE = 2;
@@ -6618,21 +6622,20 @@ async function speedMarkets(speedMarketsContract,givenSpeedMarketType){
 
 }
 
-async function speedResolvedMarkets(speedMarketsContract,givenSpeedMarketType){
+async function speedResolvedMarkets(speedMarketsContract,givenSpeedMarketType,speedDataMarketContract){
 
-  const numMaturedMarkets = await speedMarketsContract.methods.numMaturedMarkets().call();
-  let index = numMaturedMarkets < 20 ? numMaturedMarkets : 20;
-  const maturedMarkets = await speedMarketsContract.methods.maturedMarkets(numMaturedMarkets - index, numMaturedMarkets).call();
+  const ammParams = await speedDataMarketContract.methods.getSpeedMarketsAMMParameters('0x0000000000000000000000000000000000000000').call();
+  let index = ammParams.numMaturedMarkets < 20 ? ammParams.numMaturedMarkets : 20;
+  const maturedMarkets = await speedMarketsContract.methods.maturedMarkets(ammParams.numMaturedMarkets - index, ammParams.numMaturedMarkets).call();
   for (const maturedMarket of maturedMarkets) {
     if(!writenMaturedMarkets.includes(maturedMarket)){
 
-      let speedMarket = await speedMarketsContract.methods.getMarketsData(Array(maturedMarket)).call();
+      let speedMarket = await speedDataMarketContract.methods.getMarketsData(Array(maturedMarket)).call();
       speedMarket = speedMarket [0];
       let side = speedMarket.direction == 0 ? "UP" : "DOWN";
-      const [lpFee, safeBoxImpact, numActiveMarkets] = await Promise.all([
+      const [lpFee, safeBoxImpact] = await Promise.all([
         speedMarketsContract.methods.lpFee().call(),
-        speedMarketsContract.methods.safeBoxImpact().call(),
-        speedMarketsContract.methods.numActiveMarkets().call(),
+        speedMarketsContract.methods.safeBoxImpact().call()
       ]);
       const fees = (lpFee/1e18) + (safeBoxImpact/1e18);
       let SPEED_MARKETS_QUOTE = 2;
