@@ -462,6 +462,7 @@ setInterval(function () {
 setInterval(function () {
   console.log("get L2 trades");
   getL2Trades();
+  getBASETrades();
   getPolygonTrades();
   getArbitrumTrades();
   getBSCTrades();
@@ -2150,7 +2151,8 @@ clientETHBurned.login(process.env.BOT_TOKEN_ETH_BURNED);
 
 const redis = require("redis");
 let redisClient = null;
-let L2tradesKey = "L2Trades";
+let L2tradesKey = "L2TradesAMM";
+let BASEtradesKey = "BASETradesAMM";
 let speedMarketsKey = "speedMarketsKey";
 let speedMaturedMarketsKey = "speedMaturedMarketsKey";
 let polygonTradesKey = "PolygonTrades";
@@ -2175,6 +2177,7 @@ let numberOfTradesARB = 130;
 let totalAmountOfTradesPolygon = 455;
 let numberOfTradesPolygon = 75;
 let writenL2Trades = [];
+let writenBASETrades = [];
 let writenPolygonTrades = [];
 let writenArbitrumTrades = [];
 let writenBSCTrades = [];
@@ -2336,6 +2339,10 @@ if (process.env.REDIS_URL) {
 
     redisClient.lrange(L2tradesKey, 0, -1, function (err, l2Trades) {
       writenL2Trades = l2Trades;
+    });
+
+    redisClient.lrange(BASEtradesKey, 0, -1, function (err, l2Trades) {
+      writenBASETrades = l2Trades;
     });
 
   redisClient.lrange(speedMarketsKey, 0, -1, function (err, l2Trades) {
@@ -2789,8 +2796,16 @@ async function getL2Trades() {
   startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
   let startDateUnixTime = Math.floor(startdate.getTime()/1000);
   for (const tradeL2 of tradesL2) {
-    if (startDateUnixTime < Number(tradeL2.timestamp) && !writenL2Trades.includes(tradeL2.id)) {
+    if (startDateUnixTime < Number(tradeL2.timestamp) && !writenL2Trades.includes(tradeL2.transactionHash)) {
       try{
+      writenL2Trades.push(tradeL2.transactionHash);
+      redisClient.lpush(L2tradesKey, tradeL2.transactionHash);
+      console.log("###### amount for l2 trade is "+amountUSD);
+      amountUSD = Math.trunc(amountUSD);
+      numberOfTradesL2++;
+      redisClient.set(totalTradesL2Key, numberOfTradesL2, function (err, reply) {
+          console.log(reply); // OK
+        });
         console.log("new trade l2");
         var shortLong;
         const makerToken = new web3L2.eth.Contract(contract, tradeL2.makerToken);
@@ -2945,7 +2960,7 @@ async function getL2Trades() {
           newAMMTradeMessage = newAMMTradeMessage + 'Amount: '+parseFloat((amountShortLong).toFixed(3))+' '+downOrUP+' tokens\n';
           newAMMTradeMessage = newAMMTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' sUSD\n';
           newAMMTradeMessage = newAMMTradeMessage + 'Potential profit: '+potentialProfit+' sUSD ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
-          let tweetV2PostTweetResult = await twitterClientAMMMarket.v2.tweet(newAMMTradeMessage);
+          //let tweetV2PostTweetResult = await twitterClientAMMMarket.v2.tweet(newAMMTradeMessage);
 
         }else {
           clientNewListings.channels
@@ -3027,11 +3042,11 @@ async function getL2Trades() {
 
 
 
-          let tweetV2PostTweetResult = await twitterClientAMMMarket.v2.tweet(newRangeTradeMessage);
+          //let tweetV2PostTweetResult = await twitterClientAMMMarket.v2.tweet(newRangeTradeMessage);
 
         }
-      writenL2Trades.push(tradeL2.id);
-      redisClient.lpush(L2tradesKey, tradeL2.id);
+      writenL2Trades.push(tradeL2.transactionHash);
+      redisClient.lpush(L2tradesKey, tradeL2.transactionHash);
       console.log("###### amount for l2 trade is "+amountUSD);
       amountUSD = Math.trunc(amountUSD);
       numberOfTradesL2++;
@@ -3221,7 +3236,7 @@ async function getPolygonTrades() {
           newRangeTradeMessage = newRangeTradeMessage + 'Potential profit: '+potentialProfit+' sUSD ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
 
 
-          let tweetV2PostTweetResult = await twitterClientAMMMarket.v2.tweet(newRangeTradeMessage);
+          //let tweetV2PostTweetResult = await twitterClientAMMMarket.v2.tweet(newRangeTradeMessage);
 
           clientNewListings.channels
               .fetch("1006161731837501461")
@@ -3312,7 +3327,7 @@ async function getPolygonTrades() {
           newAMMTradeMessage = newAMMTradeMessage + 'Amount: ' + parseFloat((amountShortLong).toFixed(3)) + ' ' + downOrUP + ' tokens\n';
           newAMMTradeMessage = newAMMTradeMessage + 'Paid: ' + parseFloat((amountUSD).toFixed(3)) + ' USDC\n';
           newAMMTradeMessage = newAMMTradeMessage + 'Potential profit: ' + potentialProfit + ' USDC (' + calculateProfitPercentageTotal(paidAMM, amountAMM) + '%)\n';
-          let tweetV2PostTweetResult = await twitterClientAMMMarket.v2.tweet(newAMMTradeMessage);
+          //let tweetV2PostTweetResult = await twitterClientAMMMarket.v2.tweet(newAMMTradeMessage);
 
         }
         writenPolygonTrades.push(polygonTrade.transactionHash);
@@ -4369,7 +4384,12 @@ let ppMAP = new Map( [
   [11047, "Pitcher hits allowed"],
   [11055, "Touchdowns"],
   [11057, "Player receiving yards"],
-  [11060, "Player field goals"]
+  [11060, "Player field goals"],
+  [11037, "How many shots will be recorded?"],
+  [11086, "Will this player score a goal?"],
+  [11012, "Hits: How many hits will be recorded?"],
+  [11035, "How many rebounds will this player record?"],
+  [11039, "How many assists will the player record?"]
 ]);
 
 async function getOvertimeMarkets(networkId){
@@ -5141,7 +5161,7 @@ async function getArbitrumTrades() {
         newRangeTradeMessage = newRangeTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' sUSD\n';
         newRangeTradeMessage = newRangeTradeMessage + 'Potential profit: '+potentialProfit+' sUSD ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
 
-        let tweetV2PostTweetResult = await twitterClientAMMMarket.v2.tweet(newRangeTradeMessage);
+       // let tweetV2PostTweetResult = await twitterClientAMMMarket.v2.tweet(newRangeTradeMessage);
 
         clientNewListings.channels
             .fetch("1017059106093281400")
@@ -5215,7 +5235,7 @@ async function getArbitrumTrades() {
             .then((ammTradesChannel) => {
               ammTradesChannel.send(message);
             });
-        }{
+        } else {
           clientNewListings.channels
               .fetch("1017058994973573153")
               .then((ammTradesChannel) => {
@@ -5240,7 +5260,7 @@ async function getArbitrumTrades() {
         newAMMTradeMessage = newAMMTradeMessage + 'Amount: ' + parseFloat((amountShortLong).toFixed(3)) + ' ' + downOrUP + ' tokens\n';
         newAMMTradeMessage = newAMMTradeMessage + 'Paid: ' + parseFloat((amountUSD).toFixed(3)) + ' USDC\n';
         newAMMTradeMessage = newAMMTradeMessage + 'Potential profit: ' + potentialProfit + ' USDC (' + calculateProfitPercentageTotal(paidAMM, amountAMM) + '%)\n';
-        let tweetV2PostTweetResult = await twitterClientAMMMarket.v2.tweet(newAMMTradeMessage);
+        //let tweetV2PostTweetResult = await twitterClientAMMMarket.v2.tweet(newAMMTradeMessage);
       }
       writenArbitrumTrades.push(arbitrumTrade.transactionHash);
       redisClient.lpush(arbitrumTradesKey, arbitrumTrade.transactionHash);
@@ -5508,7 +5528,7 @@ async function getBSCTrades() {
         newRangeTradeMessage = newRangeTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' sUSD\n';
         newRangeTradeMessage = newRangeTradeMessage + 'Potential profit: '+potentialProfit+' sUSD ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
 
-        let tweetV2PostTweetResult = await twitterClientAMMMarket.v2.tweet(newRangeTradeMessage);
+        //let tweetV2PostTweetResult = await twitterClientAMMMarket.v2.tweet(newRangeTradeMessage);
 
          clientNewListings.channels
              .fetch("1017059039085068308")
@@ -5599,7 +5619,7 @@ async function getBSCTrades() {
         newAMMTradeMessage = newAMMTradeMessage + 'Amount: ' + parseFloat((amountShortLong).toFixed(3)) + ' ' + downOrUP + ' tokens\n';
         newAMMTradeMessage = newAMMTradeMessage + 'Paid: ' + parseFloat((amountUSD).toFixed(3)) + ' USDC\n';
         newAMMTradeMessage = newAMMTradeMessage + 'Potential profit: ' + potentialProfit + ' USDC (' + calculateProfitPercentageTotal(paidAMM, amountAMM) + '%)\n';
-        let tweetV2PostTweetResult = await twitterClientAMMMarket.v2.tweet(newAMMTradeMessage);
+      //  let tweetV2PostTweetResult = await twitterClientAMMMarket.v2.tweet(newAMMTradeMessage);
       }
         writenBSCTrades.push(bscTrade.transactionHash);
         redisClient.lpush(bscTradesKey, bscTrade.transactionHash);
@@ -6533,7 +6553,7 @@ const speedDataMarketPOLYGONContract = new web3Polygon.eth.Contract(speedMarketD
 
 setInterval(function () {
   console.log("get speedMarkets");
-  speedMarkets(speedMarketOPContract,speedMarketType.OP,speedMarketDataContract,speedDataMarketOPContract);
+  speedMarkets(speedMarketOPContract,speedMarketType.OP,speedDataMarketOPContract);
   speedMarkets(speedMarketARBContract,speedMarketType.ARB,speedDataMarketARBContract);
   //speedMarkets(speedMarketBSCContract,speedMarketType.BSC,speedMarketDataContract);
   speedMarkets(speedMarketPOLYGONContract,speedMarketType.POLYGON,speedDataMarketPOLYGONContract);
@@ -6722,3 +6742,291 @@ function timeConverter(UNIX_timestamp){
   return time;
 }
 
+async function getBASETrades() {
+
+  const body = JSON.stringify({
+    query: `{
+      trades(
+        orderBy:timestamp,
+        orderDirection:desc,
+      ) {
+    id
+    timestamp
+    transactionHash
+    orderHash
+    maker
+    taker
+    makerToken
+    takerToken
+    makerAmount
+    takerAmount
+    market
+    optionSide
+    orderSide
+  }
+}`,
+    variables: null,
+  });
+
+  const response = await fetch(
+      "https://api.studio.thegraph.com/query/11948/thales-markets-base/version/latest",
+      {
+        method: "POST",
+        body,
+      }
+  );
+
+  const json = await response.json();
+  const tradesBASE = json.data.trades;
+
+  var startdate = new Date();
+  var durationInMinutes = 30;
+  startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
+  let startDateUnixTime = Math.floor(startdate.getTime()/1000);
+  for (const tradeBASE of tradesBASE) {
+    if (startDateUnixTime < Number(tradeBASE.timestamp) && !writenBASETrades.includes(tradeBASE.transactionHash)) {
+      try{
+        console.log("new trade base");
+        var shortLong;
+        const makerToken = new web3Base.eth.Contract(contract, tradeBASE.makerToken);
+        const makerTokenName = await makerToken.methods.name().call();
+        const takerToken = new web3Base.eth.Contract(contract, tradeBASE.takerToken);
+        const takerTokenName = await takerToken.methods.name().call();
+        var amountUSD;
+        var amountShortLong;
+        var isLong = false;
+        var isBuy = false;
+        var isRanged = false;
+
+        if (
+            makerTokenName.toLowerCase().includes("in") ||
+            makerTokenName.toLowerCase().includes("out")
+        ){
+          amountShortLong = tradeBASE.makerAmount/1e6;
+          amountUSD = tradeBASE.takerAmount / 1e6;
+          isRanged = true;
+        }else if(takerTokenName.toLowerCase().includes("in") ||
+            takerTokenName.toLowerCase().includes("out")){
+          isRanged = true;
+          amountUSD =tradeBASE.makerAmount / 1e6;
+          amountShortLong = tradeBASE.takerAmount / 1e6;
+        }else if (
+            makerTokenName.toLowerCase().includes("up") ||
+            makerTokenName.toLowerCase().includes("down")
+        ) {
+          if (makerTokenName.toLowerCase().includes("up")) {
+            shortLong = " > ";
+            isLong = true;
+          } else {
+            shortLong = " < ";
+            isLong = false;
+          }
+          amountShortLong = tradeBASE.makerAmount/1e6;
+          amountUSD = tradeBASE.takerAmount / 1e6;
+          isBuy = true;
+        } else {
+          if (takerTokenName.toLowerCase().includes("up")) {
+            shortLong = " > ";
+            isLong = true;
+          } else {
+            shortLong = " < ";
+            isLong = false;
+          }
+
+          amountUSD =tradeBASE.makerAmount / 1e6;
+          amountShortLong = tradeBASE.takerAmount / 1e6;
+          shortLong = takerTokenName.toLowerCase().includes("up") ? " > " : " < ";
+        }
+
+        if(!isRanged){
+        let market = await  getMarketL2(tradeBASE);
+
+        var marketMessage =
+            web3.utils.hexToAscii(market.currencyKey).replace(/\0/g, '') +
+            shortLong +
+            Math.round(((market.strikePrice/1e6) + Number.EPSILON) * 1000) / 1000;
+        marketMessage =
+            marketMessage +
+            "@" +
+            new Date(market.maturityDate*1000).toISOString().slice(0, 10);
+
+        let isAmmTrade = false;
+        let messageTitle;
+        if (
+            ammTradeAddress.toLowerCase() == tradeBASE.maker.toLowerCase() ||
+            ammTradeAddress.toLowerCase() == tradeBASE.taker.toLowerCase()
+        ) {
+          isAmmTrade = true;
+          messageTitle = ":lock: New Amm Thales Trade :lock:"
+        } else{
+          messageTitle = ":lock: New Orderbook Thales Trade :lock:"
+        }
+
+
+        var message = new Discord.MessageEmbed()
+            .addFields(
+                {
+                  name: messageTitle,
+                  value: "\u200b",
+                },
+                {
+                  name: ":link: Transaction:",
+                  value:
+                      "[" +
+                      tradeBASE.transactionHash +
+                      "](https://optimistic.etherscan.io/tx/" +
+                      tradeBASE.transactionHash +
+                      ")",
+                },
+                {
+                  name: ":coin: Transaction type:",
+                  value: isBuy ? "Buy" : "Sell",
+                },
+                {
+                  name: ":classical_building: Market:",
+                  value:
+                      "[" +
+                      marketMessage +
+                      "](https://thalesmarket.io/markets/" +
+                      tradeBASE.market +
+                      ")",
+                },
+                {
+                  name: isLong ? ":dollar: UP tokens" : ":dollar: DOWN tokens",
+                  value: parseFloat((amountShortLong).toFixed(3)),
+                },
+                {
+                  name: ":dollar: Total:",
+                  value: parseFloat((amountUSD).toFixed(3)) + " sUSD",
+                },
+                {
+                  name: ":alarm_clock: Timestamp:",
+                  value: new Date(tradeBASE.timestamp*1000),
+                }
+            )
+            .setColor("#0037ff");
+        if (
+           isAmmTrade
+        ) {
+
+          if(parseFloat((amountUSD).toFixed(3))>1000){
+            clientNewListings.channels
+                .fetch("1164609163234643968")
+                .then((ammTradesChannel) => {
+                  ammTradesChannel.send(message);
+                });
+          }else{
+            clientNewListings.channels
+                .fetch("1164608939556618380")
+                .then((ammTradesChannel) => {
+                  ammTradesChannel.send(message);
+                });
+          }
+
+
+          let newAMMTradeMessage = isBuy ? 'New BASE AMM position bought\n' : 'New BASE AMM position sold\n';
+          var date = new Date(tradeBASE.timestamp*1000);
+
+          newAMMTradeMessage = newAMMTradeMessage + 'Condition: '+marketMessage+'\n';
+          let downOrUP;
+          if(isLong){
+            downOrUP='UP';
+          }else{
+            downOrUP='DOWN';
+          };
+          let amountAMM = parseFloat((amountShortLong).toFixed(3));
+          let paidAMM = parseFloat((amountUSD).toFixed(3));
+          let potentialProfit = (amountAMM-paidAMM)>0.51? Math.round(amountAMM-paidAMM): amountAMM-paidAMM;
+          newAMMTradeMessage = newAMMTradeMessage + 'Amount: '+parseFloat((amountShortLong).toFixed(3))+' '+downOrUP+' tokens\n';
+          newAMMTradeMessage = newAMMTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' sUSD\n';
+          newAMMTradeMessage = newAMMTradeMessage + 'Potential profit: '+potentialProfit+' sUSD ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
+          //let tweetV2PostTweetResult = await twitterClientAMMMarket.v2.tweet(newAMMTradeMessage);
+
+        }
+      } else {
+          let rangedMarket = await  getRangedMarketL2(tradeBASE);
+          var marketMessage =
+              web3.utils.hexToAscii(rangedMarket.currencyKey).replace(/\0/g, '') +
+              " "+tradeBASE.optionSide.toUpperCase() + " > $"+
+              Math.round(((rangedMarket.leftPrice/1e6) + Number.EPSILON) * 1000) / 1000+" < $"+Math.round(((rangedMarket.rightPrice/1e6) + Number.EPSILON) * 1000) / 1000;
+          let discordMarketMessage
+          discordMarketMessage =
+              marketMessage +
+              "@" +
+              new Date(rangedMarket.maturityDate*1000).toISOString().slice(0, 10);
+
+
+          var message = new Discord.MessageEmbed()
+              .addFields(
+                  {
+                    name: ":lock: New Ranged Market Thales Trade :lock:",
+                    value: "\u200b",
+                  },
+                  {
+                    name: ":link: Transaction:",
+                    value:
+                        "[" +
+                        tradeBASE.transactionHash +
+                        "](https://optimistic.etherscan.io/tx/" +
+                        tradeBASE.transactionHash +
+                        ")",
+                  },
+                  {
+                    name: ":coin: Transaction type:",
+                    value: tradeBASE.orderSide.toUpperCase(),
+                  },
+                  {
+                    name: ":classical_building: Market:",
+                    value:
+                        "[" +
+                        discordMarketMessage +
+                        "](https://thales-dapp-git-feature-ranged-markets-thales-market.vercel.app/ranged-markets/" +
+                        tradeBASE.market +
+                        ")",
+                  },
+                  {
+                    name: ":dollar: "+tradeBASE.optionSide.toUpperCase()+" tokens",
+                    value: parseFloat((amountShortLong).toFixed(3)),
+                  },
+                  {
+                    name: ":dollar: Total:",
+                    value: parseFloat((amountUSD).toFixed(3)) + " sUSD",
+                  },
+                  {
+                    name: ":alarm_clock: Timestamp:",
+                    value: new Date(tradeBASE.timestamp*1000),
+                  }
+              )
+              .setColor("#0037ff");
+          let channel =  await clientNewListings.channels
+              .fetch("1164609160801964183");
+          channel.send(message);
+
+          let newRangeTradeMessage = tradeBASE.orderSide.toUpperCase()=="BUY" ? 'New BASE Ranged Market position bought\n' : 'New BASE Ranged Market position sold\n';
+          var date = new Date(tradeBASE.timestamp*1000);
+
+          newRangeTradeMessage = newRangeTradeMessage + 'Condition: '+marketMessage+'\n';
+          let amountAMM = parseFloat((amountShortLong).toFixed(3));
+          let paidAMM = parseFloat((amountUSD).toFixed(3));
+          let potentialProfit = (amountAMM-paidAMM)>0.51? Math.round(amountAMM-paidAMM): amountAMM-paidAMM;
+          newRangeTradeMessage = newRangeTradeMessage + 'Maturity date: '+new Date(rangedMarket.maturityDate*1000).toISOString().slice(0, 10)+'\n';
+          newRangeTradeMessage = newRangeTradeMessage + 'Amount: '+parseFloat((amountShortLong).toFixed(3))+' '+tradeBASE.optionSide.toUpperCase()+' tokens\n';
+          newRangeTradeMessage = newRangeTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' sUSD\n';
+          newRangeTradeMessage = newRangeTradeMessage + 'Potential profit: '+potentialProfit+' sUSD ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
+
+
+
+          //let tweetV2PostTweetResult = await twitterClientAMMMarket.v2.tweet(newRangeTradeMessage);
+
+        }
+      writenBASETrades.push(tradeBASE.transactionHash);
+      redisClient.lpush(BASEtradesKey, tradeBASE.transactionHash);
+      console.log("###### amount for base trade is "+amountUSD);
+      amountUSD = Math.trunc(amountUSD);
+      }catch (e) {
+        console.log("error in l2 trades "+e);
+      }
+    }
+  }
+
+}
