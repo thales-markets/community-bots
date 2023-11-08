@@ -144,6 +144,12 @@ nonMMordersList.push(
   "0xc0e554c1951c0193e020156f68dce15064769937",
   "0x71c5a24f6ede7861a32a5f81af5b1b70ff250b80"
 );
+let parlayAMMList = new Array();
+parlayAMMList.push(
+  "0x82b3634c0518507d5d817be6dab6233ebe4d68d9",
+  "0x2bb7d689780e7a34dd365359bd7333ab24903268",
+  "0x5625c3233b52206a5f23c5fc1ce16f6a7e3874dd"
+);
 const fetch = require("node-fetch");
 const thalesGraphURL =
   "https://api.thegraph.com/subgraphs/name/thales-markets/thales-markets";
@@ -4389,7 +4395,9 @@ let ppMAP = new Map( [
   [11086, "Will this player score a goal?"],
   [11012, "Hits: How many hits will be recorded?"],
   [11035, "How many rebounds will this player record?"],
-  [11039, "How many assists will the player record?"]
+  [11039, "How many assists will the player record?"],
+  [11087, "Player double-double"],
+  [11088, "Player triple-double"]
 ]);
 
 async function getOvertimeMarkets(networkId){
@@ -4856,6 +4864,11 @@ async function getOvertimeTrades(networkId){
         if(Math.round(overtimeMarketTrade.amount)>500){
           let overtimeTrades = await clientNewListings.channels
               .fetch("1057735441870241932");
+          await message.addFields(
+            {
+              name: ":coin: is Parlay AMM:",
+              value: parlayAMMList.includes(overtimeMarketTrade.account.toLowerCase()),
+            });
           overtimeTrades.send(message);
         } else{
           let overtimeTrades = await clientNewListings.channels
@@ -4866,6 +4879,11 @@ async function getOvertimeTrades(networkId){
           if(Math.round(overtimeMarketTrade.amount)>500){
             let overtimeTrades = await clientNewListings.channels
                 .fetch("1154038984368984084");
+            await message.addFields(
+            {
+              name: ":coin: is Parlay AMM:",
+              value: parlayAMMList.includes(overtimeMarketTrade.account.toLowerCase()),
+            });
             overtimeTrades.send(message);
           } else{
             let overtimeTrades = await clientNewListings.channels
@@ -4876,6 +4894,11 @@ async function getOvertimeTrades(networkId){
           if(Math.round(overtimeMarketTrade.amount)>500){
             let overtimeTrades = await clientNewListings.channels
                 .fetch("1075367077940043867");
+            await message.addFields(
+            {
+              name: ":coin: is Parlay AMM:",
+              value: parlayAMMList.includes(overtimeMarketTrade.account.toLowerCase()),
+            });
             overtimeTrades.send(message);
           } else{
             let overtimeTrades = await clientNewListings.channels
@@ -5892,6 +5915,11 @@ async function getOvertimeParlays(networkId){
         if(Math.round(overtimeMarketParlay.sUSDPaid)>1000){
           let overtimeParlaysChannel = await clientNewListings.channels
               .fetch("1057735441870241932");
+          await message.addFields(
+            {
+              name: ":coin: is Parlay AMM:",
+              value: parlayAMMList.includes(overtimeMarketParlay.account.toLowerCase()),
+            });
           overtimeParlaysChannel.send(message);
         } else{
           let overtimeParlaysChannel = await clientNewListings.channels
@@ -5912,6 +5940,11 @@ async function getOvertimeParlays(networkId){
           if(Math.round(overtimeMarketParlay.sUSDPaid)>1000){
             let overtimeParlaysChannel = await clientNewListings.channels
                 .fetch("1075367077940043867");
+            await message.addFields(
+            {
+              name: ":coin: is Parlay AMM:",
+              value: parlayAMMList.includes(overtimeMarketParlay.account.toLowerCase()),
+            });
             overtimeParlaysChannel.send(message);
           } else{
             let overtimeParlaysChannel = await clientNewListings.channels
@@ -6798,15 +6831,15 @@ async function getBASETrades() {
         var isBuy = false;
         var isRanged = false;
 
-        if (
-            makerTokenName.toLowerCase().includes("in") ||
-            makerTokenName.toLowerCase().includes("out")
+       if (
+            (makerTokenName.toLowerCase().includes("in") ||
+            makerTokenName.toLowerCase().includes("out")) && !makerToken.toLowerCase().includes("coin")
         ){
           amountShortLong = tradeBASE.makerAmount/1e6;
           amountUSD = tradeBASE.takerAmount / 1e6;
           isRanged = true;
-        }else if(takerTokenName.toLowerCase().includes("in") ||
-            takerTokenName.toLowerCase().includes("out")){
+        }else if((takerTokenName.toLowerCase().includes("in") ||
+            takerTokenName.toLowerCase().includes("out"))&& !takerTokenName.toLowerCase().includes("coin")){
           isRanged = true;
           amountUSD =tradeBASE.makerAmount / 1e6;
           amountShortLong = tradeBASE.takerAmount / 1e6;
@@ -6839,7 +6872,7 @@ async function getBASETrades() {
         }
 
         if(!isRanged){
-        let market = await  getMarketL2(tradeBASE);
+        let market = await getMarketBASE(tradeBASE);
 
         var marketMessage =
             web3.utils.hexToAscii(market.currencyKey).replace(/\0/g, '') +
@@ -6944,7 +6977,7 @@ async function getBASETrades() {
 
         }
       } else {
-          let rangedMarket = await  getRangedMarketL2(tradeBASE);
+          let rangedMarket = await  getRangedMarketBASE(tradeBASE);
           var marketMessage =
               web3.utils.hexToAscii(rangedMarket.currencyKey).replace(/\0/g, '') +
               " "+tradeBASE.optionSide.toUpperCase() + " > $"+
@@ -7029,4 +7062,80 @@ async function getBASETrades() {
     }
   }
 
+}
+
+async function  getMarketBASE(tradeL2) {
+
+  const body = JSON.stringify({
+    query: `{markets(where:{
+    id: "${tradeL2.market}"
+  }) {
+    id
+    timestamp
+    creator
+    currencyKey
+    maturityDate
+    strikePrice
+  }}`,
+    variables: null,
+  });
+
+  const response = await fetch(
+      "https://api.studio.thegraph.com/query/11948/thales-markets-base/version/latest",
+      {
+        method: "POST",
+        body,
+      }
+  );
+
+  const json = await response.json();
+  const markets = json.data.markets;
+
+  return markets[0];
+}
+
+async function  getRangedMarketBASE(tradeL2) {
+
+  const body = JSON.stringify({
+    query: `{rangedMarkets(where:{
+    id: "${tradeL2.market}"
+  }) {
+    id
+    timestamp
+    currencyKey
+    maturityDate
+    expiryDate
+    leftPrice
+    rightPrice
+    rightMarket{
+    id
+    strikePrice
+      currencyKey
+      maturityDate
+      expiryDate
+    }
+    leftMarket{
+      id
+    strikePrice
+      currencyKey
+      maturityDate
+      expiryDate
+    }
+    
+  }}`,
+    variables: null,
+  });
+
+  const response = await fetch(
+      "https://api.studio.thegraph.com/query/11948/thales-markets-base/version/latest",
+      {
+        method: "POST",
+        body,
+      }
+  );
+
+  const json = await response.json();
+  const markets = json.data.rangedMarkets;
+
+  return markets[0];
 }
