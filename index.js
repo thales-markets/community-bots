@@ -7207,10 +7207,10 @@ async function chainedSpeedMarkets(speedMarketsContract,givenSpeedMarketType,spe
             },
             {
               name: ":coin: Size:",
-              value: payout + " "+directionNames,
+              value: Math.round(payout) + " "+directionNames,
             },{
               name: ":coin: Paid:",
-              value: size,
+              value: Math.round(size),
             },{
               name: ":alarm_clock: End time:",
               value: timeConverter(speedMarket.strikeTime)
