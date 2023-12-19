@@ -6862,7 +6862,7 @@ async function getBASETrades() {
 
        if (
             (makerTokenName.toLowerCase().includes("in") ||
-            makerTokenName.toLowerCase().includes("out")) && !makerToken.toLowerCase().includes("coin")
+            makerTokenName.toLowerCase().includes("out")) && !makerTokenName.toLowerCase().includes("coin")
         ){
           amountShortLong = tradeBASE.makerAmount/1e6;
           amountUSD = tradeBASE.takerAmount / 1e6;
