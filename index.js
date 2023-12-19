@@ -6803,6 +6803,7 @@ function timeConverter(UNIX_timestamp){
   return time;
 }
 
+let baseAMMAddress = "0xe41cD3A25CBdeDA0BC46D48C380393D953bD2034";
 async function getBASETrades() {
 
   const body = JSON.stringify({
@@ -6914,8 +6915,8 @@ async function getBASETrades() {
         let isAmmTrade = false;
         let messageTitle;
         if (
-            ammTradeAddress.toLowerCase() == tradeBASE.maker.toLowerCase() ||
-            ammTradeAddress.toLowerCase() == tradeBASE.taker.toLowerCase()
+            baseAMMAddress.toLowerCase() == tradeBASE.maker.toLowerCase() ||
+            baseAMMAddress.toLowerCase() == tradeBASE.taker.toLowerCase()
         ) {
           isAmmTrade = true;
           messageTitle = ":lock: New Amm Thales Trade :lock:"
