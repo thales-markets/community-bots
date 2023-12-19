@@ -4537,7 +4537,7 @@ async function getOvertimeMarkets(networkId){
                   value:
                       "[" +
                       contestantName+
-                      "](https://overtimemarkets.xyz/#/markets/" +
+                      "](https://overtimemarkets.xyz/markets/" +
                       sportMarket.address +
                       ")",
                 },
@@ -4648,7 +4648,7 @@ async function getOvertimeMarkets(networkId){
                 value:
                     "[" +
                     contestantName+
-                    "](https://overtimemarkets.xyz/#/markets/" +
+                    "](https://overtimemarkets.xyz/markets/" +
                     sportMarket.address +
                     ")",
               },
@@ -4820,7 +4820,7 @@ async function getOvertimeTrades(networkId){
                   value:
                       "[" +
                       marketMessage+
-                      "](https://overtimemarkets.xyz/#/markets/" +
+                      "](https://overtimemarkets.xyz/markets/" +
                       overtimeMarketTrade.market +
                       ")",
                 },
