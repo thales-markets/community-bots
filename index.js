@@ -2160,7 +2160,9 @@ let redisClient = null;
 let L2tradesKey = "L2TradesAMM";
 let BASEtradesKey = "BASETradesAMM";
 let speedMarketsKey = "speedMarketsKey";
+let chainedSpeedMarketsKey = "chainedSpeedMarketsKey";
 let speedMaturedMarketsKey = "speedMaturedMarketsKey";
+let chainedSpeedMaturedMarketsKey = "chainedSpeedMaturedMarketsKey";
 let polygonTradesKey = "PolygonTrades";
 let arbitrumTradesKey = "ArbitrumTrades";
 let bscTradesKey = "BSCTrades";
@@ -2195,7 +2197,9 @@ let writenExoticDisputes = [];
 let writenExoticPositions = [];
 let writenExoticMarketResultSet = [];
 let writenSpeedMarkets = [];
+let writenChainedSpeedMarkets = [];
 let writenMaturedMarkets = [];
+let writenChainedMaturedMarkets = [];
 let verifiedUsersMap = new Map();
 let totalAmountOTKey = "totalAmountOTKey";
 let totalTradesOTKey = "totalTradesOTKey";
@@ -2355,8 +2359,16 @@ if (process.env.REDIS_URL) {
     writenSpeedMarkets = l2Trades;
   });
 
+  redisClient.lrange(chainedSpeedMarketsKey, 0, -1, function (err, l2Trades) {
+    writenChainedSpeedMarkets = l2Trades;
+  });
+
   redisClient.lrange(speedMaturedMarketsKey, 0, -1, function (err, l2Trades) {
     writenMaturedMarkets = l2Trades;
+  });
+
+  redisClient.lrange(chainedSpeedMaturedMarketsKey, 0, -1, function (err, l2Trades) {
+    writenChainedMaturedMarkets = l2Trades;
   });
 
   redisClient.lrange(polygonTradesKey, 0, -1, function (err, polygonTrades) {
@@ -6579,6 +6591,13 @@ const speedMarketBASEContract = new web3Base.eth.Contract(speedMarketContract, "
 const speedMarketBSCContract = new web3BSC.eth.Contract(speedMarketContract, "0x72ca0765d4bE0529377d656c9645600606214610");
 const speedMarketPOLYGONContract = new web3Polygon.eth.Contract(speedMarketContract, "0x4B1aED25f1877E1E9fBECBd77EeE95BB1679c361");
 
+
+const chainedSpeedMarketOPContract = new web3L2.eth.Contract(speedMarketContract, "0xFf8Cf5ABF583D0979C0B9c35d62dd1fD52cce7C7");
+const chainedSpeedARBContract = new web3Arbitrum.eth.Contract(speedMarketContract, "0xe92B4c614b04c239d30c31A7ea1290AdDCb8217D");
+const chainedSpeedBASEContract = new web3Base.eth.Contract(speedMarketContract, "0x6848F001ddDb4442d352C495c7B4a231e3889b70");
+const chainedSpeedPOLYGONContract = new web3Polygon.eth.Contract(speedMarketContract, "0x14D2d7f64D6F10f8eF06372c2e5E36850661a537");
+
+
 const speedDataMarketOPContract = new web3L2.eth.Contract(speedMarketDataContract, "0x467e14ac025499d60c417D7F00A7D9E83293F43c");
 const speedDataMarketARBContract = new web3Arbitrum.eth.Contract(speedMarketDataContract, "0xbbE161Bf57799104eFd6524133e305BBcB7C07EA");
 const speedDataMarketBASEContract = new web3Base.eth.Contract(speedMarketDataContract, "0xD6155E7C948458D6Ab58f9D63E1566493b9304C1");
@@ -6588,15 +6607,24 @@ setInterval(function () {
   console.log("get speedMarkets");
   speedMarkets(speedMarketOPContract,speedMarketType.OP,speedDataMarketOPContract);
   speedMarkets(speedMarketARBContract,speedMarketType.ARB,speedDataMarketARBContract);
-  //speedMarkets(speedMarketBSCContract,speedMarketType.BSC,speedMarketDataContract);
   speedMarkets(speedMarketPOLYGONContract,speedMarketType.POLYGON,speedDataMarketPOLYGONContract);
   speedMarkets(speedMarketBASEContract,speedMarketType.BASE,speedDataMarketBASEContract);
 
+  chainedSpeedMarkets(chainedSpeedMarketOPContract,speedMarketType.OP,speedDataMarketOPContract);
+  chainedSpeedMarkets(chainedSpeedARBContract,speedMarketType.ARB,speedDataMarketARBContract);
+  chainedSpeedMarkets(chainedSpeedBASEContract,speedMarketType.POLYGON,speedDataMarketPOLYGONContract);
+  chainedSpeedMarkets(chainedSpeedPOLYGONContract,speedMarketType.BASE,speedDataMarketBASEContract);
+
   speedResolvedMarkets(speedMarketOPContract,speedMarketType.OP,speedDataMarketOPContract);
   speedResolvedMarkets(speedMarketARBContract,speedMarketType.ARB,speedDataMarketARBContract);
-  //speedResolvedMarkets(speedMarketBSCContract,speedMarketType.BSC,speedMarketDataContract);
   speedResolvedMarkets(speedMarketPOLYGONContract,speedMarketType.POLYGON,speedDataMarketPOLYGONContract);
   speedResolvedMarkets(speedMarketBASEContract,speedMarketType.BASE,speedDataMarketBASEContract);
+
+  chainedSpeedResolvedMarkets(chainedSpeedMarketOPContract,speedMarketType.OP,speedDataMarketOPContract);
+  chainedSpeedResolvedMarkets(chainedSpeedARBContract,speedMarketType.ARB,speedDataMarketARBContract);
+  chainedSpeedResolvedMarkets(chainedSpeedBASEContract,speedMarketType.POLYGON,speedDataMarketPOLYGONContract);
+  chainedSpeedResolvedMarkets(chainedSpeedPOLYGONContract,speedMarketType.BASE,speedDataMarketBASEContract);
+
 }, 2 * 60 * 1000);
 
 async function speedMarkets(speedMarketsContract,givenSpeedMarketType,speedDataMarketContract){
@@ -7138,4 +7166,165 @@ async function  getRangedMarketBASE(tradeL2) {
   const markets = json.data.rangedMarkets;
 
   return markets[0];
+}
+
+async function chainedSpeedMarkets(speedMarketsContract,givenSpeedMarketType,speedDataMarketContract){
+
+  const ammParams = await speedDataMarketContract.methods.getChainedSpeedMarketsAMMParameters('0x0000000000000000000000000000000000000000').call();
+  const activeMarkets = await speedMarketsContract.methods.activeMarkets(0, ammParams.numActiveMarkets).call();
+  for (const activeMarket of activeMarkets) {
+    if(!writenChainedSpeedMarkets.includes(activeMarket)){
+
+      let speedMarket = await speedDataMarketContract.methods.getChainedMarketsData(Array(activeMarket)).call();
+      speedMarket = speedMarket [0];
+      let directionNames = "";
+      for (let i = 0; i < speedMarket.directions.length; i++) {
+        let currentDirection = speedMarket.directions[i] == 0 ? "UP" : "DOWN";
+        if(directionNames.length>1){
+        directionNames = directionNames + ", " + currentDirection;
+        } else {
+          directionNames = currentDirection;
+        }
+    }
+    let SPEED_MARKETS_QUOTE = 1.9;
+    const payout = (speedMarket.buyinAmount / getDefaultDecimalsForNetwork (givenSpeedMarketType)) * SPEED_MARKETS_QUOTE * speedMarket.directions.length;
+
+    let size = (speedMarket.buyinAmount / getDefaultDecimalsForNetwork (givenSpeedMarketType));
+
+    var message = new Discord.MessageEmbed()
+        .addFields(
+            {
+              name: "New Chained Market Trade",
+              value: "\u200b",
+            },
+            {
+              name: ":link: Account",
+              value: speedMarket.user,
+            },
+            {
+              name: ":coin: Asset and initial strike price :",
+              value: web3.utils.toAscii(speedMarket.asset).replace(/\0/g, '') + " $"+  Math.round(speedMarket.initialStrikePrice / 1e8)
+            },
+            {
+              name: ":coin: Size:",
+              value: payout + " "+directionNames,
+            },{
+              name: ":coin: Paid:",
+              value: size,
+            },{
+              name: ":alarm_clock: End time:",
+              value: timeConverter(speedMarket.strikeTime)
+            },
+        )
+        .setColor("#0037ff");
+    if(givenSpeedMarketType == speedMarketType.OP){
+      let speedMarketChannel = await clientNewListings.channels
+          .fetch("1186705690820083903");
+      speedMarketChannel.send(message);
+    } else if(givenSpeedMarketType == speedMarketType.ARB){
+      let speedMarketChannel = await clientNewListings.channels
+          .fetch("1186705792620044419");
+      speedMarketChannel.send(message);
+    }if(givenSpeedMarketType == speedMarketType.BSC){
+        let speedMarketChannel = await clientNewListings.channels
+            .fetch("1139487508833513482");
+        speedMarketChannel.send(message);
+      }if(givenSpeedMarketType == speedMarketType.BASE){
+        let speedMarketChannel = await clientNewListings.channels
+            .fetch("1186705890934526053");
+        speedMarketChannel.send(message);
+      }if(givenSpeedMarketType == speedMarketType.POLYGON){
+        let speedMarketChannel = await clientNewListings.channels
+            .fetch("1186705981682499725");
+        speedMarketChannel.send(message);
+      }
+      writenChainedSpeedMarkets.push(activeMarket);
+      redisClient.lpush(chainedSpeedMarketsKey, activeMarket);
+
+    }
+  }
+}
+
+async function chainedSpeedResolvedMarkets(speedMarketsContract,givenSpeedMarketType,speedDataMarketContract){
+
+  const ammParams = await speedDataMarketContract.methods.getChainedSpeedMarketsAMMParameters('0x0000000000000000000000000000000000000000').call();
+  let index = ammParams.numMaturedMarkets < 20 ? ammParams.numMaturedMarkets : 20;
+  const maturedMarkets = await speedMarketsContract.methods.maturedMarkets(ammParams.numMaturedMarkets - index, ammParams.numMaturedMarkets).call();
+  for (const maturedMarket of maturedMarkets) {
+    if(!writenChainedMaturedMarkets.includes(maturedMarket)){
+
+      let speedMarket = await speedDataMarketContract.methods.getChainedMarketsData(Array(maturedMarket)).call();
+      speedMarket = speedMarket [0];
+      let directionNames = "";
+      for (let i = 0; i < speedMarket.directions.length; i++) {
+        let currentDirection = speedMarket.directions[i] == 0 ? "UP" : "DOWN";
+        if(directionNames.length>1){
+        directionNames = directionNames + ", " + currentDirection;
+        } else {
+          directionNames = currentDirection;
+        }
+      }
+      let SPEED_MARKETS_QUOTE = 1.9;
+      const payout = (speedMarket.buyinAmount / getDefaultDecimalsForNetwork (givenSpeedMarketType)) * SPEED_MARKETS_QUOTE * speedMarket.directions.length;
+
+      let size = (speedMarket.buyinAmount / getDefaultDecimalsForNetwork (givenSpeedMarketType));
+
+      var message = new Discord.MessageEmbed()
+          .addFields(
+              {
+                name: "New Chained Resolved Speed Market Trade",
+                value: "\u200b",
+              },
+              {
+                name: ":link: Account",
+                value: speedMarket.user,
+              },
+              {
+                name: ":coin: Size:",
+                value: payout + " "+directionNames,
+              },{
+                name: ":coin: Paid:",
+                value: size,
+              },{
+                name: ":coin: Asset and final strike price :",
+                value: web3.utils.toAscii(speedMarket.asset).replace(/\0/g, '') + " $"+  Math.round(speedMarket.strikePrices[speedMarket.strikePrices.length -1] / 1e8)
+              },
+              {
+                name: ":coin: Final price:",
+                value: " $"+Math.round(speedMarket.finalPrices[speedMarket.finalPrices.length -1] / 1e8),
+              },{
+                name: ":coin: User won:",
+                value: speedMarket.isUserWinner,
+              },{
+                name: ":alarm_clock: End time:",
+                value: timeConverter(speedMarket.strikeTime)
+              },
+          )
+          .setColor("#0037ff");
+      if(givenSpeedMarketType == speedMarketType.OP){
+        let speedMarketChannel = await clientNewListings.channels
+            .fetch("1186705745509613669");
+        speedMarketChannel.send(message);
+      } else if(givenSpeedMarketType == speedMarketType.ARB){
+        let speedMarketChannel = await clientNewListings.channels
+            .fetch("1186705833518698627");
+        speedMarketChannel.send(message);
+      }if(givenSpeedMarketType == speedMarketType.BSC){
+        let speedMarketChannel = await clientNewListings.channels
+            .fetch("1140924950438477834");
+        speedMarketChannel.send(message);
+      }if(givenSpeedMarketType == speedMarketType.BASE){
+        let speedMarketChannel = await clientNewListings.channels
+            .fetch("1186705890934526053");
+        speedMarketChannel.send(message);
+      }if(givenSpeedMarketType == speedMarketType.POLYGON){
+        let speedMarketChannel = await clientNewListings.channels
+            .fetch("1186706013093646346");
+        speedMarketChannel.send(message);
+      }
+      writenChainedMaturedMarkets.push(maturedMarket);
+      redisClient.lpush(chainedSpeedMaturedMarketsKey, maturedMarket);
+
+    }
+  }
 }
