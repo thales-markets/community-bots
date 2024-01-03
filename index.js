@@ -6864,14 +6864,14 @@ async function getBASETrades() {
             (makerTokenName.toLowerCase().includes("in") ||
             makerTokenName.toLowerCase().includes("out")) && !makerTokenName.toLowerCase().includes("coin")
         ){
-          amountShortLong = tradeBASE.makerAmount/1e6;
+          amountShortLong = tradeBASE.makerAmount/1e18;
           amountUSD = tradeBASE.takerAmount / 1e6;
           isRanged = true;
         }else if((takerTokenName.toLowerCase().includes("in") ||
             takerTokenName.toLowerCase().includes("out"))&& !takerTokenName.toLowerCase().includes("coin")){
           isRanged = true;
           amountUSD =tradeBASE.makerAmount / 1e6;
-          amountShortLong = tradeBASE.takerAmount / 1e6;
+          amountShortLong = tradeBASE.takerAmount / 1e18;
         }else if (
             makerTokenName.toLowerCase().includes("up") ||
             makerTokenName.toLowerCase().includes("down")
@@ -6883,7 +6883,7 @@ async function getBASETrades() {
             shortLong = " < ";
             isLong = false;
           }
-          amountShortLong = tradeBASE.makerAmount/1e6;
+          amountShortLong = tradeBASE.makerAmount/1e18;
           amountUSD = tradeBASE.takerAmount / 1e6;
           isBuy = true;
         } else {
@@ -6896,7 +6896,7 @@ async function getBASETrades() {
           }
 
           amountUSD =tradeBASE.makerAmount / 1e6;
-          amountShortLong = tradeBASE.takerAmount / 1e6;
+          amountShortLong = tradeBASE.takerAmount / 1e18;
           shortLong = takerTokenName.toLowerCase().includes("up") ? " > " : " < ";
         }
 
@@ -6906,7 +6906,7 @@ async function getBASETrades() {
         var marketMessage =
             web3.utils.hexToAscii(market.currencyKey).replace(/\0/g, '') +
             shortLong +
-            Math.round(((market.strikePrice/1e6) + Number.EPSILON) * 1000) / 1000;
+            Math.round(((market.strikePrice/1e18) + Number.EPSILON) * 1000) / 1000;
         marketMessage =
             marketMessage +
             "@" +
@@ -6936,7 +6936,7 @@ async function getBASETrades() {
                   value:
                       "[" +
                       tradeBASE.transactionHash +
-                      "](https://optimistic.etherscan.io/tx/" +
+                      "](https://basescan.org/tx/" +
                       tradeBASE.transactionHash +
                       ")",
                 },
@@ -7010,7 +7010,7 @@ async function getBASETrades() {
           var marketMessage =
               web3.utils.hexToAscii(rangedMarket.currencyKey).replace(/\0/g, '') +
               " "+tradeBASE.optionSide.toUpperCase() + " > $"+
-              Math.round(((rangedMarket.leftPrice/1e6) + Number.EPSILON) * 1000) / 1000+" < $"+Math.round(((rangedMarket.rightPrice/1e6) + Number.EPSILON) * 1000) / 1000;
+              Math.round(((rangedMarket.leftPrice/1e18) + Number.EPSILON) * 1000) / 1000+" < $"+Math.round(((rangedMarket.rightPrice/1e18) + Number.EPSILON) * 1000) / 1000;
           let discordMarketMessage
           discordMarketMessage =
               marketMessage +
@@ -7029,7 +7029,7 @@ async function getBASETrades() {
                     value:
                         "[" +
                         tradeBASE.transactionHash +
-                        "](https://optimistic.etherscan.io/tx/" +
+                        "](https://basescan.org/tx/" +
                         tradeBASE.transactionHash +
                         ")",
                   },
