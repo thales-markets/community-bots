@@ -2,6 +2,7 @@ require("dotenv").config();
 const Discord = require("discord.js");
 const clientCountdown = new Discord.Client();
 clientCountdown.login(process.env.BOT_TOKEN_COUNTDOWN);
+const BASE_APY_INF = process.env.BASE_APY_INF;
 const clientGameCountdown = new Discord.Client();
 clientGameCountdown.login(process.env.BOT_TOKEN_GAME_COUNTDOWN);
 const clientThalesL2APR = new Discord.Client();
@@ -43,6 +44,7 @@ clientLiqParlayOP.login(process.env.BOT_TOKEN_LQ_PARLAY_OP);
 const clientLiqParlayARB = new Discord.Client();
 clientLiqParlayARB.login(process.env.BOT_TOKEN_LQ_PARLAY_ARB);
 var fs = require("fs");
+const { CCIPCollector } = require('./cc.js');
 const client = new Discord.Client();
 let contentRaw = fs.readFileSync("content.json");
 const axios = require("axios");
@@ -1126,20 +1128,11 @@ clientNewListings.once("ready", () => {
   console.log("initial new operations");
 });
 
-clientARBAPR.once("ready", () => {
-  console.log("initial arb apr");
-  getStakingAPY(arbThalesContract,ecrowThalesContract,clientARBAPR);
-});
+
 
 clientOPSTAKE.once("ready", () => {
   console.log("initial op apr");
-  getStakingAPY(opThalesContract,ecrowOPThalesContract,clientOPSTAKE);
-});
-
-
-clientBASESTAKE.once("ready", () => {
-  console.log("initial base apr");
-  getStakingAPY(baseThalesContract,ecrowBASEThalesContract,clientBASESTAKE);
+  getStakingAPY(clientOPSTAKE);
 });
 
 
@@ -3509,9 +3502,7 @@ clientThalesL2APR.once("ready", () => {
 setInterval(function () {
   console.log("calculate L2 APR");
   calculateThalesL2APR();
-  getStakingAPY(arbThalesContract,ecrowThalesContract,clientARBAPR);
-  getStakingAPY(opThalesContract,ecrowOPThalesContract,clientOPSTAKE);
-  getStakingAPY(baseThalesContract,ecrowBASEThalesContract,clientBASESTAKE);
+  getStakingAPY(clientOPSTAKE);
   getLiqOPThales();
   getLiqOPOvertime();
   getLiqARBThales();
@@ -6329,38 +6320,91 @@ function reviver(key, value) {
   return value;
 }
 
+function getGlobalStakingData() {
+  return {
+    totalStakedAmount: 0,
+    thalesApy: 0,
+    feeApy: 0,
+    baseRewards: 0,
+    extraRewards: 0,
+  }
+}
 
-async function getStakingAPY(thalesContract,totalEscrowedContract,clientForStaking){
-  let fixedPeriodReward =  await thalesContract.methods.fixedPeriodReward().call();
-  let totalStakedAmount =  await thalesContract.methods.totalStakedAmount().call();
-  let totalEscrowedRewards =  await totalEscrowedContract.methods.totalEscrowedRewards().call();
-  let totalEscrowBalanceNotIncludedInStaking =  await totalEscrowedContract.methods.totalEscrowBalanceNotIncludedInStaking().call();
-  let maxAMMVolumeRewardsPercentage =  await thalesContract.methods.maxAMMVolumeRewardsPercentage().call();
+async function getStakingAPY(clientForStaking){
 
 
-  let APR = (Number(fixedPeriodReward) * 52 * 100) /
-      (Number(totalStakedAmount) +
-          Number(totalEscrowedRewards) -
-          Number(totalEscrowBalanceNotIncludedInStaking));
-  APR = Math.round(APR);
-  console.log("APR is "+APR);
-  const bonusAPR = (APR * maxAMMVolumeRewardsPercentage) / 100;
-  const APY = await aprToApy(APR)
-  const bonusAPY = await aprToApy(bonusAPR+APR);
-  const formattedBonusAPY = Math.round(bonusAPY);
-  console.log("APY "+APY+" and MAX APY"+formattedBonusAPY);
-  clientForStaking.guilds.cache.forEach(function (value, key) {
-      try {
-        value.members.cache
-            .get(clientForStaking.user.id)
-            .setNickname(Math.round(APY)+"% APY / "+Math.round(formattedBonusAPY)+"% Max. APY");
-      } catch (e) {
-        console.log(e);
-      }
-    });
-  clientForStaking.user.setActivity(getNumberLabelDecimals((Math.round(Number(totalStakedAmount)/1e18)))+" staked", {
+    const stakingData = getGlobalStakingData();
+
+    // Thales staked - Base
+    const baseAnkrProvider = new ethers.providers.JsonRpcProvider(
+        BASE_APY_INF,
+        8453
+    );
+
+    const CCIPCollectorContract = new ethers.Contract(
+        '0x25f29136801b0Eac63C586FFD249B49F1d96DB9c',
+        CCIPCollector.abi,
+        baseAnkrProvider
+    );
+
+    const period = Number(await CCIPCollectorContract.period()) - 1;
+    const [
+      price,
+      stakedAmount,
+      escrowedAmount,
+      calculatedRevenueForPeriod,
+      baseRewardsPool,
+      bonusRewardsPool,
+    ] = await Promise.all([
+      fetch(`https://api.thalesmarket.io/token/price`),
+      CCIPCollectorContract.calculatedStakedAmountForPeriod(Number(period)),
+      CCIPCollectorContract.calculatedEscrowedAmountForPeriod(Number(period)),
+      CCIPCollectorContract.calculatedRevenueForPeriod(Number(period)),
+      CCIPCollectorContract.baseRewardsPerPeriod(),
+      CCIPCollectorContract.extraRewardsPerPeriod(),
+    ]);
+
+    const revShare = period <= 3 ? 30000 :  bigNumberFormatter(calculatedRevenueForPeriod);
+    const thalesTokenPrice = Number(await price.text());
+
+    const feeAPR =
+        (revShare * 52 * 100) /
+        ((bigNumberFormatter(stakedAmount) + bigNumberFormatter(escrowedAmount)) * thalesTokenPrice);
+
+    const thalesRewardsAPR =
+        ((bigNumberFormatter(baseRewardsPool) + bigNumberFormatter(bonusRewardsPool)) * 52 * 100) /
+        (bigNumberFormatter(stakedAmount) + bigNumberFormatter(escrowedAmount));
+
+    stakingData.feeApy =  aprToApy(feeAPR);
+    stakingData.thalesApy =  aprToApy(thalesRewardsAPR);
+
+    stakingData.feeApy = Number((Math.round(stakingData.feeApy * 100) / 100).toFixed(2));
+    stakingData.thalesApy = Number((Math.round(stakingData.thalesApy * 100) / 100).toFixed(2));
+
+    stakingData.totalStakedAmount = bigNumberFormatter(stakedAmount) + bigNumberFormatter(escrowedAmount);
+    stakingData.baseRewards = bigNumberFormatter(baseRewardsPool);
+    stakingData.extraRewards = bigNumberFormatter(bonusRewardsPool);
+
+   clientForStaking.guilds.cache.forEach(function (value, key) {
+    try {
+      value.members.cache
+          .get(clientForStaking.user.id)
+          .setNickname(stakingData.thalesApy+"% APY / "+stakingData.feeApy +"% Stable APY");
+    } catch (e) {
+      console.log(e);
+    }
+  });
+  clientForStaking.user.setActivity(getNumberLabelDecimals((Math.round(Number(stakingData.totalStakedAmount))))+" staked", {
     type: "WATCHING",
   });
+
+  }
+
+
+
+function bigNumberFormatter(value)
+{
+  return (Number(ethers.utils.formatUnits(value, 18)));
 }
 
 function numberWithCommas(x) {
@@ -6368,7 +6412,7 @@ function numberWithCommas(x) {
 }
 
 
-async function aprToApy(interest){
+function aprToApy(interest){
   let APR_FREQUENCY = 52;
   return ((1 + interest / 100 / APR_FREQUENCY) ** APR_FREQUENCY - 1) * 100;
 }
