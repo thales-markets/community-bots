@@ -4409,7 +4409,10 @@ let ppMAP = new Map( [
   [11035, "How many rebounds will this player record?"],
   [11039, "How many assists will the player record?"],
   [11087, "Player double-double"],
-  [11088, "Player triple-double"]
+  [11088, "Player triple-double"],
+  [9002, "Player receptions"],
+  [10010, "Player receptions"],
+  [11058, "Player receptions"]
 ]);
 
 async function getOvertimeMarkets(networkId){
