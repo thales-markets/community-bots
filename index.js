@@ -3548,7 +3548,7 @@ async function calculateThalesL2APR() {
           (wethBalanceNumber * ethValue + thalesBalanceNumber * thalesValue).toFixed(2))
   )/totalSupply;
 
-  const apr = ((100 * (20000 * thalesValue * 52)) / totalInUSD).toFixed(0);
+  const apr = ((100 * (18500 * thalesValue * 52)) / totalInUSD).toFixed(0);
   let formatedAPR = Math.round(apr*100)/100+"%";
 
   const resOP = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=optimism&vs_currencies=usd');
@@ -3556,7 +3556,7 @@ async function calculateThalesL2APR() {
   if(dataOP.optimism){
   const opValue = dataOP.optimism.usd;
   console.log("op value is "+opValue);
-  const aprOP = ((100 * (2000 * opValue * 52)) / totalInUSD).toFixed(0);
+  const aprOP = ((100 * (1000 * opValue * 52)) / totalInUSD).toFixed(0);
   let formatedAPROP = Math.round(aprOP*100)/100+"%";
   console.log("formated APR OP is "+formatedAPROP);
 
