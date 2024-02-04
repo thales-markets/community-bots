@@ -1369,163 +1369,7 @@ async function sendNewTradeMessage(trade, market) {
 
 let checkDurationInMinutes = 0;
 
-setInterval(function () {
-  try {
-    console.log("checking unsent trades");
-    checkUnsentTrades();
-  } catch (e) {
-    console.log("error checking unsent trades" + e);
-    checkDurationInMinutes = 60;
-  }
-}, 60 * 60 * 1000);
 
-async function checkUnsentTrades() {
-  const body = JSON.stringify({
-    query: `{
-      markets(
-        orderBy:timestamp,
-        orderDirection:desc,
-      )
-      {
-        id
-        timestamp
-        creator
-        currencyKey
-        strikePrice
-        maturityDate
-        expiryDate
-        isOpen
-        poolSize
-        longAddress
-        shortAddress
-        result
-        customMarket
-        customOracle
-      }
-    }`,
-    variables: null,
-  });
-
-  const response = await fetch(
-    "https://api.thegraph.com/subgraphs/name/thales-markets/thales-markets",
-    {
-      method: "POST",
-      body,
-    }
-  );
-
-  const json = await response.json();
-  const markets = json.data.markets;
-  var startdate = new Date();
-  checkDurationInMinutes = checkDurationInMinutes + 60;
-  startdate.setMinutes(startdate.getMinutes() - checkDurationInMinutes);
-  checkDurationInMinutes = 0;
-  let startDateUnixTime = startdate.getTime();
-  for (const market of markets) {
-    try {
-      thalesData.binaryOptions
-        .trades({
-          network: 1,
-          makerToken: market.longAddress,
-          takerToken: SYNTH_USD_MAINNET,
-        })
-        .then((trades) => {
-          //send messages
-          if (trades.length > 0) {
-            for (let trade of trades) {
-              if (
-                startDateUnixTime < trade.timestamp &&
-                !setConcludedTradesPastHour.has(trade.transactionHash)
-              ) {
-                console.log("new trade message");
-                try {
-                  sendNewTradeMessage(trade, market);
-                } catch (e) {
-                  console.log("error checking unsent trades" + e);
-                  checkDurationInMinutes = 60;
-                }
-              }
-            }
-          }
-        });
-      thalesData.binaryOptions
-        .trades({
-          network: network,
-          makerToken: SYNTH_USD_MAINNET,
-          takerToken: market.longAddress,
-        })
-        .then((trades) => {
-          if (trades.length > 0) {
-            for (let trade of trades) {
-              if (
-                startDateUnixTime < trade.timestamp &&
-                !setConcludedTradesPastHour.has(trade.transactionHash)
-              ) {
-                console.log("new trade message");
-                try {
-                  sendNewTradeMessage(trade, market);
-                } catch (e) {
-                  console.log("error checking unsent trades" + e);
-                  checkDurationInMinutes = 60;
-                }
-              }
-            }
-          }
-        });
-      thalesData.binaryOptions
-        .trades({
-          network: network,
-          makerToken: market.shortAddress,
-          takerToken: SYNTH_USD_MAINNET,
-        })
-        .then((trades) => {
-          if (trades.length > 0) {
-            for (let trade of trades) {
-              if (
-                startDateUnixTime < trade.timestamp &&
-                !setConcludedTradesPastHour.has(trade.transactionHash)
-              ) {
-                console.log("new trade message");
-                try {
-                  sendNewTradeMessage(trade, market);
-                } catch (e) {
-                  console.log("error checking unsent trades" + e);
-                  checkDurationInMinutes = 60;
-                }
-              }
-            }
-          }
-        });
-      thalesData.binaryOptions
-        .trades({
-          network: network,
-          makerToken: SYNTH_USD_MAINNET,
-          takerToken: market.shortAddress,
-        })
-        .then((trades) => {
-          if (trades.length > 0) {
-            for (let trade of trades) {
-              if (
-                startDateUnixTime < trade.timestamp &&
-                !setConcludedTradesPastHour.has(trade.transactionHash)
-              ) {
-                console.log("new trade message");
-                try {
-                  sendNewTradeMessage(trade, market);
-                } catch (e) {
-                  console.log("error checking unsent trades" + e);
-                  checkDurationInMinutes = 60;
-                }
-              }
-            }
-          }
-        });
-    } catch (e) {
-      console.log("error checking unsent trades" + e);
-      checkDurationInMinutes = 60;
-    }
-  }
-}
 
 async function getThalesNewOperations() {
   const body = JSON.stringify({
@@ -6667,12 +6511,17 @@ setInterval(function () {
   speedResolvedMarkets(speedMarketPOLYGONContract,speedMarketType.POLYGON,speedDataMarketPOLYGONContract);
   speedResolvedMarkets(speedMarketBASEContract,speedMarketType.BASE,speedDataMarketBASEContract);
 
+}, 2 * 60 * 1000);
+
+setInterval(function () {
+  console.log(" chained resolved speedMarkets");
+
   chainedSpeedResolvedMarkets(chainedSpeedMarketOPContract,speedMarketType.OP,speedDataMarketOPContract);
   chainedSpeedResolvedMarkets(chainedSpeedARBContract,speedMarketType.ARB,speedDataMarketARBContract);
   chainedSpeedResolvedMarkets(chainedSpeedBASEContract,speedMarketType.POLYGON,speedDataMarketPOLYGONContract);
   chainedSpeedResolvedMarkets(chainedSpeedPOLYGONContract,speedMarketType.BASE,speedDataMarketBASEContract);
 
-}, 2 * 60 * 1000);
+}, 3 * 60 * 1000);
 
 async function speedMarkets(speedMarketsContract,givenSpeedMarketType,speedDataMarketContract){
 
@@ -7300,7 +7149,7 @@ async function chainedSpeedResolvedMarkets(speedMarketsContract,givenSpeedMarket
   const maturedMarkets = await speedMarketsContract.methods.maturedMarkets(ammParams.numMaturedMarkets - index, ammParams.numMaturedMarkets).call();
   for (const maturedMarket of maturedMarkets) {
     if(!writenChainedMaturedMarkets.includes(maturedMarket)){
-
+    try{
       let speedMarket = await speedDataMarketContract.methods.getChainedMarketsData(Array(maturedMarket)).call();
       speedMarket = speedMarket [0];
       let directionNames = "";
@@ -7372,7 +7221,9 @@ async function chainedSpeedResolvedMarkets(speedMarketsContract,givenSpeedMarket
       }
       writenChainedMaturedMarkets.push(maturedMarket);
       redisClient.lpush(chainedSpeedMaturedMarketsKey, maturedMarket);
-
+    }catch (e) {
+      console.log("problem with chained resolved market ",e);
+    }
     }
   }
 }
