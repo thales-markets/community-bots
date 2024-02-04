@@ -6518,8 +6518,8 @@ setInterval(function () {
 
   chainedSpeedResolvedMarkets(chainedSpeedMarketOPContract,speedMarketType.OP,speedDataMarketOPContract);
   chainedSpeedResolvedMarkets(chainedSpeedARBContract,speedMarketType.ARB,speedDataMarketARBContract);
-  chainedSpeedResolvedMarkets(chainedSpeedBASEContract,speedMarketType.POLYGON,speedDataMarketPOLYGONContract);
-  chainedSpeedResolvedMarkets(chainedSpeedPOLYGONContract,speedMarketType.BASE,speedDataMarketBASEContract);
+  chainedSpeedResolvedMarkets(chainedSpeedPOLYGONContract,speedMarketType.POLYGON,speedDataMarketPOLYGONContract);
+  chainedSpeedResolvedMarkets(chainedSpeedBASEContract,speedMarketType.BASE,speedDataMarketBASEContract);
 
 }, 3 * 60 * 1000);
 
@@ -7222,7 +7222,7 @@ async function chainedSpeedResolvedMarkets(speedMarketsContract,givenSpeedMarket
       writenChainedMaturedMarkets.push(maturedMarket);
       redisClient.lpush(chainedSpeedMaturedMarketsKey, maturedMarket);
     }catch (e) {
-      console.log("problem with chained resolved market ",e);
+      console.log("problem with chained resolved market"+givenSpeedMarketType+" and the error is ",e);
     }
     }
   }
