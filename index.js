@@ -83,6 +83,7 @@ let burnedRaw = fs.readFileSync('contracts/burned.json');
 let contractBurned = JSON.parse(burnedRaw);
 const web3Polygon = new Web3(new Web3.providers.HttpProvider("https://polygon-mainnet.infura.io/v3/71f890a2441d49088e4e145b2bc23bc7"));
 const web3Arbitrum = new Web3(new Web3.providers.HttpProvider("https://arbitrum-mainnet.infura.io/v3/71f890a2441d49088e4e145b2bc23bc7"));
+const web3ZKSYNC = new Web3(new Web3.providers.HttpProvider("https://mainnet.era.zksync.io"));
 const web3BSC = new Web3(new Web3.providers.HttpProvider("https://winter-spring-frost.bsc.discover.quiknode.pro/360e06c724df630e0a6aa4417dedfb41142a3184/"));
 let bscRaw = fs.readFileSync('contracts/bsc.json');
 let bscContract = JSON.parse(bscRaw);
@@ -185,6 +186,14 @@ let opThalesContract = new web3L2.eth.Contract(arbThalesContractRaw,"0xC392133eE
 let ecrowOPThalesContract = new web3L2.eth.Contract(ecrowThalesContractRaw,"0xa25816b9605009aa446d4d597F0AA46FD828f056");
 let baseThalesContract = new web3Base.eth.Contract(arbThalesContractRaw,"0x84aB38e42D8Da33b480762cCa543eEcA6135E040");
 let ecrowBASEThalesContract = new web3Base.eth.Contract(ecrowThalesContractRaw,"0x29dfc5fee05578CD913c75fF1C7A0d315595939A");
+let speedMarketZKSYNCRaw = fs.readFileSync('contracts/speedMarketZKSYNC.json');
+let speedMarketZKSYNCContract = JSON.parse(speedMarketZKSYNCRaw);
+let speedMarketZKSYNCDataRaw = fs.readFileSync('contracts/speedMarketZKSYNCDataContract.json');
+let speedMarketZKSYNCDataContract = JSON.parse(speedMarketZKSYNCDataRaw);
+const speedZKSYNCContract = new web3ZKSYNC.eth.Contract(speedMarketZKSYNCContract, "0x508F31897c25C436b257E37763E157Cb53D0a6fa");
+const speedDataMarketZKSYNCContract = new web3ZKSYNC.eth.Contract(speedMarketZKSYNCDataContract, "0x6356454D76642c72edb9170EF1102418D656887d");
+
+
 let mapSladeMM = new Map();
 let mapAlmaMM = new Map();
 let mapDeckardMM = new Map();
@@ -6474,7 +6483,8 @@ const speedMarketType = {
   OP: 'op',
   BASE: 'base',
   POLYGON:'polygon',
-  BSC:'bsc'
+  BSC:'bsc',
+  ZKSYNC:'zksync'
 }
 const speedMarketOPContract = new web3L2.eth.Contract(speedMarketContract, "0xE16B8a01490835EC1e76bAbbB3Cadd8921b32001");
 const speedMarketARBContract = new web3Arbitrum.eth.Contract(speedMarketContract, "0x02D0123a89Ae6ef27419d5EBb158d1ED4Cf24FA3");
@@ -6499,6 +6509,25 @@ setInterval(function () {
   speedMarkets(speedMarketOPContract,speedMarketType.OP,speedDataMarketOPContract);
   speedMarkets(speedMarketARBContract,speedMarketType.ARB,speedDataMarketARBContract);
   speedMarkets(speedMarketPOLYGONContract,speedMarketType.POLYGON,speedDataMarketPOLYGONContract);
+  speedMarkets(speedMarketBASEContract,speedMarketType.BASE,speedDataMarketBASEContract);
+  console.log("get speedMarkets");
+  speedMarkets(speedMarketOPContract,speedMarketType.OP,speedDataMarketOPContract);
+  speedMarkets(speedMarketARBContract,speedMarketType.ARB,speedDataMarketARBContract);
+  speedMarkets(speedMarketPOLYGONContract,speedMarketType.POLYGON,speedDataMarketPOLYGONContract);
+  speedMarkets(speedMarketBASEContract,speedMarketType.BASE,speedDataMarketBASEContract);
+  speedMarkets(speedZKSYNCContract,speedMarketType.ZKSYNC,speedDataMarketZKSYNCContract);
+
+  chainedSpeedMarkets(chainedSpeedMarketOPContract,speedMarketType.OP,speedDataMarketOPContract);
+  chainedSpeedMarkets(chainedSpeedARBContract,speedMarketType.ARB,speedDataMarketARBContract);
+  chainedSpeedMarkets(chainedSpeedBASEContract,speedMarketType.POLYGON,speedDataMarketPOLYGONContract);
+  chainedSpeedMarkets(chainedSpeedPOLYGONContract,speedMarketType.BASE,speedDataMarketBASEContract);
+
+  speedResolvedMarkets(speedMarketOPContract,speedMarketType.OP,speedDataMarketOPContract);
+  speedResolvedMarkets(speedMarketARBContract,speedMarketType.ARB,speedDataMarketARBContract);
+  speedResolvedMarkets(speedMarketPOLYGONContract,speedMarketType.POLYGON,speedDataMarketPOLYGONContract);
+  speedResolvedMarkets(speedMarketBASEContract,speedMarketType.BASE,speedDataMarketBASEContract);
+  speedResolvedMarkets(speedZKSYNCContract,speedMarketType.ZKSYNC,speedDataMarketZKSYNCContract);
+
   speedMarkets(speedMarketBASEContract,speedMarketType.BASE,speedDataMarketBASEContract);
 
   chainedSpeedMarkets(chainedSpeedMarketOPContract,speedMarketType.OP,speedDataMarketOPContract);
@@ -6589,6 +6618,10 @@ async function speedMarkets(speedMarketsContract,givenSpeedMarketType,speedDataM
         let speedMarketChannel = await clientNewListings.channels
             .fetch("1139487451568680970");
         speedMarketChannel.send(message);
+      }if(givenSpeedMarketType == speedMarketType.ZKSYNC){
+        let speedMarketChannel = await clientNewListings.channels
+            .fetch("1204438310651695115");
+        speedMarketChannel.send(message);
       }
       writenSpeedMarkets.push(activeMarket);
       redisClient.lpush(speedMarketsKey, activeMarket);
@@ -6671,6 +6704,10 @@ async function speedResolvedMarkets(speedMarketsContract,givenSpeedMarketType,sp
       }if(givenSpeedMarketType == speedMarketType.POLYGON){
         let speedMarketChannel = await clientNewListings.channels
             .fetch("1140924911716671488");
+        speedMarketChannel.send(message);
+      }if(givenSpeedMarketType == speedMarketType.ZKSYNC){
+        let speedMarketChannel = await clientNewListings.channels
+            .fetch("1204438423700512799");
         speedMarketChannel.send(message);
       }
       writenMaturedMarkets.push(maturedMarket);
