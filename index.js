@@ -7108,7 +7108,7 @@ async function chainedSpeedMarkets(speedMarketsContract,givenSpeedMarketType,spe
         }
     }
     let SPEED_MARKETS_QUOTE = 1.9;
-    const payout = (speedMarket.buyinAmount / getDefaultDecimalsForNetwork (givenSpeedMarketType)) * SPEED_MARKETS_QUOTE * speedMarket.directions.length;
+    const payout = (speedMarket.buyinAmount / getDefaultDecimalsForNetwork (givenSpeedMarketType)) * SPEED_MARKETS_QUOTE ** speedMarket.directions.length;
 
     let size = (speedMarket.buyinAmount / getDefaultDecimalsForNetwork (givenSpeedMarketType));
 
@@ -7170,7 +7170,7 @@ async function chainedSpeedResolvedMarkets(speedMarketsContract,givenSpeedMarket
 
   const ammParams = await speedDataMarketContract.methods.getChainedSpeedMarketsAMMParameters('0x0000000000000000000000000000000000000000').call();
   let index = ammParams.numMaturedMarkets < 20 ? ammParams.numMaturedMarkets : 20;
-  const maturedMarkets = await speedMarketsContract.methods.maturedMarkets(ammParams.numMaturedMarkets - index, ammParams.numMaturedMarkets).call();
+  const maturedMarkets = await speedMarketsContract.methods.maturedMarkets(ammParams.numMaturedMarkets - index, index).call();
   for (const maturedMarket of maturedMarkets) {
     if(!writenChainedMaturedMarkets.includes(maturedMarket)){
     try{
@@ -7186,7 +7186,7 @@ async function chainedSpeedResolvedMarkets(speedMarketsContract,givenSpeedMarket
         }
       }
       let SPEED_MARKETS_QUOTE = 1.9;
-      const payout = (speedMarket.buyinAmount / getDefaultDecimalsForNetwork (givenSpeedMarketType)) * SPEED_MARKETS_QUOTE * speedMarket.directions.length;
+      const payout = (speedMarket.buyinAmount / getDefaultDecimalsForNetwork (givenSpeedMarketType)) * SPEED_MARKETS_QUOTE ** speedMarket.directions.length;
 
       let size = (speedMarket.buyinAmount / getDefaultDecimalsForNetwork (givenSpeedMarketType));
 
