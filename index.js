@@ -2008,7 +2008,7 @@ let BASEtradesKey = "BASETradesAMM";
 let speedMarketsKey = "speedMarketsKey";
 let chainedSpeedMarketsKey = "chainedSpeedMarketsKey";
 let speedMaturedMarketsKey = "speedMaturedMarketsKey";
-let chainedSpeedMaturedMarketsKey = "chainedSpeedMaturedMarketsKey";
+let chainedSpeedMaturedMarketsKey = "chainedSpeedMaturedMarketsNewKey";
 let polygonTradesKey = "PolygonTrades";
 let arbitrumTradesKey = "ArbitrumTrades";
 let bscTradesKey = "BSCTrades";
@@ -6510,11 +6510,6 @@ setInterval(function () {
   speedMarkets(speedMarketARBContract,speedMarketType.ARB,speedDataMarketARBContract);
   speedMarkets(speedMarketPOLYGONContract,speedMarketType.POLYGON,speedDataMarketPOLYGONContract);
   speedMarkets(speedMarketBASEContract,speedMarketType.BASE,speedDataMarketBASEContract);
-  console.log("get speedMarkets");
-  speedMarkets(speedMarketOPContract,speedMarketType.OP,speedDataMarketOPContract);
-  speedMarkets(speedMarketARBContract,speedMarketType.ARB,speedDataMarketARBContract);
-  speedMarkets(speedMarketPOLYGONContract,speedMarketType.POLYGON,speedDataMarketPOLYGONContract);
-  speedMarkets(speedMarketBASEContract,speedMarketType.BASE,speedDataMarketBASEContract);
   speedMarkets(speedZKSYNCContract,speedMarketType.ZKSYNC,speedDataMarketZKSYNCContract);
 
   chainedSpeedMarkets(chainedSpeedMarketOPContract,speedMarketType.OP,speedDataMarketOPContract);
@@ -6527,18 +6522,6 @@ setInterval(function () {
   speedResolvedMarkets(speedMarketPOLYGONContract,speedMarketType.POLYGON,speedDataMarketPOLYGONContract);
   speedResolvedMarkets(speedMarketBASEContract,speedMarketType.BASE,speedDataMarketBASEContract);
   speedResolvedMarkets(speedZKSYNCContract,speedMarketType.ZKSYNC,speedDataMarketZKSYNCContract);
-
-  speedMarkets(speedMarketBASEContract,speedMarketType.BASE,speedDataMarketBASEContract);
-
-  chainedSpeedMarkets(chainedSpeedMarketOPContract,speedMarketType.OP,speedDataMarketOPContract);
-  chainedSpeedMarkets(chainedSpeedARBContract,speedMarketType.ARB,speedDataMarketARBContract);
-  chainedSpeedMarkets(chainedSpeedBASEContract,speedMarketType.POLYGON,speedDataMarketPOLYGONContract);
-  chainedSpeedMarkets(chainedSpeedPOLYGONContract,speedMarketType.BASE,speedDataMarketBASEContract);
-
-  speedResolvedMarkets(speedMarketOPContract,speedMarketType.OP,speedDataMarketOPContract);
-  speedResolvedMarkets(speedMarketARBContract,speedMarketType.ARB,speedDataMarketARBContract);
-  speedResolvedMarkets(speedMarketPOLYGONContract,speedMarketType.POLYGON,speedDataMarketPOLYGONContract);
-  speedResolvedMarkets(speedMarketBASEContract,speedMarketType.BASE,speedDataMarketBASEContract);
 
 }, 2 * 60 * 1000);
 
@@ -6568,10 +6551,13 @@ async function speedMarkets(speedMarketsContract,givenSpeedMarketType,speedDataM
     ]);
     const fees = (lpFee/1e18) + (safeBoxImpact/1e18);
     let SPEED_MARKETS_QUOTE = 2;
-    const payout = (speedMarket.buyinAmount / getDefaultDecimalsForNetwork (givenSpeedMarketType)) * SPEED_MARKETS_QUOTE;
+    let payout = (speedMarket.buyinAmount / getDefaultDecimalsForNetwork (givenSpeedMarketType)) * SPEED_MARKETS_QUOTE;
 
     let size = (speedMarket.buyinAmount / getDefaultDecimalsForNetwork (givenSpeedMarketType)) * (1 + fees);
-
+      if(givenSpeedMarketType == speedMarketType.ZKSYNC){
+        size = Math.round(size * 10) / 10;
+        payout = Math.round(payout * 10) / 10;
+      }
     var message = new Discord.MessageEmbed()
         .addFields(
             {
@@ -6649,10 +6635,13 @@ async function speedResolvedMarkets(speedMarketsContract,givenSpeedMarketType,sp
       ]);
       const fees = (lpFee/1e18) + (safeBoxImpact/1e18);
       let SPEED_MARKETS_QUOTE = 2;
-      const payout = (speedMarket.buyinAmount / getDefaultDecimalsForNetwork (givenSpeedMarketType)) * SPEED_MARKETS_QUOTE;
+      let payout = (speedMarket.buyinAmount / getDefaultDecimalsForNetwork (givenSpeedMarketType)) * SPEED_MARKETS_QUOTE;
 
       let size = (speedMarket.buyinAmount / getDefaultDecimalsForNetwork (givenSpeedMarketType)) * (1 + fees);
-
+      if(givenSpeedMarketType == speedMarketType.ZKSYNC){
+        size = Math.round(size * 10) / 10;
+        payout = Math.round(payout * 10) / 10;
+      }
       var message = new Discord.MessageEmbed()
           .addFields(
               {
@@ -6718,10 +6707,14 @@ async function speedResolvedMarkets(speedMarketsContract,givenSpeedMarketType,sp
 }
 
 function getDefaultDecimalsForNetwork (givenSpeedMarket) {
-  if (givenSpeedMarket == speedMarketType.ARB || givenSpeedMarket == speedMarketType.POLYGON || givenSpeedMarket == speedMarketType.BASE) return 1e6;
+  if (givenSpeedMarket == speedMarketType.ARB || givenSpeedMarket == speedMarketType.POLYGON || givenSpeedMarket == speedMarketType.BASE || givenSpeedMarket == speedMarketType.ZKSYNC) return 1e6;
   return 1e18;
 };
 
+process.on('unhandledRejection', (reason, p) => {
+  console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+  // application specific logging, throwing an error, or other logic here
+});
 
 function timeConverter(UNIX_timestamp){
   var a = new Date(UNIX_timestamp * 1000);
