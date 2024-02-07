@@ -6554,10 +6554,7 @@ async function speedMarkets(speedMarketsContract,givenSpeedMarketType,speedDataM
     let payout = (speedMarket.buyinAmount / getDefaultDecimalsForNetwork (givenSpeedMarketType)) * SPEED_MARKETS_QUOTE;
 
     let size = (speedMarket.buyinAmount / getDefaultDecimalsForNetwork (givenSpeedMarketType)) * (1 + fees);
-      if(givenSpeedMarketType == speedMarketType.ZKSYNC){
-        size = Math.round(size * 10) / 10;
-        payout = Math.round(payout * 10) / 10;
-      }
+
     var message = new Discord.MessageEmbed()
         .addFields(
             {
@@ -6638,10 +6635,7 @@ async function speedResolvedMarkets(speedMarketsContract,givenSpeedMarketType,sp
       let payout = (speedMarket.buyinAmount / getDefaultDecimalsForNetwork (givenSpeedMarketType)) * SPEED_MARKETS_QUOTE;
 
       let size = (speedMarket.buyinAmount / getDefaultDecimalsForNetwork (givenSpeedMarketType)) * (1 + fees);
-      if(givenSpeedMarketType == speedMarketType.ZKSYNC){
-        size = Math.round(size * 10) / 10;
-        payout = Math.round(payout * 10) / 10;
-      }
+
       var message = new Discord.MessageEmbed()
           .addFields(
               {
