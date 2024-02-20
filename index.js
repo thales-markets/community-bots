@@ -5746,7 +5746,7 @@ async function getOvertimeParlays(networkId){
             .setColor("#0037ff");
         let parlayMessage="";
         for (const overtimeMarketParlayPosition of overtimeMarketParlay.positions) {
-          parlayMessage =  parlayMessage + await getParlayMessage(overtimeMarketParlayPosition)
+          parlayMessage =  parlayMessage + await getParlayMessage(overtimeMarketParlayPosition) + "\n"
         }
         await message.addFields(
             {
