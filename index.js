@@ -4231,7 +4231,8 @@ let tagsMAP = new Map( [
   [109121,"GOLF Tournament Winner"],
   [109021,"GOLF H2H"],
   [9536,"Saudi league"],
-  [9268,"Brasil league"]
+  [9268,"Brasil league"],
+  [19595,"Non-Title Boxing"]
 ]);
 
 let ppMAP = new Map( [
@@ -4255,8 +4256,10 @@ let ppMAP = new Map( [
   [11087, "Player double-double"],
   [11088, "Player triple-double"],
   [11058, "Player receptions"],
+  [11097, "Shots recorded"],
   [11056, "Last touchdown scorer"],
-  [11049, "First touchdown"]
+  [11049, "First touchdown"],
+  [11038, "3-points made"]
 ]);
 
 async function getOvertimeMarkets(networkId){
@@ -6514,9 +6517,8 @@ setInterval(function () {
 
   chainedSpeedMarkets(chainedSpeedMarketOPContract,speedMarketType.OP,speedDataMarketOPContract);
   chainedSpeedMarkets(chainedSpeedARBContract,speedMarketType.ARB,speedDataMarketARBContract);
-  chainedSpeedMarkets(chainedSpeedBASEContract,speedMarketType.POLYGON,speedDataMarketPOLYGONContract);
-  chainedSpeedMarkets(chainedSpeedPOLYGONContract,speedMarketType.BASE,speedDataMarketBASEContract);
-
+  chainedSpeedMarkets(chainedSpeedPOLYGONContract,speedMarketType.POLYGON,speedDataMarketPOLYGONContract);
+  chainedSpeedMarkets(chainedSpeedBASEContract,speedMarketType.BASE,speedDataMarketBASEContract);
   speedResolvedMarkets(speedMarketOPContract,speedMarketType.OP,speedDataMarketOPContract);
   speedResolvedMarkets(speedMarketARBContract,speedMarketType.ARB,speedDataMarketARBContract);
   speedResolvedMarkets(speedMarketPOLYGONContract,speedMarketType.POLYGON,speedDataMarketPOLYGONContract);
@@ -7236,7 +7238,7 @@ async function chainedSpeedResolvedMarkets(speedMarketsContract,givenSpeedMarket
         speedMarketChannel.send(message);
       }if(givenSpeedMarketType == speedMarketType.BASE){
         let speedMarketChannel = await clientNewListings.channels
-            .fetch("1186705890934526053");
+            .fetch("1186705935780024381");
         speedMarketChannel.send(message);
       }if(givenSpeedMarketType == speedMarketType.POLYGON){
         let speedMarketChannel = await clientNewListings.channels
