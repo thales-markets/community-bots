@@ -43,6 +43,13 @@ const clientLiqParlayOP = new Discord.Client();
 clientLiqParlayOP.login(process.env.BOT_TOKEN_LQ_PARLAY_OP);
 const clientLiqParlayARB = new Discord.Client();
 clientLiqParlayARB.login(process.env.BOT_TOKEN_LQ_PARLAY_ARB);
+
+const clientTPV = new Discord.Client();
+clientTPV.login(process.env.BOT_TOKEN_TPV);
+
+const clientUsers = new Discord.Client();
+clientUsers.login(process.env.BOT_TOKEN_USERS);
+
 var fs = require("fs");
 const { CCIPCollector } = require('./cc.js');
 const client = new Discord.Client();
@@ -130,6 +137,15 @@ clientOPSTAKE.login(process.env.BOT_OP_STAKE);
 
 const clientBASESTAKE = new Discord.Client();
 clientBASESTAKE.login(process.env.BOT_BASE_STAKE);
+
+let contractV2OTRaw = fs.readFileSync('contracts/v2overtime.json');
+let v2ContractRaw = JSON.parse(contractV2OTRaw);
+let v2Contract = new web3L2.eth.Contract(v2ContractRaw,"0x2367FB44C4C2c4E5aAC62d78A55876E01F251605");
+
+let contractV2TicketRaw = fs.readFileSync('contracts/v2overtimeTicket.json');
+let v2ContractTicketRaw = JSON.parse(contractV2TicketRaw);
+let v2TicketContract = new web3L2.eth.Contract(v2ContractTicketRaw,"0x71CE219942FFD9C1d8B67d6C35C39Ae04C4F647B");
+
 
 let mapThalesTrades = new Map();
 let mapThalesAsks = new Map();
@@ -2015,6 +2031,7 @@ let bscTradesKey = "BSCTrades";
 let exoticMarketsKey = "ExoticMarkets";
 let overtimeMarketsKey = "OvertimeMarketsMap";
 let overtimeTradesKey = "OvertimeTrades";
+let overtimeV2TradesKey = "overtimeV2TradesKey";
 let overtimeParlaysKey = "OvertimeParlays";
 let exoticMarketPositionsKey = "ExoticMarketPositions";
 let exoticMarketDisputesKey = "ExoticMarketDisputes";
@@ -2038,6 +2055,7 @@ let writenBSCTrades = [];
 let writenExoticMarkets = [];
 let writenOvertimeMarkets = new Map();
 let writenOvertimeTrades = [];
+let writenOvertimeV2Trades = [];
 let writenOvertimeParlays = [];
 let writenExoticDisputes = [];
 let writenExoticPositions = [];
@@ -2241,6 +2259,9 @@ if (process.env.REDIS_URL) {
 
   redisClient.lrange(overtimeTradesKey, 0, -1, function (err, polygonTrades) {
     writenOvertimeTrades = polygonTrades;
+  });
+  redisClient.lrange(overtimeV2TradesKey, 0, -1, function (err, polygonTrades) {
+    writenOvertimeV2Trades = polygonTrades;
   });
 
   redisClient.lrange(overtimeParlaysKey, 0, -1, function (err, polygonTrades) {
@@ -3340,11 +3361,13 @@ setInterval(function () {
 
 setTimeout(function () {
   updateTotalPolygonTrades();
+  updateTotalUsers();
 }, 1000 * 30 * 1);
 
 setInterval(function () {
   console.log("update polygon trades");
   updateTotalPolygonTrades();
+  updateTotalUsers();
 }, 360 * 1000);
 
 clientThalesL2APR.once("ready", () => {
@@ -3592,13 +3615,13 @@ async function checkPositioning() {
 
 clientRoyalePingingBot.once("ready", () => {
   console.log("updating royale settings");
-  setSeasonAndCurrentRound();
+ // setSeasonAndCurrentRound();
 });
 
 
 setInterval(function () {
   console.log("updating current thales season bots");
-  setSeasonAndCurrentRound();
+  //setSeasonAndCurrentRound();
 }, 60 * 2 * 1000);
 
 setInterval(function () {
@@ -4121,6 +4144,7 @@ setInterval(function () {
   getPosition();
   getOpenDisputesExotic();
   getExoticMarketResultSet();
+  getOvertimeV2Trades();
   getOvertimeMarkets(10);
   getOvertimeMarkets(42161);
   getOvertimeMarkets(8453);
@@ -7253,3 +7277,266 @@ async function chainedSpeedResolvedMarkets(speedMarketsContract,givenSpeedMarket
     }
   }
 }
+
+function  formatV2Amount(numberForFormating, collateralAddress) {
+
+  if(collateralAddress == "0x4200000000000000000000000000000000000006" || collateralAddress == "0x217d47011b23bb961eb6d93ca9945b7501a5bb11") {
+    return numberForFormating / 1e18;
+  } else {
+    return numberForFormating / 1e6
+  }
+}
+
+async function getOvertimeV2Trades(){
+
+  let activeTickets = await v2Contract.methods.getActiveTickets(0,100).call();
+  let overtimeTrades = await v2TicketContract.methods.getTicketsData(activeTickets).call();
+  let typeInfoMap = await axios.get('https://api.thalesmarket.io/overtime-v2/market-types');//api.thalesmarket.io/overtime-v2/market-types;
+  let sportsInfoMap = await axios.get('https://api.thalesmarket.io/overtime-v2/sports');
+  typeInfoMap = typeInfoMap.data;
+  sportsInfoMap = sportsInfoMap.data;
+  const sportMap = new Map(Object.entries(JSON.parse(JSON.stringify(sportsInfoMap))));
+  const typeMap = new Map(Object.entries(JSON.parse(JSON.stringify(typeInfoMap))));
+  var startdate = new Date();
+  var durationInMinutes = 30;
+  startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
+  let startDateUnixTime = Math.floor(startdate.getTime());
+  for (const overtimeMarketTrade of overtimeTrades) {
+    if (startDateUnixTime < Number(overtimeMarketTrade.createdAt * 1000) && !writenOvertimeV2Trades.includes(overtimeMarketTrade.id)) {
+      try {
+        if (overtimeMarketTrade.marketsData.length==1) {
+          let homeTeam;
+          let awayTeam;
+          let position = overtimeMarketTrade.marketsData[0].position;
+          let specificGame = await axios.get('https://api.thalesmarket.io/overtime-v2/games-info/' + overtimeMarketTrade.marketsData[0].gameId);
+          specificGame = specificGame.data;
+          if (specificGame.teams[0].isHome) {
+            homeTeam = specificGame.teams[0].name;
+            awayTeam = specificGame.teams[1].name;
+          } else {
+            awayTeam = specificGame.teams[0].name;
+            homeTeam = specificGame.teams[1].name
+          }
+          let marketType = typeMap.get(overtimeMarketTrade.marketsData[0].typeId).name;
+          let marketMessage;
+          if (overtimeMarketTrade.marketsData[0].playerId && overtimeMarketTrade.marketsData[0].playerId>0) {
+            let specificPlayer = await axios.get('https://api.thalesmarket.io/overtime-v2/players-info' + overtimeMarketTrade.marketsData[0].playerId);
+            specificPlayer = specificPlayer.data.playerName;
+            marketMessage = specificPlayer;
+          }
+          else{
+            marketMessage = homeTeam + " - " + awayTeam;
+          }
+          let linkTransaction;
+          linkTransaction = "https://optimistic.etherscan.io/address/"
+          var message = new Discord.MessageEmbed()
+              .addFields(
+                  {
+                    name: "Overtime V2 Market Trade",
+                    value: "\u200b",
+                  },
+                  {
+                    name: ":classical_building: Overtime market:",
+                    value:
+                        "[" +
+                        marketMessage +
+                        "](https://v2.overtimemarkets.xyz/markets/" +
+                        overtimeMarketTrade.marketsData[0].gameId +
+                        ")",
+                  },
+                  {
+                    name: ":coin: Bet type:",
+                    value: marketType,
+                  },
+                  {
+                    name: ":coin: Position:",
+                    value: position,
+                  },
+                  {
+                    name: ":coin: Line:",
+                    value: overtimeMarketTrade.marketsData[0].line / 100,
+                  },
+                  {
+                    name: ":link: Transaction:",
+                    value:
+                        "[" +
+                        overtimeMarketTrade.id +
+                        "](" + linkTransaction +
+                        overtimeMarketTrade.id +
+                        ")",
+                  },
+                  {
+                    name: ":coin: Buy in Amount:",
+                    value: formatV2Amount(overtimeMarketTrade.buyInAmount , overtimeMarketTrade.collateral)
+                  },
+                  {
+                    name: ":coin: Fees:",
+                    value: formatV2Amount(overtimeMarketTrade.fees , overtimeMarketTrade.collateral),
+                  },
+                  {
+                    name: ":coin: Odds:",
+                    value: overtimeMarketTrade.marketsData[0].odd / 1e18,
+                  },
+                  {
+                    name: ":alarm_clock: Game time:",
+                    value: new Date(overtimeMarketTrade.marketsData[0].maturity * 1000),
+                  },
+                  {
+                    name: ":alarm_clock: Timestamp:",
+                    value: new Date(overtimeMarketTrade.createdAt * 1000),
+                  }
+              )
+              .setColor("#0037ff");
+          if(Math.round(overtimeMarketTrade.buyInAmount / 1e6)<500){
+            let overtimeTradesChannel = await clientNewListings.channels
+                .fetch("1249389171311644816");
+            overtimeTradesChannel.send(message);
+          } else{
+            let overtimeTradesChannel = await clientNewListings.channels
+                .fetch("1249389262089228309");
+            overtimeTradesChannel.send(message);
+          }
+          writenOvertimeV2Trades.push(overtimeMarketTrade.id);
+          redisClient.lpush(overtimeV2TradesKey, overtimeMarketTrade.id);
+
+        } else {
+          let parlayMessage = ""  ;
+          for (const marketsData of overtimeMarketTrade.marketsData) {
+            let specificGame = await axios.get('https://api.thalesmarket.io/overtime-v2/games-info/' + marketsData.gameId);
+            specificGame = specificGame.data;
+            let position = marketsData.position;
+            let marketType = typeMap.get(marketsData.typeId).name;
+            let homeTeam;
+            let awayTeam;
+            if (marketsData.playerId && marketsData.playerId>0){
+              let specificPlayer = await axios.get('https://api.thalesmarket.io/overtime-v2/players-info/'  + marketsData.playerId);
+              specificPlayer = specificPlayer.data.playerName;
+              parlayMessage =  parlayMessage +  specificPlayer+" : " + marketType +"@"+marketsData.line/100 +"\n";
+            } else {
+              if (specificGame.teams[0].isHome) {
+                homeTeam = specificGame.teams[0].name;
+                awayTeam = specificGame.teams[1].name;
+              } else {
+                awayTeam = specificGame.teams[0].name;
+                homeTeam = specificGame.teams[1].name
+              }
+              parlayMessage =  parlayMessage +  homeTeam + " - " + awayTeam+" : " + marketType +"@"+position +"\n";
+            }
+          }
+          let linkTransaction;
+          linkTransaction = "https://optimistic.etherscan.io/address/"
+
+          var message = new Discord.MessageEmbed()
+              .addFields(
+                  {
+                    name: "Overtime V2 Market Trade",
+                    value: "\u200b",
+                  },
+                  {
+                    name: ":classical_building: Overtime market:",
+                    value:
+                        "[" +
+                        parlayMessage +
+                        "](https://v2.overtimemarkets.xyz/markets/" +
+                        overtimeMarketTrade.marketsData[0].gameId +
+                        ")",
+                  },
+                  {
+                    name: ":link: Transaction:",
+                    value:
+                        "[" +
+                        overtimeMarketTrade.id +
+                        "](" + linkTransaction +
+                        overtimeMarketTrade.id +
+                        ")",
+                  },
+                  {
+                    name: ":coin: Buy in Amount:",
+                    value: formatV2Amount(overtimeMarketTrade.buyInAmount , overtimeMarketTrade.collateral)
+                  },
+                  {
+                    name: ":coin: Fees:",
+                    value: formatV2Amount(overtimeMarketTrade.fees , overtimeMarketTrade.collateral),
+                  },
+                  {
+                    name: ":coin: Total Quote:",
+                    value: overtimeMarketTrade.totalQuote / 1e18,
+                  },
+                  {
+                    name: ":alarm_clock: End time:",
+                    value: new Date(overtimeMarketTrade.expiry * 1000),
+                  },
+                  {
+                    name: ":alarm_clock: Timestamp:",
+                    value: new Date(overtimeMarketTrade.createdAt * 1000),
+                  }
+              )
+              .setColor("#0037ff");
+          if(Math.round(overtimeMarketTrade.buyInAmount / 1e6)<500){
+            let overtimeTradesChannel = await clientNewListings.channels
+                .fetch("1249389171311644816");
+            overtimeTradesChannel.send(message);
+          } else{
+            let overtimeTradesChannel = await clientNewListings.channels
+                .fetch("1249389262089228309");
+            overtimeTradesChannel.send(message);
+          }
+          writenOvertimeV2Trades.push(overtimeMarketTrade.id);
+          redisClient.lpush(overtimeV2TradesKey, overtimeMarketTrade.id);
+        }
+
+
+      } catch (e) {
+        console.log("There was a problem while getting overtime V2 trades",e);
+      }
+    }
+  }
+}
+
+async function updateTotalUsers() {
+  try {
+
+    let stats =  await axios.get('https://api.thalesmarket.io/thales/thales-io/stats');
+    stats = stats.data;
+
+    clientUsers.guilds.cache.forEach(function (value, key) {
+      try {
+        value.members.cache
+            .get(clientUsers.user.id)
+            .setNickname(numberWithCommas(stats.unique_users)+" Users");
+      } catch (e) {
+        console.log('error while updating amount of trades polygon '+e);
+      }
+    });
+    clientUsers.user.setActivity(
+        numberWithCommas(stats.total_markets)+" Markets",
+        { type: "WATCHING" }
+    );
+
+
+    let TVL =  getNumberLabelDecimals(stats.speed_markets_tvl + stats.vault_tvl + stats.overtime_single_lp_tvl +
+        stats.digital_options_lp_tvl + stats.overtime_parlay_lp_tvl + stats.staking_thales_tvl);
+    let TPV = getNumberLabelDecimals(stats.overtime_parlay+stats.overtime_single+stats.safebox+stats.speed_markets+stats.thales_amm);
+
+
+
+        clientTPV.guilds.cache.forEach(function (value, key) {
+      try {
+        value.members.cache
+            .get(clientTPV.user.id)
+            .setNickname(TVL+" Locked");
+      } catch (e) {
+        console.log('error while updating amount of trades polygon '+e);
+      }
+    });
+    clientTPV.user.setActivity(
+        TPV+" Volume",
+        { type: "WATCHING" }
+    );
+
+  }catch (e) {
+    console.log("there was an error while dashboard bots");
+  }
+}
+
+
