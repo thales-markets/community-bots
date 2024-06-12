@@ -137,6 +137,7 @@ clientOPSTAKE.login(process.env.BOT_OP_STAKE);
 
 const clientBASESTAKE = new Discord.Client();
 clientBASESTAKE.login(process.env.BOT_BASE_STAKE);
+const oddslib = require('oddslib');
 
 let contractV2OTRaw = fs.readFileSync('contracts/v2overtime.json');
 let v2ContractRaw = JSON.parse(contractV2OTRaw);
@@ -7280,12 +7281,134 @@ async function chainedSpeedResolvedMarkets(speedMarketsContract,givenSpeedMarket
 
 function  formatV2Amount(numberForFormating, collateralAddress) {
 
-  if(collateralAddress == "0x4200000000000000000000000000000000000006" || collateralAddress == "0x217d47011b23bb961eb6d93ca9945b7501a5bb11") {
+  if(collateralAddress == "0x4200000000000000000000000000000000000006" || collateralAddress == "0x217D47011b23BB961eB6D93cA9945B7501a5BB11") {
     return numberForFormating / 1e18;
   } else {
     return numberForFormating / 1e6
   }
 }
+
+function roundTo2Decimals(number){
+  if(number>0){
+    return number.toFixed(2);
+  }
+  return  number.toFixed(1-Math.floor(Math.log(number)/Math.log(10)));
+}
+
+let WINNER = new Array;
+WINNER.push(0, 10011, 10012,
+    1001,
+    10021,
+    10022,
+    10023,
+    10024,
+    10025,
+    10026,
+    10027,
+    10028,
+    10029,
+    10051,
+    10052,
+    10053,
+    10054,
+    10055,
+    10056,
+    10057,
+    10058,
+    10059
+);
+
+let HANDICAP = new Array;
+HANDICAP.push(10001,
+    10013,
+    10041,
+    10042,
+    10043,
+    10044,
+    10045,
+    10046,
+    10047,
+    10048,
+    10049,
+    10072,
+    10073,
+    10074,
+    10075,
+    10076,
+    10077,
+    10078,
+    10079
+);
+
+let TOTAL = new Array;
+TOTAL.push(10002,
+    10007,
+    10014,
+    10017,
+    10018,
+    10031,
+    10032,
+    10033,
+    10034,
+    10035,
+    10036,
+    10037,
+    10038,
+    10039,
+    10061,
+    10062,
+    10063,
+    10064,
+    10065,
+    10066,
+    10067,
+    10068,
+    10069,
+    10111,
+    10112,
+    10211,
+    10212);
+
+let W_TOTAL = new Array;
+W_TOTAL.push(10004);
+let HT_TOTAL = new Array;
+HT_TOTAL.push(10009);
+
+let DOUBLE_CHANCE = new Array;
+DOUBLE_CHANCE.push(10003,
+    10015,
+    10016);
+let HALF_END = new Array;
+HALF_END.push(10006);
+let BINARY = new Array;
+BINARY.push(10009,
+    10081,
+    10082,
+    10083,
+    10084,
+    10085,
+    10086,
+    10087,
+    10088,
+    10089,
+    10091,
+    10092,
+    10093,
+    10094,
+    10095,
+    10096,
+    10097,
+    10098,
+    10099,
+    10101,
+    10102,
+    10103,
+    10104,
+    10105,
+    10106,
+    10107,
+    10108,
+    10109);
 
 async function getOvertimeV2Trades(){
 
@@ -7304,6 +7427,16 @@ async function getOvertimeV2Trades(){
   for (const overtimeMarketTrade of overtimeTrades) {
     if (startDateUnixTime < Number(overtimeMarketTrade.createdAt * 1000) && !writenOvertimeV2Trades.includes(overtimeMarketTrade.id)) {
       try {
+        let moneySymbol;
+        if (overtimeMarketTrade.collateral=="0x4200000000000000000000000000000000000006"){
+          moneySymbol = "weth";
+        } else if (overtimeMarketTrade.collateral=="0x217D47011b23BB961eB6D93cA9945B7501a5BB11"){
+          moneySymbol = "THALES";
+        } else {
+          moneySymbol = "USDC"
+        }
+        let buyIn = roundTo2Decimals(formatV2Amount(overtimeMarketTrade.buyInAmount , overtimeMarketTrade.collateral));
+        let odds = oddslib.from('impliedProbability', overtimeMarketTrade.totalQuote / 1e18).decimalValue.toFixed(3)
         if (overtimeMarketTrade.marketsData.length==1) {
           let homeTeam;
           let awayTeam;
@@ -7327,6 +7460,107 @@ async function getOvertimeV2Trades(){
           else{
             marketMessage = homeTeam + " - " + awayTeam;
           }
+
+          let marketId = typeMap.get(overtimeMarketTrade.marketsData[0].typeId).id;
+          let betMessage;
+          if (WINNER.includes(marketId)){
+            if (position==0)
+              betMessage = homeTeam;
+            else if(position ==1){
+              betMessage = awayTeam;
+            } else {
+              betMessage = "Draw";
+            }
+          } else if (HANDICAP.includes(marketId)){
+            if (position==0)
+              betMessage = "H1("+overtimeMarketTrade.marketsData[0].line / 100+")"
+            else {
+              betMessage = "H2("+overtimeMarketTrade.marketsData[0].line / 100+")";
+            }
+          } else if (TOTAL.includes(marketId)){
+            if (position==0)
+              betMessage = "O("+overtimeMarketTrade.marketsData[0].line / 100+")";
+            else {
+              betMessage = "U("+overtimeMarketTrade.marketsData[0].line / 100+")";;
+            }
+          } else if (DOUBLE_CHANCE.includes(marketId)){
+            if (position==0)
+              betMessage = "1X";
+            else if(position ==1){
+              betMessage = "X2";
+            } else {
+              betMessage = "1 or 2";
+            }
+          } else if (HALF_END.includes(marketId)){
+
+            let position1 = overtimeMarketTrade.marketsData[0].combinedPositions[0].position;
+            let position2 = overtimeMarketTrade.marketsData[0].combinedPositions[1].position;
+
+            if (position1 == 0)
+              betMessage = homeTeam;
+            else if(position1 ==1){
+              betMessage = awayTeam;
+            } else {
+              betMessage = "Draw";
+            }
+            if (position2 == 0)
+              betMessage = betMessage+"/"+homeTeam;
+            else if(position2 ==1){
+              betMessage = betMessage+"/"+awayTeam;
+            } else {
+              betMessage = betMessage+"/"+"Draw";
+            }
+          } else if (W_TOTAL.includes(marketId)){
+
+            let position1 = overtimeMarketTrade.marketsData[0].combinedPositions[0].position;
+            let position2 = overtimeMarketTrade.marketsData[0].combinedPositions[1].position;
+
+            if (position1 == 0)
+              betMessage = homeTeam;
+            else if(position1 ==1){
+              betMessage = awayTeam;
+            } else {
+              betMessage = "Draw";
+            }
+            if (position2 == 0)
+              betMessage = betMessage+" O("+overtimeMarketTrade.marketsData[0].line/100+")";
+            else {
+              betMessage = betMessage+" U("+overtimeMarketTrade.marketsData[0].line/100+")";
+            }
+          } else if (HT_TOTAL.includes(marketId)){
+
+            let position1 = overtimeMarketTrade.marketsData[0].combinedPositions[0].position;
+            let position2 = overtimeMarketTrade.marketsData[0].combinedPositions[1].position;
+            let position3 = overtimeMarketTrade.marketsData[0].combinedPositions[2].position;
+
+            if (position1 == 0)
+              betMessage = homeTeam;
+            else if(position1 ==1){
+              betMessage = awayTeam;
+            } else {
+              betMessage = "Draw";
+            }
+            if (position2 == 0)
+              betMessage = betMessage+"/"+homeTeam;
+            else if(position2 ==1){
+              betMessage = betMessage+"/"+awayTeam;
+            } else {
+              betMessage = betMessage+"/"+"Draw";
+            }
+            if (position3 == 0)
+              betMessage = betMessage+" O("+overtimeMarketTrade.marketsData[0].line/100+")";
+            else {
+              betMessage = betMessage+" U("+overtimeMarketTrade.marketsData[0].line/100+")";
+            }
+
+          } else {
+            if (position==0)
+              betMessage = "YES";
+            else  {
+              betMessage = "NO";
+            }
+          }
+
           let linkTransaction;
           linkTransaction = "https://optimistic.etherscan.io/address/"
           var message = new Discord.MessageEmbed()
@@ -7350,11 +7584,7 @@ async function getOvertimeV2Trades(){
                   },
                   {
                     name: ":coin: Position:",
-                    value: position,
-                  },
-                  {
-                    name: ":coin: Line:",
-                    value: overtimeMarketTrade.marketsData[0].line / 100,
+                    value: betMessage,
                   },
                   {
                     name: ":link: Transaction:",
@@ -7367,15 +7597,19 @@ async function getOvertimeV2Trades(){
                   },
                   {
                     name: ":coin: Buy in Amount:",
-                    value: formatV2Amount(overtimeMarketTrade.buyInAmount , overtimeMarketTrade.collateral)
+                    value: buyIn + " " + moneySymbol
+                  },
+                  {
+                    name: ":coin: Payout:",
+                    value: roundTo2Decimals(buyIn * odds) + " "+ moneySymbol ,
                   },
                   {
                     name: ":coin: Fees:",
-                    value: formatV2Amount(overtimeMarketTrade.fees , overtimeMarketTrade.collateral),
+                    value: formatV2Amount(overtimeMarketTrade.fees , overtimeMarketTrade.collateral).toFixed(2) + " " + moneySymbol ,
                   },
                   {
                     name: ":coin: Odds:",
-                    value: overtimeMarketTrade.marketsData[0].odd / 1e18,
+                    value: odds,
                   },
                   {
                     name: ":alarm_clock: Game time:",
@@ -7387,7 +7621,7 @@ async function getOvertimeV2Trades(){
                   }
               )
               .setColor("#0037ff");
-          if(Math.round(overtimeMarketTrade.buyInAmount / 1e6)<500){
+          if(Math.round(formatV2Amount(overtimeMarketTrade.buyInAmount , overtimeMarketTrade.collateral))<500){
             let overtimeTradesChannel = await clientNewListings.channels
                 .fetch("1249389171311644816");
             overtimeTradesChannel.send(message);
@@ -7411,7 +7645,12 @@ async function getOvertimeV2Trades(){
             if (marketsData.playerId && marketsData.playerId>0){
               let specificPlayer = await axios.get('https://api.thalesmarket.io/overtime-v2/players-info/'  + marketsData.playerId);
               specificPlayer = specificPlayer.data.playerName;
-              parlayMessage =  parlayMessage +  specificPlayer+" : " + marketType +"@"+marketsData.line/100 +"\n";
+              let binaryOption;
+              if(position==0){
+                binaryOption = "YES"
+              } else
+                binaryOption = "NO"
+              parlayMessage =  parlayMessage +  specificPlayer+" : " + marketType +" - "+marketsData.line/100+" @ "+binaryOption +"\n";
             } else {
               if (specificGame.teams[0].isHome) {
                 homeTeam = specificGame.teams[0].name;
@@ -7420,7 +7659,106 @@ async function getOvertimeV2Trades(){
                 awayTeam = specificGame.teams[0].name;
                 homeTeam = specificGame.teams[1].name
               }
-              parlayMessage =  parlayMessage +  homeTeam + " - " + awayTeam+" : " + marketType +"@"+position +"\n";
+              let marketId = typeMap.get(marketsData.typeId).id;
+              let betMessage;
+              if (WINNER.includes(marketId)){
+                if (position==0)
+                  betMessage = homeTeam;
+                else if(position ==1){
+                  betMessage = awayTeam;
+                } else {
+                  betMessage = "Draw";
+                }
+              } else if (HANDICAP.includes(marketId)){
+                if (position==0)
+                  betMessage = "H1("+marketsData.line / 100+")"
+                else {
+                  betMessage = "H2("+marketsData.line / 100+")";
+                }
+              } else if (TOTAL.includes(marketId)){
+                if (position==0)
+                  betMessage = "O("+marketsData.line / 100+")";
+                else {
+                  betMessage = "U("+marketsData.line / 100+")";;
+                }
+              } else if (DOUBLE_CHANCE.includes(marketId)){
+                if (position==0)
+                  betMessage = "1X";
+                else if(position ==1){
+                  betMessage = "X2";
+                } else {
+                  betMessage = "1 or 2";
+                }
+              } else if (HALF_END.includes(marketId)){
+                let position1 = marketsData.combinedPositions[0].position;
+                let position2 = marketsData.combinedPositions[1].position;
+
+                if (position1 == 0)
+                  betMessage = homeTeam;
+                else if(position1 ==1){
+                  betMessage = awayTeam;
+                } else {
+                  betMessage = "Draw";
+                }
+                if (position2 == 0)
+                  betMessage = betMessage+"/"+homeTeam;
+                else if(position2 ==1){
+                  betMessage = betMessage+"/"+awayTeam;
+                } else {
+                  betMessage = betMessage+"/"+"Draw";
+                }
+              } else if (W_TOTAL.includes(marketId)){
+
+                let position1 = marketsData.combinedPositions[0].position;
+                let position2 = marketsData.combinedPositions[1].position;
+
+                if (position1 == 0)
+                  betMessage = homeTeam;
+                else if(position1 ==1){
+                  betMessage = awayTeam;
+                } else {
+                  betMessage = "Draw";
+                }
+                if (position2 == 0)
+                  betMessage = betMessage+" O("+marketsData.line/100+")";
+                else {
+                  betMessage = betMessage+" U("+marketsData.line/100+")";
+                }
+              } else if (HT_TOTAL.includes(marketId)){
+
+                let position1 = marketsData.combinedPositions[0].position;
+                let position2 = marketsData.combinedPositions[1].position;
+                let position3 = marketsData.combinedPositions[2].position;
+
+                if (position1 == 0)
+                  betMessage = homeTeam;
+                else if(position1 ==1){
+                  betMessage = awayTeam;
+                } else {
+                  betMessage = "Draw";
+                }
+                if (position2 == 0)
+                  betMessage = betMessage+"/"+homeTeam;
+                else if(position2 ==1){
+                  betMessage = betMessage+"/"+awayTeam;
+                } else {
+                  betMessage = betMessage+"/"+"Draw";
+                }
+                if (position3 == 0)
+                  betMessage = betMessage+" O("+marketsData.line/100+")";
+                else {
+                  betMessage = betMessage+" U("+marketsData.line/100+")";
+                }
+
+              } else {
+                if (position==0)
+                  betMessage = "YES";
+                else  {
+                  betMessage = "NO";
+                }
+              }
+
+              parlayMessage =  parlayMessage +  homeTeam + " - " + awayTeam+" : " + marketType +" @ "+position +"\n";
             }
           }
           let linkTransaction;
@@ -7452,15 +7790,19 @@ async function getOvertimeV2Trades(){
                   },
                   {
                     name: ":coin: Buy in Amount:",
-                    value: formatV2Amount(overtimeMarketTrade.buyInAmount , overtimeMarketTrade.collateral)
+                    value: buyIn + " " + moneySymbol
+                  },
+                  {
+                    name: ":coin: Payout:",
+                    value: roundTo2Decimals(buyIn * odds) + " "+ moneySymbol ,
                   },
                   {
                     name: ":coin: Fees:",
-                    value: formatV2Amount(overtimeMarketTrade.fees , overtimeMarketTrade.collateral),
+                    value: formatV2Amount(overtimeMarketTrade.fees , overtimeMarketTrade.collateral).toFixed(2) + " " + moneySymbol,
                   },
                   {
                     name: ":coin: Total Quote:",
-                    value: overtimeMarketTrade.totalQuote / 1e18,
+                    value: odds,
                   },
                   {
                     name: ":alarm_clock: End time:",
@@ -7472,7 +7814,7 @@ async function getOvertimeV2Trades(){
                   }
               )
               .setColor("#0037ff");
-          if(Math.round(overtimeMarketTrade.buyInAmount / 1e6)<500){
+          if(Math.round(formatV2Amount(overtimeMarketTrade.buyInAmount , overtimeMarketTrade.collateral))<500){
             let overtimeTradesChannel = await clientNewListings.channels
                 .fetch("1249389171311644816");
             overtimeTradesChannel.send(message);
@@ -7509,7 +7851,7 @@ async function updateTotalUsers() {
       }
     });
     clientUsers.user.setActivity(
-        numberWithCommas(stats.total_markets)+" Markets",
+        numberWithCommas(stats.total_markets)+" markets created",
         { type: "WATCHING" }
     );
 
@@ -7524,13 +7866,13 @@ async function updateTotalUsers() {
       try {
         value.members.cache
             .get(clientTPV.user.id)
-            .setNickname(TVL+" Locked");
+            .setNickname("TVL="+TVL);
       } catch (e) {
         console.log('error while updating amount of trades polygon '+e);
       }
     });
     clientTPV.user.setActivity(
-        TPV+" Volume",
+        TPV+" total protocol volume",
         { type: "WATCHING" }
     );
 
