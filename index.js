@@ -7289,10 +7289,9 @@ function  formatV2Amount(numberForFormating, collateralAddress) {
 }
 
 function roundTo2Decimals(number){
-  if(number>0){
-    return number.toFixed(2);
-  }
-  return  number.toFixed(1-Math.floor(Math.log(number)/Math.log(10)));
+  if(1-Math.floor(Math.log(number)/Math.log(10)>0))
+    return  number.toFixed(1-Math.floor(Math.log(number)/Math.log(10)))
+  else return number.toFixed(2);
 }
 
 let WINNER = new Array;
@@ -7372,7 +7371,7 @@ TOTAL.push(10002,
 let W_TOTAL = new Array;
 W_TOTAL.push(10004);
 let HT_TOTAL = new Array;
-HT_TOTAL.push(10009);
+HT_TOTAL.push(10008);
 
 let DOUBLE_CHANCE = new Array;
 DOUBLE_CHANCE.push(10003,
@@ -7453,7 +7452,7 @@ async function getOvertimeV2Trades(){
           let marketType = typeMap.get(overtimeMarketTrade.marketsData[0].typeId).name;
           let marketMessage;
           if (overtimeMarketTrade.marketsData[0].playerId && overtimeMarketTrade.marketsData[0].playerId>0) {
-            let specificPlayer = await axios.get('https://api.thalesmarket.io/overtime-v2/players-info' + overtimeMarketTrade.marketsData[0].playerId);
+            let specificPlayer = await axios.get('https://api.thalesmarket.io/overtime-v2/players-info/' + overtimeMarketTrade.marketsData[0].playerId);
             specificPlayer = specificPlayer.data.playerName;
             marketMessage = specificPlayer;
           }
@@ -7523,9 +7522,9 @@ async function getOvertimeV2Trades(){
               betMessage = "Draw";
             }
             if (position2 == 0)
-              betMessage = betMessage+" O("+overtimeMarketTrade.marketsData[0].line/100+")";
+              betMessage = betMessage+" O("+overtimeMarketTrade.marketsData[0].combinedPositions[1].line/100+")";
             else {
-              betMessage = betMessage+" U("+overtimeMarketTrade.marketsData[0].line/100+")";
+              betMessage = betMessage+" U("+overtimeMarketTrade.marketsData[0].combinedPositions[1].line/100+")";
             }
           } else if (HT_TOTAL.includes(marketId)){
 
@@ -7548,16 +7547,22 @@ async function getOvertimeV2Trades(){
               betMessage = betMessage+"/"+"Draw";
             }
             if (position3 == 0)
-              betMessage = betMessage+" O("+overtimeMarketTrade.marketsData[0].line/100+")";
+              betMessage = betMessage+" O("+overtimeMarketTrade.marketsData[0].combinedPositions[2].line/100+")";
             else {
-              betMessage = betMessage+" U("+overtimeMarketTrade.marketsData[0].line/100+")";
+              betMessage = betMessage+" U("+overtimeMarketTrade.marketsData[0].combinedPositions[2].line/100+")";
             }
 
           } else {
+
+            let points = "";
+            if (overtimeMarketTrade.marketsData[0].line && overtimeMarketTrade.marketsData[0].line >0 ){
+              points = " @ " + overtimeMarketTrade.marketsData[0].line/100;
+            }
+
             if (position==0)
-              betMessage = "YES";
+              betMessage = "YES"+points;
             else  {
-              betMessage = "NO";
+              betMessage = "NO"+points;
             }
           }
 
@@ -7621,14 +7626,27 @@ async function getOvertimeV2Trades(){
                   }
               )
               .setColor("#0037ff");
+
+
           if(Math.round(formatV2Amount(overtimeMarketTrade.buyInAmount , overtimeMarketTrade.collateral))<500){
+
+            if(overtimeMarketTrade.isLive){
+              let overtimeTradesChannel = await clientNewListings.channels
+                  .fetch("1250500936120406177");
+              overtimeTradesChannel.send(message);
+            } else {
             let overtimeTradesChannel = await clientNewListings.channels
                 .fetch("1249389171311644816");
-            overtimeTradesChannel.send(message);
+            overtimeTradesChannel.send(message);}
           } else{
+            if(overtimeMarketTrade.isLive){
+            let overtimeTradesChannel = await clientNewListings.channels
+                .fetch("1250500964608245853");
+            overtimeTradesChannel.send(message);
+          } else {
             let overtimeTradesChannel = await clientNewListings.channels
                 .fetch("1249389262089228309");
-            overtimeTradesChannel.send(message);
+            overtimeTradesChannel.send(message); }
           }
           writenOvertimeV2Trades.push(overtimeMarketTrade.id);
           redisClient.lpush(overtimeV2TradesKey, overtimeMarketTrade.id);
@@ -7720,9 +7738,9 @@ async function getOvertimeV2Trades(){
                   betMessage = "Draw";
                 }
                 if (position2 == 0)
-                  betMessage = betMessage+" O("+marketsData.line/100+")";
+                  betMessage = betMessage+" O("+marketsData.combinedPositions[1].line/100+")";
                 else {
-                  betMessage = betMessage+" U("+marketsData.line/100+")";
+                  betMessage = betMessage+" U("+marketsData.combinedPositions[1].line/100+")";
                 }
               } else if (HT_TOTAL.includes(marketId)){
 
@@ -7745,9 +7763,9 @@ async function getOvertimeV2Trades(){
                   betMessage = betMessage+"/"+"Draw";
                 }
                 if (position3 == 0)
-                  betMessage = betMessage+" O("+marketsData.line/100+")";
+                  betMessage = betMessage+" O("+marketsData.combinedPositions[2].line/100+")";
                 else {
-                  betMessage = betMessage+" U("+marketsData.line/100+")";
+                  betMessage = betMessage+" U("+marketsData.combinedPositions[2].line/100+")";
                 }
 
               } else {
@@ -7758,7 +7776,7 @@ async function getOvertimeV2Trades(){
                 }
               }
 
-              parlayMessage =  parlayMessage +  homeTeam + " - " + awayTeam+" : " + marketType +" @ "+position +"\n";
+              parlayMessage =  parlayMessage +  homeTeam + " - " + awayTeam+" : " + marketType +" @ "+betMessage +"\n";
             }
           }
           let linkTransaction;
@@ -7815,14 +7833,24 @@ async function getOvertimeV2Trades(){
               )
               .setColor("#0037ff");
           if(Math.round(formatV2Amount(overtimeMarketTrade.buyInAmount , overtimeMarketTrade.collateral))<500){
+            if(overtimeMarketTrade.isLive){
+              let overtimeTradesChannel = await clientNewListings.channels
+                  .fetch("1250500936120406177");
+              overtimeTradesChannel.send(message);
+            } else {
             let overtimeTradesChannel = await clientNewListings.channels
                 .fetch("1249389171311644816");
             overtimeTradesChannel.send(message);
-          } else{
+            }} else{
+            if(overtimeMarketTrade.isLive){
+              let overtimeTradesChannel = await clientNewListings.channels
+                  .fetch("1250500964608245853");
+              overtimeTradesChannel.send(message);
+            } else {
             let overtimeTradesChannel = await clientNewListings.channels
                 .fetch("1249389262089228309");
             overtimeTradesChannel.send(message);
-          }
+          }}
           writenOvertimeV2Trades.push(overtimeMarketTrade.id);
           redisClient.lpush(overtimeV2TradesKey, overtimeMarketTrade.id);
         }
