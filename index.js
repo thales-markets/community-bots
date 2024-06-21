@@ -7339,12 +7339,22 @@ HANDICAP.push(10001,
     10079
 );
 
+let TOTAL_HOME_FIRST = new Array;
+TOTAL_HOME_FIRST.push(10111)
+
+    let TOTAL_HOME_SECOND = new Array;
+TOTAL_HOME_FIRST.push(10211, 10017)
+
+    let TOTAL_AWAY_SECOND = new Array;
+TOTAL_AWAY_SECOND.push(10212,10018)
+
+    let TOTAL_AWAY_FIRST = new Array;
+TOTAL_AWAY_FIRST.push(10112)
+
 let TOTAL = new Array;
 TOTAL.push(10002,
     10007,
     10014,
-    10017,
-    10018,
     10031,
     10032,
     10033,
@@ -7363,10 +7373,25 @@ TOTAL.push(10002,
     10067,
     10068,
     10069,
-    10111,
-    10112,
-    10211,
-    10212);
+    11010,
+    11012,
+    11019,
+    11029,
+    11035,
+    11038,
+    11039,
+    11047,
+    11051,
+    11052,
+    11053,
+    11055,
+    11056,
+    11057,
+    11058,
+    11060,
+    11086,
+    11097,
+    11098);
 
 let W_TOTAL = new Array;
 W_TOTAL.push(10004);
@@ -7411,7 +7436,10 @@ BINARY.push(10009,
 
 async function getOvertimeV2Trades(){
 
-  let activeTickets = await v2Contract.methods.getActiveTickets(0,100).call();
+
+
+
+  let activeTickets = await v2Contract.methods.getActiveTickets(0,10000).call();
   let overtimeTrades = await v2TicketContract.methods.getTicketsData(activeTickets).call();
   let typeInfoMap = await axios.get('https://api.thalesmarket.io/overtime-v2/market-types');//api.thalesmarket.io/overtime-v2/market-types;
   let sportsInfoMap = await axios.get('https://api.thalesmarket.io/overtime-v2/sports');
@@ -7476,11 +7504,37 @@ async function getOvertimeV2Trades(){
             else {
               betMessage = "H2("+overtimeMarketTrade.marketsData[0].line / 100+")";
             }
-          } else if (TOTAL.includes(marketId)){
+          }
+          else if (TOTAL.includes(marketId)){
             if (position==0)
               betMessage = "O("+overtimeMarketTrade.marketsData[0].line / 100+")";
             else {
               betMessage = "U("+overtimeMarketTrade.marketsData[0].line / 100+")";;
+            }
+          } else if (TOTAL_HOME_FIRST.includes(marketId)){
+            if (position==0)
+              betMessage = homeTeam +" O("+overtimeMarketTrade.marketsData[0].line / 100+")";
+            else {
+              betMessage = homeTeam+ " U("+overtimeMarketTrade.marketsData[0].line / 100+")";;
+            }
+          } else if (TOTAL_HOME_SECOND.includes(marketId)){
+            if (position==0)
+              betMessage = homeTeam+" O("+overtimeMarketTrade.marketsData[0].line / 100+")";
+            else {
+              betMessage = homeTeam+" U("+overtimeMarketTrade.marketsData[0].line / 100+")";;
+            }
+          } else if (TOTAL_AWAY_SECOND.includes(marketId)){
+            if (position==0)
+              betMessage = awayTeam+" O("+overtimeMarketTrade.marketsData[0].line / 100+")";
+            else {
+              betMessage = awayTeam+" U("+overtimeMarketTrade.marketsData[0].line / 100+")";;
+            }
+          }
+          else if (TOTAL_AWAY_FIRST.includes(marketId)){
+            if (position==0)
+              betMessage = awayTeam+" O("+overtimeMarketTrade.marketsData[0].line / 100+")";
+            else {
+              betMessage = awayTeam+" U("+overtimeMarketTrade.marketsData[0].line / 100+")";;
             }
           } else if (DOUBLE_CHANCE.includes(marketId)){
             if (position==0)
@@ -7592,7 +7646,7 @@ async function getOvertimeV2Trades(){
                     value: betMessage,
                   },
                   {
-                    name: ":link: Transaction:",
+                    name: ":link: Ticket address:",
                     value:
                         "[" +
                         overtimeMarketTrade.id +
@@ -7660,15 +7714,23 @@ async function getOvertimeV2Trades(){
             let marketType = typeMap.get(marketsData.typeId).name;
             let homeTeam;
             let awayTeam;
+            let marketId = typeMap.get(marketsData.typeId).id;
             if (marketsData.playerId && marketsData.playerId>0){
               let specificPlayer = await axios.get('https://api.thalesmarket.io/overtime-v2/players-info/'  + marketsData.playerId);
               specificPlayer = specificPlayer.data.playerName;
-              let binaryOption;
+              let betMessage="";
+              if (TOTAL.includes(marketId)){
+                if (position==0)
+                  betMessage = "O("+marketsData.line / 100+")";
+                else {
+                  betMessage = "U(" + marketsData.line / 100 + ")";
+
+                }} else {
               if(position==0){
-                binaryOption = "YES"
+                betMessage = "YES"
               } else
-                binaryOption = "NO"
-              parlayMessage =  parlayMessage +  specificPlayer+" : " + marketType +" - "+marketsData.line/100+" @ "+binaryOption +"\n";
+                betMessage = "NO"
+                } parlayMessage =  parlayMessage +  specificPlayer+" : " + marketType + " @ "+betMessage +"\n";
             } else {
               if (specificGame.teams[0].isHome) {
                 homeTeam = specificGame.teams[0].name;
@@ -7677,7 +7739,6 @@ async function getOvertimeV2Trades(){
                 awayTeam = specificGame.teams[0].name;
                 homeTeam = specificGame.teams[1].name
               }
-              let marketId = typeMap.get(marketsData.typeId).id;
               let betMessage;
               if (WINNER.includes(marketId)){
                 if (position==0)
@@ -7698,6 +7759,31 @@ async function getOvertimeV2Trades(){
                   betMessage = "O("+marketsData.line / 100+")";
                 else {
                   betMessage = "U("+marketsData.line / 100+")";;
+                }
+              } else if (TOTAL_HOME_FIRST.includes(marketId)){
+                if (position==0)
+                  betMessage = homeTeam +" O("+marketsData.line / 100+")";
+                else {
+                  betMessage = homeTeam+ " U("+marketsData.line / 100+")";
+                }
+              } else if (TOTAL_HOME_SECOND.includes(marketId)){
+                if (position==0)
+                  betMessage = homeTeam+" O("+marketsData.line / 100+")";
+                else {
+                  betMessage = homeTeam+" U("+marketsData.line / 100+")";
+                }
+              } else if (TOTAL_AWAY_SECOND.includes(marketId)){
+                if (position==0)
+                  betMessage = awayTeam+" O("+marketsData.line / 100+")";
+                else {
+                  betMessage = awayTeam+" U("+marketsData.line / 100+")";
+                }
+              }
+              else if (TOTAL_AWAY_FIRST.includes(marketId)){
+                if (position==0)
+                  betMessage = awayTeam+" O("+marketsData.line / 100+")";
+                else {
+                  betMessage = awayTeam+" U("+marketsData.line / 100+")";
                 }
               } else if (DOUBLE_CHANCE.includes(marketId)){
                 if (position==0)
@@ -7798,7 +7884,7 @@ async function getOvertimeV2Trades(){
                         ")",
                   },
                   {
-                    name: ":link: Transaction:",
+                    name: ":link: Ticket address:",
                     value:
                         "[" +
                         overtimeMarketTrade.id +
