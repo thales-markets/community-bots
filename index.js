@@ -44,6 +44,17 @@ clientLiqParlayOP.login(process.env.BOT_TOKEN_LQ_PARLAY_OP);
 const clientLiqParlayARB = new Discord.Client();
 clientLiqParlayARB.login(process.env.BOT_TOKEN_LQ_PARLAY_ARB);
 
+const clientLiqV2USDC = new Discord.Client();
+clientLiqV2USDC.login(process.env.BOT_TOKEN_LQ_V2_USDC);
+
+const clientLiqV2THALES = new Discord.Client();
+clientLiqV2THALES.login(process.env.BOT_TOKEN_LQ_V2_THALES);
+
+const clientLiqV2WETH = new Discord.Client();
+clientLiqV2WETH.login(process.env.BOT_TOKEN_LQ_V2_WETH);
+
+
+
 const clientTPV = new Discord.Client();
 clientTPV.login(process.env.BOT_TOKEN_TPV);
 
@@ -147,6 +158,9 @@ let contractV2TicketRaw = fs.readFileSync('contracts/v2overtimeTicket.json');
 let v2ContractTicketRaw = JSON.parse(contractV2TicketRaw);
 let v2TicketContract = new web3L2.eth.Contract(v2ContractTicketRaw,"0x71CE219942FFD9C1d8B67d6C35C39Ae04C4F647B");
 
+
+let liqV2Raw = fs.readFileSync('contracts/liqV2THALES.json');
+let liqV2Contract = JSON.parse(liqV2Raw);
 
 let mapThalesTrades = new Map();
 let mapThalesAsks = new Map();
@@ -3387,6 +3401,13 @@ setInterval(function () {
   getLiqParlayOP();
   getLiqParlayARB();
 }, 360 * 1000);
+
+setInterval(function () {
+  console.log("calculate V2 APR");
+  getLiqV2("0x0fe1044Fc8C05482102Db14368fE88791E9B8698",1e6,"OP V2 PNL ",clientLiqV2USDC,"$");
+  getLiqV2("0x4f2822D4e60af7f9F70E7e45BC1941fe3461231e",1e18,"OP V2 PNL ", clientLiqV2WETH," WETH");
+  getLiqV2("0xE59206b08cC96Da0818522C75eE3Fd4EBB7c0A47",1e18,"OP V2 PNL ",clientLiqV2THALES," THALES");
+}, 200 * 1000);
 
 async function calculateThalesL2APR() {
 
@@ -7433,6 +7454,11 @@ BINARY.push(10009,
     10107,
     10108,
     10109);
+let DRAW_NO_BET = new Array;
+DRAW_NO_BET.push(10121,
+    10122,
+    10123,
+    10124);
 
 async function getOvertimeV2Trades(){
 
@@ -7499,11 +7525,26 @@ async function getOvertimeV2Trades(){
               betMessage = "Draw";
             }
           } else if (HANDICAP.includes(marketId)){
-            if (position==0)
-              betMessage = "H1("+overtimeMarketTrade.marketsData[0].line / 100+")"
+            if (position==0){
+              if(overtimeMarketTrade.marketsData[0].sportId == "15312"){
+                if(overtimeMarketTrade.marketsData[0].typeId == "10001") {
+                  betMessage = "H1(" + overtimeMarketTrade.marketsData[0].line / 100 + ") games"
+                } else {
+                  betMessage = "H1(" + overtimeMarketTrade.marketsData[0].line / 100 + ") sets"
+                }
+              } else {
+                betMessage = "H1("+overtimeMarketTrade.marketsData[0].line / 100+")";
+              }}
             else {
+              if(overtimeMarketTrade.marketsData[0].sportId == "15312"){
+                if(overtimeMarketTrade.marketsData[0].typeId == "10001") {
+                  betMessage = "H2(" + overtimeMarketTrade.marketsData[0].line / 100 + ") games"
+                } else {
+                  betMessage = "H2(" + overtimeMarketTrade.marketsData[0].line / 100 + ") sets"
+                }
+              } else{
               betMessage = "H2("+overtimeMarketTrade.marketsData[0].line / 100+")";
-            }
+            }}
           }
           else if (TOTAL.includes(marketId)){
             if (position==0)
@@ -7535,6 +7576,12 @@ async function getOvertimeV2Trades(){
               betMessage = awayTeam+" O("+overtimeMarketTrade.marketsData[0].line / 100+")";
             else {
               betMessage = awayTeam+" U("+overtimeMarketTrade.marketsData[0].line / 100+")";;
+            }
+          } else if (DRAW_NO_BET.includes(marketId)){
+            if (position==0)
+              betMessage = homeTeam;
+            else {
+              betMessage = awayTeam;
             }
           } else if (DOUBLE_CHANCE.includes(marketId)){
             if (position==0)
@@ -7749,16 +7796,37 @@ async function getOvertimeV2Trades(){
                   betMessage = "Draw";
                 }
               } else if (HANDICAP.includes(marketId)){
-                if (position==0)
-                  betMessage = "H1("+marketsData.line / 100+")"
+                if (position==0){
+                  if(marketsData.sportId == "15312"){
+                    if(marketsData.typeId == "10001") {
+                      betMessage = "H1(" + marketsData.line / 100 + ") games"
+                    } else {
+                      betMessage = "H1(" + marketsData.line / 100 + ") sets"
+                    }
+                  } else {
+                    betMessage = "H1("+marketsData.line / 100+")";
+                  }}
                 else {
-                  betMessage = "H2("+marketsData.line / 100+")";
-                }
+                  if(marketsData.sportId == "15312"){
+                    if(marketsData.typeId == "10001") {
+                      betMessage = "H2(" + marketsData.line / 100 + ") games"
+                    } else {
+                      betMessage = "H2(" + marketsData.line / 100 + ") sets"
+                    }
+                  } else{
+                    betMessage = "H2("+marketsData.line / 100+")";
+                  }}
               } else if (TOTAL.includes(marketId)){
                 if (position==0)
                   betMessage = "O("+marketsData.line / 100+")";
                 else {
                   betMessage = "U("+marketsData.line / 100+")";;
+                }
+              } else if (DRAW_NO_BET.includes(marketId)){
+                if (position==0)
+                  betMessage = homeTeam;
+                else {
+                  betMessage = awayTeam;
                 }
               } else if (TOTAL_HOME_FIRST.includes(marketId)){
                 if (position==0)
@@ -7996,3 +8064,37 @@ async function updateTotalUsers() {
 }
 
 
+async function getLiqV2(address, divider, text, clientV2LQ, symbol){
+
+  const liqContract = new web3L2.eth.Contract(liqV2Contract, address);
+  const round = await liqContract.methods.round().call();
+  let cumulativeProfitAndLoss = 0;
+  if(round>1)
+    cumulativeProfitAndLoss = await liqContract.methods.cumulativeProfitAndLoss(round-1).call();
+  else
+    cumulativeProfitAndLoss = await liqContract.methods.cumulativeProfitAndLoss(round).call();
+  cumulativeProfitAndLoss = Number(cumulativeProfitAndLoss/1e18) - 1;
+  let positive = "+";
+  if(cumulativeProfitAndLoss<0){
+    positive="-";
+  }
+  cumulativeProfitAndLoss = (cumulativeProfitAndLoss*100).toFixed(2);
+  let allocationPerRound = await liqContract.methods.allocationPerRound(round).call();
+  allocationPerRound = Math.round(allocationPerRound / divider);
+  let TVL = await liqContract.methods.totalDeposited().call();
+  TVL = Math.round(TVL / divider);
+
+  clientV2LQ.guilds.cache.forEach(function (value, key) {
+    try {
+      value.members.cache
+          .get(clientV2LQ.user.id)
+          .setNickname(text+positive+getNumberLabelDecimals(cumulativeProfitAndLoss)+"%");
+    } catch (e) {
+      console.log('error while clientLiqARBThales '+e);
+    }
+  });
+  clientV2LQ.user.setActivity(
+      "TVL= "+getNumberLabelDecimals(TVL)+symbol,
+      { type: "WATCHING" }
+  );
+}
