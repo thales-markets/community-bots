@@ -7455,10 +7455,19 @@ BINARY.push(10009,
     10108,
     10109);
 let DRAW_NO_BET = new Array;
-DRAW_NO_BET.push(10121,
+DRAW_NO_BET.push(10010,
+    10121,
     10122,
     10123,
     10124);
+
+function  isTenisV2(sportId) {
+  if(sportId.startsWith("153") || sportId.startsWith("156")) {
+    return true;
+  } else {
+    return false;
+  }
+}
 
 async function getOvertimeV2Trades(){
 
@@ -7586,7 +7595,7 @@ async function getOvertimeV2Trades(){
           } else if (DOUBLE_CHANCE.includes(marketId)){
             if (position==0)
               betMessage = "1X";
-            else if(position ==1){
+            else if(position ==2){
               betMessage = "X2";
             } else {
               betMessage = "1 or 2";
