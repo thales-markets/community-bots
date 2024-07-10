@@ -7534,32 +7534,50 @@ async function getOvertimeV2Trades(){
               betMessage = "Draw";
             }
           } else if (HANDICAP.includes(marketId)){
-            if (position==0){
-              if(overtimeMarketTrade.marketsData[0].sportId == "15312"){
+            if(isTenisV2(overtimeMarketTrade.marketsData[0].sportId)){
+              if (position==0){
                 if(overtimeMarketTrade.marketsData[0].typeId == "10001") {
                   betMessage = "H1(" + overtimeMarketTrade.marketsData[0].line / 100 + ") games"
                 } else {
                   betMessage = "H1(" + overtimeMarketTrade.marketsData[0].line / 100 + ") sets"
                 }
-              } else {
-                betMessage = "H1("+overtimeMarketTrade.marketsData[0].line / 100+")";
-              }}
-            else {
-              if(overtimeMarketTrade.marketsData[0].sportId == "15312"){
+              }
+              else {
                 if(overtimeMarketTrade.marketsData[0].typeId == "10001") {
                   betMessage = "H2(" + overtimeMarketTrade.marketsData[0].line / 100 + ") games"
                 } else {
                   betMessage = "H2(" + overtimeMarketTrade.marketsData[0].line / 100 + ") sets"
                 }
-              } else{
-              betMessage = "H2("+overtimeMarketTrade.marketsData[0].line / 100+")";
-            }}
-          }
-          else if (TOTAL.includes(marketId)){
-            if (position==0)
-              betMessage = "O("+overtimeMarketTrade.marketsData[0].line / 100+")";
-            else {
-              betMessage = "U("+overtimeMarketTrade.marketsData[0].line / 100+")";;
+              }
+            } else {
+              if (position==0){
+                betMessage = "H1("+overtimeMarketTrade.marketsData[0].line / 100+")";
+              }
+              else {
+                betMessage = "H2("+overtimeMarketTrade.marketsData[0].line / 100+")";
+              }}
+          } else if (TOTAL.includes(marketId)){
+            if(isTenisV2(overtimeMarketTrade.marketsData[0].sportId)) {
+              if (position == 0)
+                if (overtimeMarketTrade.marketsData[0].typeId == "10014") {
+                  betMessage = "O(" + overtimeMarketTrade.marketsData[0].line / 100 + ") sets";
+                } else {
+                  betMessage = "O(" + overtimeMarketTrade.marketsData[0].line / 100 + ") games"
+                }
+              else {
+                if (overtimeMarketTrade.marketsData[0].typeId == "10014") {
+                  betMessage = "U(" + overtimeMarketTrade.marketsData[0].line / 100 + ") sets";
+                } else {
+                  betMessage = "U(" + overtimeMarketTrade.marketsData[0].line / 100 + ") games";
+                }
+              }
+
+            } else {
+              if (position == 0)
+                betMessage = "O(" + overtimeMarketTrade.marketsData[0].line / 100 + ")";
+              else {
+                betMessage = "U(" + overtimeMarketTrade.marketsData[0].line / 100 + ")";
+              }
             }
           } else if (TOTAL_HOME_FIRST.includes(marketId)){
             if (position==0)
@@ -7805,32 +7823,52 @@ async function getOvertimeV2Trades(){
                   betMessage = "Draw";
                 }
               } else if (HANDICAP.includes(marketId)){
-                if (position==0){
-                  if(marketsData.sportId == "15312"){
+                if(isTenisV2(marketsData.sportId)){
+                  if (position==0){
                     if(marketsData.typeId == "10001") {
                       betMessage = "H1(" + marketsData.line / 100 + ") games"
                     } else {
                       betMessage = "H1(" + marketsData.line / 100 + ") sets"
                     }
-                  } else {
-                    betMessage = "H1("+marketsData.line / 100+")";
-                  }}
-                else {
-                  if(marketsData.sportId == "15312"){
+                  }
+                  else {
                     if(marketsData.typeId == "10001") {
                       betMessage = "H2(" + marketsData.line / 100 + ") games"
                     } else {
                       betMessage = "H2(" + marketsData.line / 100 + ") sets"
                     }
-                  } else{
+                  }
+                } else {
+                  if (position==0){
+                    betMessage = "H1("+marketsData.line / 100+")";
+                  }
+                  else {
                     betMessage = "H2("+marketsData.line / 100+")";
                   }}
               } else if (TOTAL.includes(marketId)){
-                if (position==0)
-                  betMessage = "O("+marketsData.line / 100+")";
-                else {
-                  betMessage = "U("+marketsData.line / 100+")";;
+                if(isTenisV2(marketsData.sportId)) {
+                  if (position == 0)
+                    if (marketsData.typeId == "10014") {
+                      betMessage = "O(" + marketsData.line / 100 + ") sets";
+                    } else {
+                      betMessage = "O(" + marketsData.line / 100 + ") games"
+                    }
+                  else {
+                    if (marketsData.typeId == "10014") {
+                      betMessage = "U(" + marketsData.line / 100 + ") sets";
+                    } else {
+                      betMessage = "U(" + marketsData.line / 100 + ") games";
+                    }
+                  }
+
+                } else {
+                  if (position == 0)
+                    betMessage = "O(" + marketsData.line / 100 + ")";
+                  else {
+                    betMessage = "U(" + marketsData.line / 100 + ")";
+                  }
                 }
+
               } else if (DRAW_NO_BET.includes(marketId)){
                 if (position==0)
                   betMessage = homeTeam;
