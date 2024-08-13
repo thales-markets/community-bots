@@ -154,10 +154,14 @@ let contractV2OTRaw = fs.readFileSync('contracts/v2overtime.json');
 let v2ContractRaw = JSON.parse(contractV2OTRaw);
 let v2Contract = new web3L2.eth.Contract(v2ContractRaw,"0x2367FB44C4C2c4E5aAC62d78A55876E01F251605");
 
+
 let contractV2TicketRaw = fs.readFileSync('contracts/v2overtimeTicket.json');
 let v2ContractTicketRaw = JSON.parse(contractV2TicketRaw);
 let v2TicketContract = new web3L2.eth.Contract(v2ContractTicketRaw,"0x71CE219942FFD9C1d8B67d6C35C39Ae04C4F647B");
 
+let v2ARBContract = new web3Arbitrum.eth.Contract(v2ContractRaw,"0xB155685132eEd3cD848d220e25a9607DD8871D38");
+
+let v2ARBTicketContract = new web3Arbitrum.eth.Contract(v2ContractTicketRaw,"0x04386f9b2b4f713984Fe0425E46a376201641649");
 
 let liqV2Raw = fs.readFileSync('contracts/liqV2THALES.json');
 let liqV2Contract = JSON.parse(liqV2Raw);
@@ -513,7 +517,6 @@ setInterval(function () {
   getBASETrades();
   getPolygonTrades();
   getArbitrumTrades();
-  getBSCTrades();
 }, 2 * 60 * 1000);
 
 
@@ -1166,6 +1169,7 @@ function delay(time) {
 
 clientNewListings.once("ready", () => {
   console.log("initial new operations");
+  updateTokenPrice();
 });
 
 
@@ -1883,6 +1887,16 @@ setInterval(function () {
   }
 }, 60 * 6 * 1000);
 
+
+setInterval(function () {
+  try {
+    console.log("starting token price");
+    updateTokenPrice();
+  } catch (e) {
+    console.log("starting countdown" + e);
+  }
+}, 60 * 32 * 1000);
+
 async function getMintData() {
   const body = JSON.stringify({
     query: `{
@@ -2589,63 +2603,25 @@ let ammTradeAddress="0x278B5A44397c9D8E52743fEdec263c4760dc1A1A";
 
 async function  getPolygonMarket(tradeL2) {
 
-  const body = JSON.stringify({
-    query: `{markets(where:{
-    id: "${tradeL2.market}"
-  }) {
-    id
-    timestamp
-    creator
-    currencyKey
-    maturityDate
-    strikePrice
-  }}`,
-    variables: null,
-  });
+  let markets =  await thalesData.binaryOptions.markets({
+    network: 137,
+    max:5000
+  })
+  const foundElement = markets.find(element => element.address === tradeL2.market);
 
-  const response = await fetch(
-      "https://api.thegraph.com/subgraphs/name/thales-markets/thales-polygon",
-      {
-        method: "POST",
-        body,
-      }
-  );
-
-  const json = await response.json();
-  const markets = json.data.markets;
-
-  return markets[0];
+  return foundElement;
 }
 
 
 async function  getMarketL2(tradeL2) {
 
-  const body = JSON.stringify({
-    query: `{markets(where:{
-    id: "${tradeL2.market}"
-  }) {
-    id
-    timestamp
-    creator
-    currencyKey
-    maturityDate
-    strikePrice
-  }}`,
-    variables: null,
-  });
+  let markets =  await thalesData.binaryOptions.markets({
+    network: 10,
+    max:5000
+  })
+  const foundElement = markets.find(element => element.address === tradeL2.market);
 
-  const response = await fetch(
-      "https://api.thegraph.com/subgraphs/name/thales-markets/thales-markets",
-      {
-        method: "POST",
-        body,
-      }
-  );
-
-  const json = await response.json();
-  const markets = json.data.markets;
-
-  return markets[0];
+  return foundElement;
 }
 
 let l2ReleaseDate = 1640181600000;
@@ -2656,45 +2632,15 @@ function calculateProfitPercentageTotal(paid, total) {
 
 async function getL2Trades() {
 
-  const body = JSON.stringify({
-    query: `{
-      trades(
-        orderBy:timestamp,
-        orderDirection:desc,
-      ) {
-    id
-    timestamp
-    transactionHash
-    orderHash
-    maker
-    taker
-    makerToken
-    takerToken
-    makerAmount
-    takerAmount
-    market
-    optionSide
-    orderSide
-  }
-}`,
-    variables: null,
+  let tradesL2 = await thalesData.binaryOptions.trades({
+    max:100,
+    network:10
   });
-
-  const response = await fetch(
-      "https://api.thegraph.com/subgraphs/name/thales-markets/thales-markets",
-      {
-        method: "POST",
-        body,
-      }
-  );
-
-  const json = await response.json();
-  const tradesL2 = json.data.trades;
 
   var startdate = new Date();
   var durationInMinutes = 30;
   startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
-  let startDateUnixTime = Math.floor(startdate.getTime()/1000);
+  let startDateUnixTime = Math.floor(startdate.getTime());
   for (const tradeL2 of tradesL2) {
     if (startDateUnixTime < Number(tradeL2.timestamp) && !writenL2Trades.includes(tradeL2.transactionHash)) {
       try{
@@ -2722,14 +2668,14 @@ async function getL2Trades() {
             makerTokenName.toLowerCase().includes("in") ||
             makerTokenName.toLowerCase().includes("out")
         ){
-          amountShortLong = tradeL2.makerAmount/1e18;
-          amountUSD = tradeL2.takerAmount / 1e18;
+          amountShortLong = tradeL2.makerAmount;
+          amountUSD = tradeL2.takerAmount;
           isRanged = true;
         }else if(takerTokenName.toLowerCase().includes("in") ||
             takerTokenName.toLowerCase().includes("out")){
           isRanged = true;
-          amountUSD =tradeL2.makerAmount / 1e18;
-          amountShortLong = tradeL2.takerAmount / 1e18;
+          amountUSD =tradeL2.makerAmount;
+          amountShortLong = tradeL2.takerAmount;
         }else if (
             makerTokenName.toLowerCase().includes("up") ||
             makerTokenName.toLowerCase().includes("down")
@@ -2741,8 +2687,8 @@ async function getL2Trades() {
             shortLong = " < ";
             isLong = false;
           }
-          amountShortLong = tradeL2.makerAmount/1e18;
-          amountUSD = tradeL2.takerAmount / 1e18;
+          amountShortLong = tradeL2.makerAmount;
+          amountUSD = tradeL2.takerAmount;
           isBuy = true;
         } else {
           if (takerTokenName.toLowerCase().includes("up")) {
@@ -2753,8 +2699,8 @@ async function getL2Trades() {
             isLong = false;
           }
 
-          amountUSD =tradeL2.makerAmount / 1e18;
-          amountShortLong = tradeL2.takerAmount / 1e18;
+          amountUSD =tradeL2.makerAmount;
+          amountShortLong = tradeL2.takerAmount;
           shortLong = takerTokenName.toLowerCase().includes("up") ? " > " : " < ";
         }
 
@@ -2762,13 +2708,13 @@ async function getL2Trades() {
         let market = await  getMarketL2(tradeL2);
 
         var marketMessage =
-            web3.utils.hexToAscii(market.currencyKey).replace(/\0/g, '') +
+            market.currencyKey +
             shortLong +
-            Math.round(((market.strikePrice/1e18) + Number.EPSILON) * 1000) / 1000;
+            market.strikePrice;
         marketMessage =
             marketMessage +
             "@" +
-            new Date(market.maturityDate*1000).toISOString().slice(0, 10);
+            new Date(market.maturityDate).toISOString().slice(0, 10);
 
         let isAmmTrade = false;
         let messageTitle;
@@ -2821,7 +2767,7 @@ async function getL2Trades() {
                 },
                 {
                   name: ":alarm_clock: Timestamp:",
-                  value: new Date(tradeL2.timestamp*1000),
+                  value: new Date(tradeL2.timestamp),
                 }
             )
             .setColor("#0037ff");
@@ -2872,14 +2818,14 @@ async function getL2Trades() {
       } else {
           let rangedMarket = await  getRangedMarketL2(tradeL2);
           var marketMessage =
-              web3.utils.hexToAscii(rangedMarket.currencyKey).replace(/\0/g, '') +
+              rangedMarket.currencyKey +
               " "+tradeL2.optionSide.toUpperCase() + " > $"+
-              Math.round(((rangedMarket.leftPrice/1e18) + Number.EPSILON) * 1000) / 1000+" < $"+Math.round(((rangedMarket.rightPrice/1e18) + Number.EPSILON) * 1000) / 1000;
+              rangedMarket.leftPrice+" < $"+rangedMarket.rightPrice;
           let discordMarketMessage
           discordMarketMessage =
               marketMessage +
               "@" +
-              new Date(rangedMarket.maturityDate*1000).toISOString().slice(0, 10);
+              new Date(rangedMarket.maturityDate).toISOString().slice(0, 10);
 
 
           var message = new Discord.MessageEmbed()
@@ -2920,7 +2866,7 @@ async function getL2Trades() {
                   },
                   {
                     name: ":alarm_clock: Timestamp:",
-                    value: new Date(tradeL2.timestamp*1000),
+                    value: new Date(tradeL2.timestamp),
                   }
               )
               .setColor("#0037ff");
@@ -2963,45 +2909,14 @@ async function getL2Trades() {
 
 async function getPolygonTrades() {
 
-  const body = JSON.stringify({
-    query: `{
-      trades(
-        orderBy:timestamp,
-        orderDirection:desc,
-      ) {
-    id
-    timestamp
-    transactionHash
-    orderHash
-    maker
-    taker
-    makerToken
-    takerToken
-    makerAmount
-    takerAmount
-    market
-    optionSide
-    orderSide
-  }
-}`,
-    variables: null,
+  let polygonTrades = await thalesData.binaryOptions.trades({
+    max:100,
+    network:137
   });
-
-  const response = await fetch(
-      "https://api.thegraph.com/subgraphs/name/thales-markets/thales-polygon",
-      {
-        method: "POST",
-        body,
-      }
-  );
-
-  const json = await response.json();
-  const polygonTrades = json.data.trades;
-
   var startdate = new Date();
   var durationInMinutes = 30;
   startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
-  let startDateUnixTime = Math.floor(startdate.getTime()/1000);
+  let startDateUnixTime = Math.floor(startdate.getTime());
   for (const polygonTrade of polygonTrades) {
     if (startDateUnixTime < Number(polygonTrade.timestamp) && !writenPolygonTrades.includes(polygonTrade.transactionHash)) {
       try{
@@ -3031,14 +2946,14 @@ async function getPolygonTrades() {
             lowerMakerTokenNamesArray.includes("in") ||
             lowerMakerTokenNamesArray.includes("out")
         ){
-          amountShortLong = polygonTrade.makerAmount/1e18;
-          amountUSD = polygonTrade.takerAmount / 1e6;
+          amountShortLong = polygonTrade.makerAmount;
+          amountUSD = polygonTrade.takerAmount;
           isRanged = true;
         }else if(lowerTakerTokenNamesArray.includes("in") ||
             lowerTakerTokenNamesArray.includes("out")){
           isRanged = true;
-          amountUSD =polygonTrade.makerAmount / 1e6;
-          amountShortLong = polygonTrade.takerAmount / 1e18;
+          amountUSD =polygonTrade.makerAmount;
+          amountShortLong = polygonTrade.takerAmount;
         }else if (
             lowerMakerTokenNamesArray.includes("up") ||
             lowerMakerTokenNamesArray.includes("down")
@@ -3050,8 +2965,8 @@ async function getPolygonTrades() {
             shortLong = " < ";
             isLong = false;
           }
-          amountShortLong = polygonTrade.makerAmount/1e18;
-          amountUSD = polygonTrade.takerAmount / 1e6;
+          amountShortLong = polygonTrade.makerAmount;
+          amountUSD = polygonTrade.takerAmount;
           isBuy = true;
         } else {
           if (lowerTakerTokenNamesArray.includes("up")) {
@@ -3062,8 +2977,8 @@ async function getPolygonTrades() {
             isLong = false;
           }
 
-          amountUSD =polygonTrade.makerAmount / 1e6;
-          amountShortLong = polygonTrade.takerAmount / 1e18;
+          amountUSD =polygonTrade.makerAmount;
+          amountShortLong = polygonTrade.takerAmount;
           shortLong = takerTokenName.toLowerCase().includes("up") ? " > " : " < ";
         }
 
@@ -3071,14 +2986,14 @@ async function getPolygonTrades() {
 
           let rangedMarket = await  getRangedMarketPolygon(polygonTrade);
           var marketMessage =
-              web3.utils.hexToAscii(rangedMarket.currencyKey).replace(/\0/g, '') +
+              rangedMarket.currencyKey+
               " "+polygonTrade.optionSide.toUpperCase() + " > $"+
-              Math.round(((rangedMarket.leftPrice/1e18) + Number.EPSILON) * 1000) / 1000+" < $"+Math.round(((rangedMarket.rightPrice/1e18) + Number.EPSILON) * 1000) / 1000;
+              rangedMarket.leftPrice+" < $"+rangedMarket.rightPrice;
           let discordMarketMessage
           discordMarketMessage =
               marketMessage +
               "@" +
-              new Date(rangedMarket.maturityDate*1000).toISOString().slice(0, 10);
+              new Date(rangedMarket.maturityDate).toISOString().slice(0, 10);
 
 
           var message = new Discord.MessageEmbed()
@@ -3119,7 +3034,7 @@ async function getPolygonTrades() {
                   },
                   {
                     name: ":alarm_clock: Timestamp:",
-                    value: new Date(polygonTrade.timestamp*1000),
+                    value: new Date(polygonTrade.timestamp),
                   }
               )
               .setColor("#0037ff");
@@ -3149,13 +3064,13 @@ async function getPolygonTrades() {
           let market = await getPolygonMarket(polygonTrade);
 
           var marketMessage =
-              web3.utils.hexToAscii(market.currencyKey).replace(/\0/g, '') +
+             market.currencyKey +
               shortLong +
-              Math.round(((market.strikePrice / 1e18) + Number.EPSILON) * 1000) / 1000;
+              market.strikePrice;
           marketMessage =
               marketMessage +
               "@" +
-              new Date(market.maturityDate * 1000).toISOString().slice(0, 10);
+              new Date(market.maturityDate).toISOString().slice(0, 10);
 
           let messageTitle;
           messageTitle = ":lock: New Polygon Amm Thales Trade :lock:"
@@ -3199,7 +3114,7 @@ async function getPolygonTrades() {
                   },
                   {
                     name: ":alarm_clock: Timestamp:",
-                    value: new Date(polygonTrade.timestamp * 1000),
+                    value: new Date(polygonTrade.timestamp),
                   }
               )
               .setColor("#0037ff");
@@ -3251,46 +3166,12 @@ async function getPolygonTrades() {
 
 async function  getRangedMarketPolygon(tradeL2) {
 
-  const body = JSON.stringify({
-    query: `{rangedMarkets(where:{
-    id: "${tradeL2.market}"
-  }) {
-    id
-    timestamp
-    currencyKey
-    maturityDate
-    expiryDate
-    leftPrice
-    rightPrice
-    rightMarket{
-    id
-    strikePrice
-      currencyKey
-      maturityDate
-      expiryDate
-    }
-    leftMarket{
-      id
-    strikePrice
-      currencyKey
-      maturityDate
-      expiryDate
-    }
-    
-  }}`,
-    variables: null,
-  });
-
-  const response = await fetch(
-      "https://api.thegraph.com/subgraphs/name/thales-markets/thales-polygon",
-      {
-        method: "POST",
-        body,
-      }
-  );
-
-  const json = await response.json();
-  const markets = json.data.rangedMarkets;
+  let ids =  new Array();
+  ids.push(tradeL2.market);
+  let markets =  await thalesData.binaryOptions.rangedMarkets({
+    marketIds: ids,
+    network: 137
+  })
 
   return markets[0];
 }
@@ -3652,504 +3533,24 @@ setInterval(function () {
   checkPositioning();
 }, 60 * 5 * 1000);
 
-async function  getPosition() {
 
-  const body = JSON.stringify({
-    query: `{
-  positions(orderBy:timestamp,
-        orderDirection:desc) {
-    id
-    timestamp
-    account
-    market
-    positions
-    position
-    isWithdrawn
-    isClaimed
-  }
-}`,
-    variables: null,
-  });
 
-  const response = await fetch(
-      "https://api.thegraph.com/subgraphs/name/thales-markets/exotic-markets-optimism",
-      {
-        method: "POST",
-        body,
-      }
-  );
 
-  const json = await response.json();
-  const positions = json.data.positions;
-
-  var startdate = new Date();
-  var durationInMinutes = 30;
-  startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
-  let startDateUnixTime = Math.floor(startdate.getTime()/1000);
-  for (const position of positions) {
-    if (startDateUnixTime < Number(position.timestamp) && !writenExoticPositions.includes(position.id) && (position.position!=0 || isOpenBidPosition(position.positions))) {
-      try {
-        console.log("new exotic market position");
-
-        let messageTitle = "New Exotic Market Position";
-        let market = await getExoticMarket(position);
-        let poolSize = market.poolSize / 1e18;
-        let ticketPrice = 0;
-        let posistionsMade="";
-        if(!market.isTicketType){
-          for (var i = 0; i < position.positions.length; i++) {
-            if(position.positions[i]!="0"){
-              if(posistionsMade!=""){
-                posistionsMade =posistionsMade +  ", "+ market.positions[i]
-              }else{
-                posistionsMade =  market.positions[i];
-              }
-              ticketPrice = ticketPrice + Number(position.positions[i]);
-            }
-          }
-          ticketPrice = ticketPrice / 1e18;
-        } else {
-          posistionsMade = market.positions[position.position-1];
-          ticketPrice = market.ticketPrice / 1e18;
-        }
-
-        var message = new Discord.MessageEmbed()
-            .addFields(
-                {
-                  name: messageTitle,
-                  value: "\u200b",
-                },
-                {
-                  name: ":classical_building: Market:",
-                  value:
-                      "[" +
-                      market.question +
-                      "](https://exoticmarkets.xyz/#/markets/" +
-                      market.address +
-                      ")",
-                },
-                {
-                  name: ":coin: Position:",
-                  value: posistionsMade,
-                },
-                {
-                  name: ":coin: Ticket price:",
-                  value: ticketPrice+" sUSD",
-                },
-                {
-                  name: ":coin: Pool size:",
-                  value: poolSize+" sUSD",
-                },
-                {
-                  name: ":alarm_clock: Timestamp:",
-                  value: new Date(position.timestamp * 1000),
-                }
-            )
-            .setColor("#0037ff");
-        clientNewListings.channels
-            .fetch("968912147826507796")
-            .then((ammTradesChannel) => {
-              ammTradesChannel.send(message);
-            });
-        writenExoticPositions.push(position.id);
-        redisClient.lpush(exoticMarketPositionsKey, position.id);
-      } catch (e) {
-        console.log("There was a problem while getting exotic markets", e);
-      }
-    }
-  }
-}
-
-async function  getExoticMarket(dispute) {
-
-  const body = JSON.stringify({
-    query: `{
-  markets(where:{
-    id: "${dispute.market}"
-  }) {
-     id
-    timestamp
-    creator
-    creationTime
-    isTicketType
-    resolver
-    resolvedTime
-    address
-    question
-    dataSource
-    endOfPositioning
-    ticketPrice
-    isWithdrawalAllowed
-    positions
-    tags
-    isOpen
-    numberOfDisputes
-    numberOfOpenDisputes
-    marketClosedForDisputes
-    isResolved
-    isCancelled
-    winningPosition
-    backstopTimeout
-    isPaused
-    isDisputed
-    disputeClosedTime
-    poolSize
-    numberOfParticipants
-    noWinners
-    cancelledByCreator
-  }
-}`,
-    variables: null,
-  });
-
-  const response = await fetch(
-      "https://api.thegraph.com/subgraphs/name/thales-markets/exotic-markets-optimism",
-      {
-        method: "POST",
-        body,
-      }
-  );
-
-  const json = await response.json();
-  const markets = json.data.markets;
-
-  return markets[0];
-}
-
-async function getOpenDisputesExotic() {
-
-  const body = JSON.stringify({
-    query: `{
-  disputes(orderBy:timestamp,
-        orderDirection:desc) {
-    id
-    timestamp
-    creationDate
-    disputeNumber
-    disputer
-    market
-    reasonForDispute
-    isInPositioningPhase
-    disputeCode
-  }
-}`,
-    variables: null,
-  });
-
-  const response = await fetch(
-      "https://api.thegraph.com/subgraphs/name/thales-markets/exotic-markets-optimism",
-      {
-        method: "POST",
-        body,
-      }
-  );
-
-  const json = await response.json();
-  const disputes = json.data.disputes;
-
-  var startdate = new Date();
-  var durationInMinutes = 30;
-  startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
-  let startDateUnixTime = Math.floor(startdate.getTime()/1000);
-  for (const dispute of disputes) {
-     if (startDateUnixTime < Number(dispute.timestamp) && !writenExoticDisputes.includes(dispute.id)) {
-    try {
-      console.log("new dispute");
-      let messageTitle = "New Exotic Market Dispute";
-      let market = await getExoticMarket(dispute);
-
-      var message = new Discord.MessageEmbed()
-          .addFields(
-              {
-                name: messageTitle,
-                value: "\u200b",
-              },
-              {
-                name: ":question: Dispute Reason:",
-                value: dispute.reasonForDispute,
-              },
-              {
-                name: ":classical_building: Market:",
-                value:
-                    "[" +
-                    market.question +
-                    "](https://exoticmarkets.xyz/#/markets/" +
-                    dispute.market +
-                    ")",
-              },
-              {
-                name: ":alarm_clock: Timestamp:",
-                value: new Date(dispute.timestamp*1000),
-              }
-          )
-          .setColor("#0037ff");
-      clientNewListings.channels
-          .fetch("968805375015014410")
-          .then((ammTradesChannel) => {
-            ammTradesChannel.send(message);
-          });
-      writenExoticDisputes.push(dispute.id);
-      redisClient.lpush(exoticMarketDisputesKey, dispute.id);
-    } catch (e) {
-      console.log("There was a problem while getting exotic market disputes",e);
-    }
-  }
-  }
-}
-
-async function getExoticMarkets(){
-  const body = JSON.stringify({
-    query: `{
-  markets(orderBy:timestamp,
-        orderDirection:desc) {
-    id
-    timestamp
-    creator
-    creationTime
-    resolver
-    resolvedTime
-    address
-    question
-    dataSource
-    endOfPositioning
-    ticketPrice
-    isWithdrawalAllowed
-    positions
-    tags
-    isTicketType
-    isOpen
-    numberOfDisputes
-    numberOfOpenDisputes
-    marketClosedForDisputes
-    isResolved
-    isCancelled
-    winningPosition
-    backstopTimeout
-    isPaused
-    isDisputed
-    disputeClosedTime
-    poolSize
-    numberOfParticipants
-    noWinners
-    cancelledByCreator
-  }
-}`,
-    variables: null,
-  });
-
-  const response = await fetch(
-      "https://api.thegraph.com/subgraphs/name/thales-markets/exotic-markets-optimism",
-      {
-        method: "POST",
-        body,
-      }
-  );
-
-  const json = await response.json();
-  const exoticMarkets = json.data.markets;
-
-  var startdate = new Date();
-  var durationInMinutes = 30;
-  startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
-  let startDateUnixTime = Math.floor(startdate.getTime()/1000);
-  for (const exoticMarket of exoticMarkets) {
-     if (startDateUnixTime < Number(exoticMarket.timestamp) && !writenExoticMarkets.includes(exoticMarket.id)) {
-    try {
-      console.log("new exotic market");
-
-      let messageTitle = "New Exotic Market";
-      let exoticMarketQuestion = exoticMarket.question;
-      let ticketPrice = exoticMarket.ticketPrice / 1e18;
-      let poolSize = exoticMarket.poolSize / 1e18;
-      let bidType = "";
-      if(!exoticMarket.isTicketType){
-        bidType = "Open bid";
-      }else{
-        bidType = "Ticket"
-      }
-      var message = new Discord.MessageEmbed()
-          .addFields(
-              {
-                name: messageTitle,
-                value: "\u200b",
-              },
-              {
-                name: ":classical_building: Market:",
-                value:
-                    "[" +
-                    exoticMarketQuestion +
-                    "](https://exoticmarkets.xyz/#/markets/" +
-                    exoticMarket.address +
-                    ")",
-              },
-              {
-                name: ":coin: Ticket price:",
-                value: ticketPrice+" sUSD",
-              },
-              {
-                name: ":coin: Bid type:",
-                value: bidType,
-              },
-              {
-                name: ":alarm_clock: Deadline:",
-                value: new Date(exoticMarket.endOfPositioning *1000),
-              },
-              {
-                name: ":alarm_clock: Timestamp:",
-                value: new Date(exoticMarket.timestamp*1000),
-              }
-          )
-          .setColor("#0037ff");
-      clientNewListings.channels
-          .fetch("968805331104841738")
-          .then((ammTradesChannel) => {
-            ammTradesChannel.send(message);
-          });
-      writenExoticMarkets.push(exoticMarket.id);
-      redisClient.lpush(exoticMarketsKey, exoticMarket.id);
-    } catch (e) {
-      console.log("There was a problem while getting exotic markets",e);
-    }
-  }
-  }
-}
 
 async function  getRangedMarketL2(tradeL2) {
 
-  const body = JSON.stringify({
-    query: `{rangedMarkets(where:{
-    id: "${tradeL2.market}"
-  }) {
-    id
-    timestamp
-    currencyKey
-    maturityDate
-    expiryDate
-    leftPrice
-    rightPrice
-    rightMarket{
-    id
-    strikePrice
-      currencyKey
-      maturityDate
-      expiryDate
-    }
-    leftMarket{
-      id
-    strikePrice
-      currencyKey
-      maturityDate
-      expiryDate
-    }
-    
-  }}`,
-    variables: null,
-  });
-
-  const response = await fetch(
-      "https://api.thegraph.com/subgraphs/name/thales-markets/thales-markets",
-      {
-        method: "POST",
-        body,
-      }
-  );
-
-  const json = await response.json();
-  const markets = json.data.rangedMarkets;
+  let ids =  new Array();
+  ids.push(tradeL2.market);
+  let markets =  await thalesData.binaryOptions.rangedMarkets({
+    marketIds: ids,
+    network: 10
+  })
 
   return markets[0];
 }
 
 
 
-async function getExoticMarketResultSet() {
-
-  const body = JSON.stringify({
-    query: `{
-  marketTransactions(orderBy:timestamp,
-        orderDirection:desc
-  where:{
-    type: resolveMarket
-  }) {
-    id
-    hash
-    timestamp
-    blockNumber
-    type
-    account
-    market
-    amount
-    position
-  }
-}`,
-    variables: null,
-  });
-
-  const response = await fetch(
-      "https://api.thegraph.com/subgraphs/name/thales-markets/exotic-markets-optimism",
-      {
-        method: "POST",
-        body,
-      }
-  );
-
-  const json = await response.json();
-  const marketTransactions = json.data.marketTransactions;
-
-  var startdate = new Date();
-  var durationInMinutes = 30;
-  startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
-  let startDateUnixTime = Math.floor(startdate.getTime()/1000);
-  for (const marketTransaction of marketTransactions) {
-    if (startDateUnixTime < Number(marketTransaction.timestamp) && !writenExoticMarketResultSet.includes(marketTransaction.id)) {
-      try {
-        console.log("new market result set");
-        let messageTitle = "New Exotic Market Result Set";
-        let market = await getExoticMarket(marketTransaction);
-        let outcomePosistion;
-        if(marketTransaction.position==0){
-          outcomePosistion="Market is Canceled";
-        }else{
-          outcomePosistion=market.positions[marketTransaction.position-1];
-        }
-        var message = new Discord.MessageEmbed()
-            .addFields(
-                {
-                  name: messageTitle,
-                  value: "\u200b",
-                },
-                {
-                  name: ":classical_building: Market:",
-                  value:
-                      "[" +
-                      market.question +
-                      "](https://exoticmarkets.xyz/#/markets/" +
-                      marketTransaction.market +
-                      ")",
-                },
-                {
-                  name: ":coin: Outcome Position:",
-                  value: outcomePosistion,
-                },
-                {
-                  name: ":alarm_clock: Timestamp:",
-                  value: new Date(marketTransaction.timestamp*1000),
-                }
-            )
-            .setColor("#0037ff");
-        clientNewListings.channels
-            .fetch("972190551078236210")
-            .then((ammTradesChannel) => {
-              ammTradesChannel.send(message);
-            });
-        writenExoticMarketResultSet.push(marketTransaction.id);
-        redisClient.lpush(exoticMarketResultSet, marketTransaction.id);
-      } catch (e) {
-        console.log("There was a problem while getting exotic market result sets",e);
-      }
-    }
-  }
-}
 
 function isOpenBidPosition(array){
   for (var i = 0; i < array.length; i++) {
@@ -4162,10 +3563,7 @@ function isOpenBidPosition(array){
 
 setInterval(function () {
   console.log("get L2 trades");
-  getExoticMarkets();
-  getPosition();
-  getOpenDisputesExotic();
-  getExoticMarketResultSet();
+  getOvertimeV2ARBTrades();
   getOvertimeV2Trades();
   getOvertimeMarkets(10);
   getOvertimeMarkets(42161);
@@ -4922,43 +4320,14 @@ async function updateTotalOvertimeARBTrades() {
 
 async function getArbitrumTrades() {
 
-  const body = JSON.stringify({
-    query: `{
-      trades(
-        orderBy:timestamp,
-        orderDirection:desc,
-      ) {
-    id
-    timestamp
-    transactionHash
-    orderHash
-    maker
-    taker
-    makerToken
-    takerToken
-    makerAmount
-    takerAmount
-    market
-    optionSide
-    orderSide
-  }
-}`,
-    variables: null,
+  let arbitrumTrades = await thalesData.binaryOptions.trades({
+    max:100,
+    network:42161
   });
-
-  const response = await fetch(
-      "https://api.thegraph.com/subgraphs/name/thales-markets/thales-arbitrum",
-      {
-        method: "POST",
-        body,
-      }
-  );
-  const json = await response.json();
-  const arbitrumTrades = json.data.trades;
   var startdate = new Date();
   var durationInMinutes = 30;
   startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
-  let startDateUnixTime = Math.floor(startdate.getTime()/1000);
+  let startDateUnixTime = Math.floor(startdate.getTime());
   for (const arbitrumTrade of arbitrumTrades) {
       if (startDateUnixTime < Number(arbitrumTrade.timestamp) && !writenArbitrumTrades.includes(arbitrumTrade.transactionHash)) {
     try{
@@ -4988,14 +4357,14 @@ async function getArbitrumTrades() {
           lowerMakerTokenNamesArray.includes("in") ||
           lowerMakerTokenNamesArray.includes("out")
       ){
-        amountShortLong = arbitrumTrade.makerAmount/1e18;
-        amountUSD = arbitrumTrade.takerAmount / 1e6;
+        amountShortLong = arbitrumTrade.makerAmount;
+        amountUSD = arbitrumTrade.takerAmount;
         isRanged = true;
       }else if(lowerTakerTokenNamesArray.includes("in") ||
           lowerTakerTokenNamesArray.includes("out")){
         isRanged = true;
-        amountUSD =arbitrumTrade.makerAmount / 1e6;
-        amountShortLong = arbitrumTrade.takerAmount / 1e18;
+        amountUSD =arbitrumTrade.makerAmount;
+        amountShortLong = arbitrumTrade.takerAmount;
       }else if (
           lowerMakerTokenNamesArray.includes("up") ||
           lowerMakerTokenNamesArray.includes("down")
@@ -5007,8 +4376,8 @@ async function getArbitrumTrades() {
           shortLong = " < ";
           isLong = false;
         }
-        amountShortLong = arbitrumTrade.makerAmount/1e18;
-        amountUSD = arbitrumTrade.takerAmount / 1e6;
+        amountShortLong = arbitrumTrade.makerAmount;
+        amountUSD = arbitrumTrade.takerAmount;
         isBuy = true;
       } else {
         if (lowerTakerTokenNamesArray.includes("up")) {
@@ -5019,8 +4388,8 @@ async function getArbitrumTrades() {
           isLong = false;
         }
 
-        amountUSD =arbitrumTrade.makerAmount / 1e6;
-        amountShortLong = arbitrumTrade.takerAmount / 1e18;
+        amountUSD =arbitrumTrade.makerAmount;
+        amountShortLong = arbitrumTrade.takerAmount;
         shortLong = takerTokenName.toLowerCase().includes("up") ? " > " : " < ";
       }
 
@@ -5028,14 +4397,14 @@ async function getArbitrumTrades() {
 
         let rangedMarket = await  getRangedMarketArbitrum(arbitrumTrade);
         var marketMessage =
-            web3.utils.hexToAscii(rangedMarket.currencyKey).replace(/\0/g, '') +
+            rangedMarket.currencyKey +
             " "+arbitrumTrade.optionSide.toUpperCase() + " > $"+
-            Math.round(((rangedMarket.leftPrice/1e18) + Number.EPSILON) * 1000) / 1000+" < $"+Math.round(((rangedMarket.rightPrice/1e18) + Number.EPSILON) * 1000) / 1000;
+            rangedMarket.leftPrice+" < $"+rangedMarket.rightPrice;
         let discordMarketMessage
         discordMarketMessage =
             marketMessage +
             "@" +
-            new Date(rangedMarket.maturityDate*1000).toISOString().slice(0, 10);
+            new Date(rangedMarket.maturityDate).toISOString().slice(0, 10);
 
 
         var message = new Discord.MessageEmbed()
@@ -5076,18 +4445,18 @@ async function getArbitrumTrades() {
                 },
                 {
                   name: ":alarm_clock: Timestamp:",
-                  value: new Date(arbitrumTrade.timestamp*1000),
+                  value: new Date(arbitrumTrade.timestamp),
                 }
             )
             .setColor("#0037ff");
         let newRangeTradeMessage = arbitrumTrade.orderSide.toUpperCase()=="BUY" ? 'New Arbitrum Ranged Market position bought\n' : 'New Arbitrum Ranged Market position sold\n';
-        var date = new Date(arbitrumTrade.timestamp*1000);
+        var date = new Date(arbitrumTrade.timestamp);
 
         newRangeTradeMessage = newRangeTradeMessage + 'Condition: '+marketMessage+'\n';
         let amountAMM = parseFloat((amountShortLong).toFixed(3));
         let paidAMM = parseFloat((amountUSD).toFixed(3));
         let potentialProfit = (amountAMM-paidAMM)>0.51? Math.round(amountAMM-paidAMM): amountAMM-paidAMM;
-        newRangeTradeMessage = newRangeTradeMessage + 'Maturity date: '+new Date(rangedMarket.maturityDate*1000).toISOString().slice(0, 10)+'\n';
+        newRangeTradeMessage = newRangeTradeMessage + 'Maturity date: '+new Date(rangedMarket.maturityDate).toISOString().slice(0, 10)+'\n';
         newRangeTradeMessage = newRangeTradeMessage + 'Amount: '+parseFloat((amountShortLong).toFixed(3))+' '+arbitrumTrade.optionSide.toUpperCase()+' tokens\n';
         newRangeTradeMessage = newRangeTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' sUSD\n';
         newRangeTradeMessage = newRangeTradeMessage + 'Potential profit: '+potentialProfit+' sUSD ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
@@ -5105,13 +4474,13 @@ async function getArbitrumTrades() {
         let market = await getArbitrumMarket(arbitrumTrade);
 
         var marketMessage =
-            web3.utils.hexToAscii(market.currencyKey).replace(/\0/g, '') +
+            market.currencyKey +
             shortLong +
-            Math.round(((market.strikePrice / 1e18) + Number.EPSILON) * 1000) / 1000;
+            market.strikePrice;
         marketMessage =
             marketMessage +
             "@" +
-            new Date(market.maturityDate * 1000).toISOString().slice(0, 10);
+            new Date(market.maturityDate ).toISOString().slice(0, 10);
 
         let messageTitle;
         messageTitle = ":lock: New Arbitrum Amm Thales Trade :lock:"
@@ -5155,7 +4524,7 @@ async function getArbitrumTrades() {
                 },
                 {
                   name: ":alarm_clock: Timestamp:",
-                  value: new Date(arbitrumTrade.timestamp * 1000),
+                  value: new Date(arbitrumTrade.timestamp),
                 }
             )
             .setColor("#0037ff");
@@ -5175,7 +4544,7 @@ async function getArbitrumTrades() {
         }
 
         let newAMMTradeMessage = isBuy ? 'New Arbitrum AMM position bought\n' : 'New Arbitrum AMM position sold\n';
-        var date = new Date(arbitrumTrade.timestamp * 1000);
+        var date = new Date(arbitrumTrade.timestamp);
 
         newAMMTradeMessage = newAMMTradeMessage + 'Condition: ' + marketMessage + '\n';
         let downOrUP;
@@ -5213,76 +4582,26 @@ async function getArbitrumTrades() {
 
 async function  getArbitrumMarket(tradeL2) {
 
-  const body = JSON.stringify({
-    query: `{markets(where:{
-    id: "${tradeL2.market}"
-  }) {
-    id
-    timestamp
-    creator
-    currencyKey
-    maturityDate
-    strikePrice
-  }}`,
-    variables: null,
-  });
+  let markets =  await thalesData.binaryOptions.markets({
+    network: 42161,
+    max:5000
+  })
+  const foundElement = markets.find(element => element.address === tradeL2.market);
 
-  const response = await fetch(
-      "https://api.thegraph.com/subgraphs/name/thales-markets/thales-arbitrum",
-      {
-        method: "POST",
-        body,
-      }
-  );
 
-  const json = await response.json();
-  const markets = json.data.markets;
 
-  return markets[0];
+  return foundElement;
 }
 
 async function  getRangedMarketArbitrum(tradeL2) {
 
-  const body = JSON.stringify({
-    query: `{rangedMarkets(where:{
-    id: "${tradeL2.market}"
-  }) {
-    id
-    timestamp
-    currencyKey
-    maturityDate
-    expiryDate
-    leftPrice
-    rightPrice
-    rightMarket{
-    id
-    strikePrice
-      currencyKey
-      maturityDate
-      expiryDate
-    }
-    leftMarket{
-      id
-    strikePrice
-      currencyKey
-      maturityDate
-      expiryDate
-    }
-    
-  }}`,
-    variables: null,
-  });
+  let ids =  new Array();
+  ids.push(tradeL2.market);
+  let markets =  await thalesData.binaryOptions.rangedMarkets({
+    marketIds: ids,
+    network: 42161
+  })
 
-  const response = await fetch(
-      "https://api.thegraph.com/subgraphs/name/thales-markets/thales-arbitrum",
-      {
-        method: "POST",
-        body,
-      }
-  );
-
-  const json = await response.json();
-  const markets = json.data.rangedMarkets;
 
   return markets[0];
 }
@@ -6749,7 +6068,7 @@ async function speedResolvedMarkets(speedMarketsContract,givenSpeedMarketType,sp
 }
 
 function getDefaultDecimalsForNetwork (givenSpeedMarket) {
-  if (givenSpeedMarket == speedMarketType.ARB || givenSpeedMarket == speedMarketType.POLYGON || givenSpeedMarket == speedMarketType.BASE || givenSpeedMarket == speedMarketType.ZKSYNC) return 1e6;
+  if (givenSpeedMarket == speedMarketType.ARB || givenSpeedMarket == speedMarketType.POLYGON || givenSpeedMarket == speedMarketType.BASE || givenSpeedMarket == speedMarketType.ZKSYNC || givenSpeedMarket == speedMarketType.OP) return 1e6;
   return 1e18;
 };
 
@@ -6774,45 +6093,15 @@ function timeConverter(UNIX_timestamp){
 let baseAMMAddress = "0xe41cD3A25CBdeDA0BC46D48C380393D953bD2034";
 async function getBASETrades() {
 
-  const body = JSON.stringify({
-    query: `{
-      trades(
-        orderBy:timestamp,
-        orderDirection:desc,
-      ) {
-    id
-    timestamp
-    transactionHash
-    orderHash
-    maker
-    taker
-    makerToken
-    takerToken
-    makerAmount
-    takerAmount
-    market
-    optionSide
-    orderSide
-  }
-}`,
-    variables: null,
+  let tradesBASE = await thalesData.binaryOptions.trades({
+    max:100,
+    network:8453
   });
-
-  const response = await fetch(
-      "https://api.studio.thegraph.com/query/11948/thales-markets-base/version/latest",
-      {
-        method: "POST",
-        body,
-      }
-  );
-
-  const json = await response.json();
-  const tradesBASE = json.data.trades;
 
   var startdate = new Date();
   var durationInMinutes = 30;
   startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
-  let startDateUnixTime = Math.floor(startdate.getTime()/1000);
+  let startDateUnixTime = Math.floor(startdate.getTime());
   for (const tradeBASE of tradesBASE) {
     if (startDateUnixTime < Number(tradeBASE.timestamp) && !writenBASETrades.includes(tradeBASE.transactionHash)) {
       try{
@@ -6832,14 +6121,14 @@ async function getBASETrades() {
             (makerTokenName.toLowerCase().includes("in") ||
             makerTokenName.toLowerCase().includes("out")) && !makerTokenName.toLowerCase().includes("coin")
         ){
-          amountShortLong = tradeBASE.makerAmount/1e18;
-          amountUSD = tradeBASE.takerAmount / 1e6;
+          amountShortLong = tradeBASE.makerAmount;
+          amountUSD = tradeBASE.takerAmount;
           isRanged = true;
         }else if((takerTokenName.toLowerCase().includes("in") ||
             takerTokenName.toLowerCase().includes("out"))&& !takerTokenName.toLowerCase().includes("coin")){
           isRanged = true;
-          amountUSD =tradeBASE.makerAmount / 1e6;
-          amountShortLong = tradeBASE.takerAmount / 1e18;
+          amountUSD =tradeBASE.makerAmount;
+          amountShortLong = tradeBASE.takerAmount;
         }else if (
             makerTokenName.toLowerCase().includes("up") ||
             makerTokenName.toLowerCase().includes("down")
@@ -6851,8 +6140,8 @@ async function getBASETrades() {
             shortLong = " < ";
             isLong = false;
           }
-          amountShortLong = tradeBASE.makerAmount/1e18;
-          amountUSD = tradeBASE.takerAmount / 1e6;
+          amountShortLong = tradeBASE.makerAmount;
+          amountUSD = tradeBASE.takerAmount;
           isBuy = true;
         } else {
           if (takerTokenName.toLowerCase().includes("up")) {
@@ -6863,8 +6152,8 @@ async function getBASETrades() {
             isLong = false;
           }
 
-          amountUSD =tradeBASE.makerAmount / 1e6;
-          amountShortLong = tradeBASE.takerAmount / 1e18;
+          amountUSD =tradeBASE.makerAmount;
+          amountShortLong = tradeBASE.takerAmount;
           shortLong = takerTokenName.toLowerCase().includes("up") ? " > " : " < ";
         }
 
@@ -6872,13 +6161,13 @@ async function getBASETrades() {
         let market = await getMarketBASE(tradeBASE);
 
         var marketMessage =
-            web3.utils.hexToAscii(market.currencyKey).replace(/\0/g, '') +
+            market.currencyKey +
             shortLong +
-            Math.round(((market.strikePrice/1e18) + Number.EPSILON) * 1000) / 1000;
+           market.strikePrice;
         marketMessage =
             marketMessage +
             "@" +
-            new Date(market.maturityDate*1000).toISOString().slice(0, 10);
+            new Date(market.maturityDate).toISOString().slice(0, 10);
 
         let isAmmTrade = false;
         let messageTitle;
@@ -6931,7 +6220,7 @@ async function getBASETrades() {
                 },
                 {
                   name: ":alarm_clock: Timestamp:",
-                  value: new Date(tradeBASE.timestamp*1000),
+                  value: new Date(tradeBASE.timestamp),
                 }
             )
             .setColor("#0037ff");
@@ -6955,7 +6244,7 @@ async function getBASETrades() {
 
 
           let newAMMTradeMessage = isBuy ? 'New BASE AMM position bought\n' : 'New BASE AMM position sold\n';
-          var date = new Date(tradeBASE.timestamp*1000);
+          var date = new Date(tradeBASE.timestamp);
 
           newAMMTradeMessage = newAMMTradeMessage + 'Condition: '+marketMessage+'\n';
           let downOrUP;
@@ -6976,14 +6265,14 @@ async function getBASETrades() {
       } else {
           let rangedMarket = await  getRangedMarketBASE(tradeBASE);
           var marketMessage =
-              web3.utils.hexToAscii(rangedMarket.currencyKey).replace(/\0/g, '') +
+              rangedMarket.currencyKey +
               " "+tradeBASE.optionSide.toUpperCase() + " > $"+
-              Math.round(((rangedMarket.leftPrice/1e18) + Number.EPSILON) * 1000) / 1000+" < $"+Math.round(((rangedMarket.rightPrice/1e18) + Number.EPSILON) * 1000) / 1000;
+              rangedMarket.leftPrice+" < $"+rangedMarket.rightPrice;
           let discordMarketMessage
           discordMarketMessage =
               marketMessage +
               "@" +
-              new Date(rangedMarket.maturityDate*1000).toISOString().slice(0, 10);
+              new Date(rangedMarket.maturityDate).toISOString().slice(0, 10);
 
 
           var message = new Discord.MessageEmbed()
@@ -7024,7 +6313,7 @@ async function getBASETrades() {
                   },
                   {
                     name: ":alarm_clock: Timestamp:",
-                    value: new Date(tradeBASE.timestamp*1000),
+                    value: new Date(tradeBASE.timestamp),
                   }
               )
               .setColor("#0037ff");
@@ -7063,76 +6352,23 @@ async function getBASETrades() {
 
 async function  getMarketBASE(tradeL2) {
 
-  const body = JSON.stringify({
-    query: `{markets(where:{
-    id: "${tradeL2.market}"
-  }) {
-    id
-    timestamp
-    creator
-    currencyKey
-    maturityDate
-    strikePrice
-  }}`,
-    variables: null,
-  });
+  let markets =  await thalesData.binaryOptions.markets({
+    network: 8453,
+    max:5000
+  })
+  const foundElement = markets.find(element => element.address === tradeL2.market);
 
-  const response = await fetch(
-      "https://api.studio.thegraph.com/query/11948/thales-markets-base/version/latest",
-      {
-        method: "POST",
-        body,
-      }
-  );
-
-  const json = await response.json();
-  const markets = json.data.markets;
-
-  return markets[0];
+  return foundElement;
 }
 
 async function  getRangedMarketBASE(tradeL2) {
 
-  const body = JSON.stringify({
-    query: `{rangedMarkets(where:{
-    id: "${tradeL2.market}"
-  }) {
-    id
-    timestamp
-    currencyKey
-    maturityDate
-    expiryDate
-    leftPrice
-    rightPrice
-    rightMarket{
-    id
-    strikePrice
-      currencyKey
-      maturityDate
-      expiryDate
-    }
-    leftMarket{
-      id
-    strikePrice
-      currencyKey
-      maturityDate
-      expiryDate
-    }
-    
-  }}`,
-    variables: null,
+  let ids =  new Array();
+  ids.push(tradeL2.market);
+  let markets =  await thalesData.binaryOptions.rangedMarkets({
+    marketIds: ids,
+    network: 8453
   });
-
-  const response = await fetch(
-      "https://api.studio.thegraph.com/query/11948/thales-markets-base/version/latest",
-      {
-        method: "POST",
-        body,
-      }
-  );
-
-  const json = await response.json();
-  const markets = json.data.rangedMarkets;
 
   return markets[0];
 }
@@ -7309,6 +6545,17 @@ function  formatV2Amount(numberForFormating, collateralAddress) {
   }
 }
 
+function  formatV2ARBAmount(numberForFormating, collateralAddress) {
+
+  if(collateralAddress == "0xaf88d065e77c8cC2239327C5EDb3A432268e5831") {
+    return numberForFormating / 1e6;
+  } else {
+    return numberForFormating / 1e18
+  }
+}
+
+
+
 function roundTo2Decimals(number){
   if(1-Math.floor(Math.log(number)/Math.log(10)>0))
     return  number.toFixed(1-Math.floor(Math.log(number)/Math.log(10)))
@@ -7469,10 +6716,408 @@ function  isTenisV2(sportId) {
   }
 }
 
+async function getV2MessageContent(overtimeMarketTrade,typeMap) {
+  let homeTeam;
+  let awayTeam;
+  let position = overtimeMarketTrade.marketsData[0].position;
+  let specificGame = await axios.get('https://api.thalesmarket.io/overtime-v2/games-info/' + overtimeMarketTrade.marketsData[0].gameId);
+  specificGame = specificGame.data;
+  if (specificGame.teams[0].isHome) {
+    homeTeam = specificGame.teams[0].name;
+    awayTeam = specificGame.teams[1].name;
+  } else {
+    awayTeam = specificGame.teams[0].name;
+    homeTeam = specificGame.teams[1].name
+  }
+  let marketType = typeMap.get(overtimeMarketTrade.marketsData[0].typeId).name;
+  let marketMessage;
+  if (overtimeMarketTrade.marketsData[0].playerId && overtimeMarketTrade.marketsData[0].playerId > 0) {
+    let specificPlayer = await axios.get('https://api.thalesmarket.io/overtime-v2/players-info/' + overtimeMarketTrade.marketsData[0].playerId);
+    specificPlayer = specificPlayer.data.playerName;
+    marketMessage = specificPlayer;
+  } else {
+    marketMessage = homeTeam + " - " + awayTeam;
+  }
+
+  let marketId = typeMap.get(overtimeMarketTrade.marketsData[0].typeId).id;
+  let betMessage;
+  if (WINNER.includes(marketId)) {
+    if (position == 0)
+      betMessage = homeTeam;
+    else if (position == 1) {
+      betMessage = awayTeam;
+    } else {
+      betMessage = "Draw";
+    }
+  } else if (HANDICAP.includes(marketId)) {
+    if (isTenisV2(overtimeMarketTrade.marketsData[0].sportId)) {
+      if (position == 0) {
+        if (overtimeMarketTrade.marketsData[0].typeId == "10001") {
+          betMessage = "H1(" + overtimeMarketTrade.marketsData[0].line / 100 + ") games"
+        } else {
+          betMessage = "H1(" + overtimeMarketTrade.marketsData[0].line / 100 + ") sets"
+        }
+      } else {
+        if (overtimeMarketTrade.marketsData[0].typeId == "10001") {
+          betMessage = "H2(" + overtimeMarketTrade.marketsData[0].line / 100 + ") games"
+        } else {
+          betMessage = "H2(" + overtimeMarketTrade.marketsData[0].line / 100 + ") sets"
+        }
+      }
+    } else {
+      if (position == 0) {
+        betMessage = "H1(" + overtimeMarketTrade.marketsData[0].line / 100 + ")";
+      } else {
+        betMessage = "H2(" + overtimeMarketTrade.marketsData[0].line / 100 + ")";
+      }
+    }
+  } else if (TOTAL.includes(marketId)) {
+    if (isTenisV2(overtimeMarketTrade.marketsData[0].sportId)) {
+      if (position == 0)
+        if (overtimeMarketTrade.marketsData[0].typeId == "10014") {
+          betMessage = "O(" + overtimeMarketTrade.marketsData[0].line / 100 + ") sets";
+        } else {
+          betMessage = "O(" + overtimeMarketTrade.marketsData[0].line / 100 + ") games"
+        }
+      else {
+        if (overtimeMarketTrade.marketsData[0].typeId == "10014") {
+          betMessage = "U(" + overtimeMarketTrade.marketsData[0].line / 100 + ") sets";
+        } else {
+          betMessage = "U(" + overtimeMarketTrade.marketsData[0].line / 100 + ") games";
+        }
+      }
+
+    } else {
+      if (position == 0)
+        betMessage = "O(" + overtimeMarketTrade.marketsData[0].line / 100 + ")";
+      else {
+        betMessage = "U(" + overtimeMarketTrade.marketsData[0].line / 100 + ")";
+      }
+    }
+  } else if (TOTAL_HOME_FIRST.includes(marketId)) {
+    if (position == 0)
+      betMessage = homeTeam + " O(" + overtimeMarketTrade.marketsData[0].line / 100 + ")";
+    else {
+      betMessage = homeTeam + " U(" + overtimeMarketTrade.marketsData[0].line / 100 + ")";
+      ;
+    }
+  } else if (TOTAL_HOME_SECOND.includes(marketId)) {
+    if (position == 0)
+      betMessage = homeTeam + " O(" + overtimeMarketTrade.marketsData[0].line / 100 + ")";
+    else {
+      betMessage = homeTeam + " U(" + overtimeMarketTrade.marketsData[0].line / 100 + ")";
+      ;
+    }
+  } else if (TOTAL_AWAY_SECOND.includes(marketId)) {
+    if (position == 0)
+      betMessage = awayTeam + " O(" + overtimeMarketTrade.marketsData[0].line / 100 + ")";
+    else {
+      betMessage = awayTeam + " U(" + overtimeMarketTrade.marketsData[0].line / 100 + ")";
+      ;
+    }
+  } else if (TOTAL_AWAY_FIRST.includes(marketId)) {
+    if (position == 0)
+      betMessage = awayTeam + " O(" + overtimeMarketTrade.marketsData[0].line / 100 + ")";
+    else {
+      betMessage = awayTeam + " U(" + overtimeMarketTrade.marketsData[0].line / 100 + ")";
+      ;
+    }
+  } else if (DRAW_NO_BET.includes(marketId)) {
+    if (position == 0)
+      betMessage = homeTeam;
+    else {
+      betMessage = awayTeam;
+    }
+  } else if (DOUBLE_CHANCE.includes(marketId)) {
+    if (position == 0)
+      betMessage = "1X";
+    else if (position == 2) {
+      betMessage = "X2";
+    } else {
+      betMessage = "1 or 2";
+    }
+  } else if (HALF_END.includes(marketId)) {
+
+    let position1 = overtimeMarketTrade.marketsData[0].combinedPositions[0].position;
+    let position2 = overtimeMarketTrade.marketsData[0].combinedPositions[1].position;
+
+    if (position1 == 0)
+      betMessage = homeTeam;
+    else if (position1 == 1) {
+      betMessage = awayTeam;
+    } else {
+      betMessage = "Draw";
+    }
+    if (position2 == 0)
+      betMessage = betMessage + "/" + homeTeam;
+    else if (position2 == 1) {
+      betMessage = betMessage + "/" + awayTeam;
+    } else {
+      betMessage = betMessage + "/" + "Draw";
+    }
+  } else if (W_TOTAL.includes(marketId)) {
+
+    let position1 = overtimeMarketTrade.marketsData[0].combinedPositions[0].position;
+    let position2 = overtimeMarketTrade.marketsData[0].combinedPositions[1].position;
+
+    if (position1 == 0)
+      betMessage = homeTeam;
+    else if (position1 == 1) {
+      betMessage = awayTeam;
+    } else {
+      betMessage = "Draw";
+    }
+    if (position2 == 0)
+      betMessage = betMessage + " O(" + overtimeMarketTrade.marketsData[0].combinedPositions[1].line / 100 + ")";
+    else {
+      betMessage = betMessage + " U(" + overtimeMarketTrade.marketsData[0].combinedPositions[1].line / 100 + ")";
+    }
+  } else if (HT_TOTAL.includes(marketId)) {
+
+    let position1 = overtimeMarketTrade.marketsData[0].combinedPositions[0].position;
+    let position2 = overtimeMarketTrade.marketsData[0].combinedPositions[1].position;
+    let position3 = overtimeMarketTrade.marketsData[0].combinedPositions[2].position;
+
+    if (position1 == 0)
+      betMessage = homeTeam;
+    else if (position1 == 1) {
+      betMessage = awayTeam;
+    } else {
+      betMessage = "Draw";
+    }
+    if (position2 == 0)
+      betMessage = betMessage + "/" + homeTeam;
+    else if (position2 == 1) {
+      betMessage = betMessage + "/" + awayTeam;
+    } else {
+      betMessage = betMessage + "/" + "Draw";
+    }
+    if (position3 == 0)
+      betMessage = betMessage + " O(" + overtimeMarketTrade.marketsData[0].combinedPositions[2].line / 100 + ")";
+    else {
+      betMessage = betMessage + " U(" + overtimeMarketTrade.marketsData[0].combinedPositions[2].line / 100 + ")";
+    }
+
+  } else {
+
+    let points = "";
+    if (overtimeMarketTrade.marketsData[0].line && overtimeMarketTrade.marketsData[0].line > 0) {
+      points = " @ " + overtimeMarketTrade.marketsData[0].line / 100;
+    }
+
+    if (position == 0)
+      betMessage = "YES" + points;
+    else {
+      betMessage = "NO" + points;
+    }
+  }
+  return {marketType, marketMessage, betMessage};
+}
+
+async function getV2ParlayMessage(overtimeMarketTrade, parlayMessage,typeMap) {
+  for (const marketsData of overtimeMarketTrade.marketsData) {
+    let specificGame = await axios.get('https://api.thalesmarket.io/overtime-v2/games-info/' + marketsData.gameId);
+    specificGame = specificGame.data;
+    let position = marketsData.position;
+    let marketType = typeMap.get(marketsData.typeId).name;
+    let homeTeam;
+    let awayTeam;
+    let marketId = typeMap.get(marketsData.typeId).id;
+    if (marketsData.playerId && marketsData.playerId > 0) {
+      let specificPlayer = await axios.get('https://api.thalesmarket.io/overtime-v2/players-info/' + marketsData.playerId);
+      specificPlayer = specificPlayer.data.playerName;
+      let betMessage = "";
+      if (TOTAL.includes(marketId)) {
+        if (position == 0)
+          betMessage = "O(" + marketsData.line / 100 + ")";
+        else {
+          betMessage = "U(" + marketsData.line / 100 + ")";
+
+        }
+      } else {
+        if (position == 0) {
+          betMessage = "YES"
+        } else
+          betMessage = "NO"
+      }
+      parlayMessage = parlayMessage + specificPlayer + " : " + marketType + " @ " + betMessage + "\n";
+    } else {
+      if (specificGame.teams[0].isHome) {
+        homeTeam = specificGame.teams[0].name;
+        awayTeam = specificGame.teams[1].name;
+      } else {
+        awayTeam = specificGame.teams[0].name;
+        homeTeam = specificGame.teams[1].name
+      }
+      let betMessage;
+      if (WINNER.includes(marketId)) {
+        if (position == 0)
+          betMessage = homeTeam;
+        else if (position == 1) {
+          betMessage = awayTeam;
+        } else {
+          betMessage = "Draw";
+        }
+      } else if (HANDICAP.includes(marketId)) {
+        if (isTenisV2(marketsData.sportId)) {
+          if (position == 0) {
+            if (marketsData.typeId == "10001") {
+              betMessage = "H1(" + marketsData.line / 100 + ") games"
+            } else {
+              betMessage = "H1(" + marketsData.line / 100 + ") sets"
+            }
+          } else {
+            if (marketsData.typeId == "10001") {
+              betMessage = "H2(" + marketsData.line / 100 + ") games"
+            } else {
+              betMessage = "H2(" + marketsData.line / 100 + ") sets"
+            }
+          }
+        } else {
+          if (position == 0) {
+            betMessage = "H1(" + marketsData.line / 100 + ")";
+          } else {
+            betMessage = "H2(" + marketsData.line / 100 + ")";
+          }
+        }
+      } else if (TOTAL.includes(marketId)) {
+        if (isTenisV2(marketsData.sportId)) {
+          if (position == 0)
+            if (marketsData.typeId == "10014") {
+              betMessage = "O(" + marketsData.line / 100 + ") sets";
+            } else {
+              betMessage = "O(" + marketsData.line / 100 + ") games"
+            }
+          else {
+            if (marketsData.typeId == "10014") {
+              betMessage = "U(" + marketsData.line / 100 + ") sets";
+            } else {
+              betMessage = "U(" + marketsData.line / 100 + ") games";
+            }
+          }
+
+        } else {
+          if (position == 0)
+            betMessage = "O(" + marketsData.line / 100 + ")";
+          else {
+            betMessage = "U(" + marketsData.line / 100 + ")";
+          }
+        }
+
+      } else if (DRAW_NO_BET.includes(marketId)) {
+        if (position == 0)
+          betMessage = homeTeam;
+        else {
+          betMessage = awayTeam;
+        }
+      } else if (TOTAL_HOME_FIRST.includes(marketId)) {
+        if (position == 0)
+          betMessage = homeTeam + " O(" + marketsData.line / 100 + ")";
+        else {
+          betMessage = homeTeam + " U(" + marketsData.line / 100 + ")";
+        }
+      } else if (TOTAL_HOME_SECOND.includes(marketId)) {
+        if (position == 0)
+          betMessage = homeTeam + " O(" + marketsData.line / 100 + ")";
+        else {
+          betMessage = homeTeam + " U(" + marketsData.line / 100 + ")";
+        }
+      } else if (TOTAL_AWAY_SECOND.includes(marketId)) {
+        if (position == 0)
+          betMessage = awayTeam + " O(" + marketsData.line / 100 + ")";
+        else {
+          betMessage = awayTeam + " U(" + marketsData.line / 100 + ")";
+        }
+      } else if (TOTAL_AWAY_FIRST.includes(marketId)) {
+        if (position == 0)
+          betMessage = awayTeam + " O(" + marketsData.line / 100 + ")";
+        else {
+          betMessage = awayTeam + " U(" + marketsData.line / 100 + ")";
+        }
+      } else if (DOUBLE_CHANCE.includes(marketId)) {
+        if (position == 0)
+          betMessage = "1X";
+        else if (position == 2) {
+          betMessage = "X2";
+        } else {
+          betMessage = "1 or 2";
+        }
+      } else if (HALF_END.includes(marketId)) {
+        let position1 = marketsData.combinedPositions[0].position;
+        let position2 = marketsData.combinedPositions[1].position;
+
+        if (position1 == 0)
+          betMessage = homeTeam;
+        else if (position1 == 1) {
+          betMessage = awayTeam;
+        } else {
+          betMessage = "Draw";
+        }
+        if (position2 == 0)
+          betMessage = betMessage + "/" + homeTeam;
+        else if (position2 == 1) {
+          betMessage = betMessage + "/" + awayTeam;
+        } else {
+          betMessage = betMessage + "/" + "Draw";
+        }
+      } else if (W_TOTAL.includes(marketId)) {
+
+        let position1 = marketsData.combinedPositions[0].position;
+        let position2 = marketsData.combinedPositions[1].position;
+
+        if (position1 == 0)
+          betMessage = homeTeam;
+        else if (position1 == 1) {
+          betMessage = awayTeam;
+        } else {
+          betMessage = "Draw";
+        }
+        if (position2 == 0)
+          betMessage = betMessage + " O(" + marketsData.combinedPositions[1].line / 100 + ")";
+        else {
+          betMessage = betMessage + " U(" + marketsData.combinedPositions[1].line / 100 + ")";
+        }
+      } else if (HT_TOTAL.includes(marketId)) {
+
+        let position1 = marketsData.combinedPositions[0].position;
+        let position2 = marketsData.combinedPositions[1].position;
+        let position3 = marketsData.combinedPositions[2].position;
+
+        if (position1 == 0)
+          betMessage = homeTeam;
+        else if (position1 == 1) {
+          betMessage = awayTeam;
+        } else {
+          betMessage = "Draw";
+        }
+        if (position2 == 0)
+          betMessage = betMessage + "/" + homeTeam;
+        else if (position2 == 1) {
+          betMessage = betMessage + "/" + awayTeam;
+        } else {
+          betMessage = betMessage + "/" + "Draw";
+        }
+        if (position3 == 0)
+          betMessage = betMessage + " O(" + marketsData.combinedPositions[2].line / 100 + ")";
+        else {
+          betMessage = betMessage + " U(" + marketsData.combinedPositions[2].line / 100 + ")";
+        }
+
+      } else {
+        if (position == 0)
+          betMessage = "YES";
+        else {
+          betMessage = "NO";
+        }
+      }
+
+      parlayMessage = parlayMessage + homeTeam + " - " + awayTeam + " : " + marketType + " @ " + betMessage + "\n";
+    }
+  }
+  return parlayMessage;
+}
+
 async function getOvertimeV2Trades(){
-
-
-
 
   let activeTickets = await v2Contract.methods.getActiveTickets(0,10000).call();
   let overtimeTrades = await v2TicketContract.methods.getTicketsData(activeTickets).call();
@@ -7490,209 +7135,20 @@ async function getOvertimeV2Trades(){
     if (startDateUnixTime < Number(overtimeMarketTrade.createdAt * 1000) && !writenOvertimeV2Trades.includes(overtimeMarketTrade.id)) {
       try {
         let moneySymbol;
+        let multiplier = 1;
         if (overtimeMarketTrade.collateral=="0x4200000000000000000000000000000000000006"){
           moneySymbol = "weth";
+          multiplier = ethPrice;
         } else if (overtimeMarketTrade.collateral=="0x217D47011b23BB961eB6D93cA9945B7501a5BB11"){
           moneySymbol = "THALES";
+          multiplier = thalesPrice;
         } else {
           moneySymbol = "USDC"
         }
         let buyIn = roundTo2Decimals(formatV2Amount(overtimeMarketTrade.buyInAmount , overtimeMarketTrade.collateral));
         let odds = oddslib.from('impliedProbability', overtimeMarketTrade.totalQuote / 1e18).decimalValue.toFixed(3)
         if (overtimeMarketTrade.marketsData.length==1) {
-          let homeTeam;
-          let awayTeam;
-          let position = overtimeMarketTrade.marketsData[0].position;
-          let specificGame = await axios.get('https://api.thalesmarket.io/overtime-v2/games-info/' + overtimeMarketTrade.marketsData[0].gameId);
-          specificGame = specificGame.data;
-          if (specificGame.teams[0].isHome) {
-            homeTeam = specificGame.teams[0].name;
-            awayTeam = specificGame.teams[1].name;
-          } else {
-            awayTeam = specificGame.teams[0].name;
-            homeTeam = specificGame.teams[1].name
-          }
-          let marketType = typeMap.get(overtimeMarketTrade.marketsData[0].typeId).name;
-          let marketMessage;
-          if (overtimeMarketTrade.marketsData[0].playerId && overtimeMarketTrade.marketsData[0].playerId>0) {
-            let specificPlayer = await axios.get('https://api.thalesmarket.io/overtime-v2/players-info/' + overtimeMarketTrade.marketsData[0].playerId);
-            specificPlayer = specificPlayer.data.playerName;
-            marketMessage = specificPlayer;
-          }
-          else{
-            marketMessage = homeTeam + " - " + awayTeam;
-          }
-
-          let marketId = typeMap.get(overtimeMarketTrade.marketsData[0].typeId).id;
-          let betMessage;
-          if (WINNER.includes(marketId)){
-            if (position==0)
-              betMessage = homeTeam;
-            else if(position ==1){
-              betMessage = awayTeam;
-            } else {
-              betMessage = "Draw";
-            }
-          } else if (HANDICAP.includes(marketId)){
-            if(isTenisV2(overtimeMarketTrade.marketsData[0].sportId)){
-              if (position==0){
-                if(overtimeMarketTrade.marketsData[0].typeId == "10001") {
-                  betMessage = "H1(" + overtimeMarketTrade.marketsData[0].line / 100 + ") games"
-                } else {
-                  betMessage = "H1(" + overtimeMarketTrade.marketsData[0].line / 100 + ") sets"
-                }
-              }
-              else {
-                if(overtimeMarketTrade.marketsData[0].typeId == "10001") {
-                  betMessage = "H2(" + overtimeMarketTrade.marketsData[0].line / 100 + ") games"
-                } else {
-                  betMessage = "H2(" + overtimeMarketTrade.marketsData[0].line / 100 + ") sets"
-                }
-              }
-            } else {
-              if (position==0){
-                betMessage = "H1("+overtimeMarketTrade.marketsData[0].line / 100+")";
-              }
-              else {
-                betMessage = "H2("+overtimeMarketTrade.marketsData[0].line / 100+")";
-              }}
-          } else if (TOTAL.includes(marketId)){
-            if(isTenisV2(overtimeMarketTrade.marketsData[0].sportId)) {
-              if (position == 0)
-                if (overtimeMarketTrade.marketsData[0].typeId == "10014") {
-                  betMessage = "O(" + overtimeMarketTrade.marketsData[0].line / 100 + ") sets";
-                } else {
-                  betMessage = "O(" + overtimeMarketTrade.marketsData[0].line / 100 + ") games"
-                }
-              else {
-                if (overtimeMarketTrade.marketsData[0].typeId == "10014") {
-                  betMessage = "U(" + overtimeMarketTrade.marketsData[0].line / 100 + ") sets";
-                } else {
-                  betMessage = "U(" + overtimeMarketTrade.marketsData[0].line / 100 + ") games";
-                }
-              }
-
-            } else {
-              if (position == 0)
-                betMessage = "O(" + overtimeMarketTrade.marketsData[0].line / 100 + ")";
-              else {
-                betMessage = "U(" + overtimeMarketTrade.marketsData[0].line / 100 + ")";
-              }
-            }
-          } else if (TOTAL_HOME_FIRST.includes(marketId)){
-            if (position==0)
-              betMessage = homeTeam +" O("+overtimeMarketTrade.marketsData[0].line / 100+")";
-            else {
-              betMessage = homeTeam+ " U("+overtimeMarketTrade.marketsData[0].line / 100+")";;
-            }
-          } else if (TOTAL_HOME_SECOND.includes(marketId)){
-            if (position==0)
-              betMessage = homeTeam+" O("+overtimeMarketTrade.marketsData[0].line / 100+")";
-            else {
-              betMessage = homeTeam+" U("+overtimeMarketTrade.marketsData[0].line / 100+")";;
-            }
-          } else if (TOTAL_AWAY_SECOND.includes(marketId)){
-            if (position==0)
-              betMessage = awayTeam+" O("+overtimeMarketTrade.marketsData[0].line / 100+")";
-            else {
-              betMessage = awayTeam+" U("+overtimeMarketTrade.marketsData[0].line / 100+")";;
-            }
-          }
-          else if (TOTAL_AWAY_FIRST.includes(marketId)){
-            if (position==0)
-              betMessage = awayTeam+" O("+overtimeMarketTrade.marketsData[0].line / 100+")";
-            else {
-              betMessage = awayTeam+" U("+overtimeMarketTrade.marketsData[0].line / 100+")";;
-            }
-          } else if (DRAW_NO_BET.includes(marketId)){
-            if (position==0)
-              betMessage = homeTeam;
-            else {
-              betMessage = awayTeam;
-            }
-          } else if (DOUBLE_CHANCE.includes(marketId)){
-            if (position==0)
-              betMessage = "1X";
-            else if(position ==2){
-              betMessage = "X2";
-            } else {
-              betMessage = "1 or 2";
-            }
-          } else if (HALF_END.includes(marketId)){
-
-            let position1 = overtimeMarketTrade.marketsData[0].combinedPositions[0].position;
-            let position2 = overtimeMarketTrade.marketsData[0].combinedPositions[1].position;
-
-            if (position1 == 0)
-              betMessage = homeTeam;
-            else if(position1 ==1){
-              betMessage = awayTeam;
-            } else {
-              betMessage = "Draw";
-            }
-            if (position2 == 0)
-              betMessage = betMessage+"/"+homeTeam;
-            else if(position2 ==1){
-              betMessage = betMessage+"/"+awayTeam;
-            } else {
-              betMessage = betMessage+"/"+"Draw";
-            }
-          } else if (W_TOTAL.includes(marketId)){
-
-            let position1 = overtimeMarketTrade.marketsData[0].combinedPositions[0].position;
-            let position2 = overtimeMarketTrade.marketsData[0].combinedPositions[1].position;
-
-            if (position1 == 0)
-              betMessage = homeTeam;
-            else if(position1 ==1){
-              betMessage = awayTeam;
-            } else {
-              betMessage = "Draw";
-            }
-            if (position2 == 0)
-              betMessage = betMessage+" O("+overtimeMarketTrade.marketsData[0].combinedPositions[1].line/100+")";
-            else {
-              betMessage = betMessage+" U("+overtimeMarketTrade.marketsData[0].combinedPositions[1].line/100+")";
-            }
-          } else if (HT_TOTAL.includes(marketId)){
-
-            let position1 = overtimeMarketTrade.marketsData[0].combinedPositions[0].position;
-            let position2 = overtimeMarketTrade.marketsData[0].combinedPositions[1].position;
-            let position3 = overtimeMarketTrade.marketsData[0].combinedPositions[2].position;
-
-            if (position1 == 0)
-              betMessage = homeTeam;
-            else if(position1 ==1){
-              betMessage = awayTeam;
-            } else {
-              betMessage = "Draw";
-            }
-            if (position2 == 0)
-              betMessage = betMessage+"/"+homeTeam;
-            else if(position2 ==1){
-              betMessage = betMessage+"/"+awayTeam;
-            } else {
-              betMessage = betMessage+"/"+"Draw";
-            }
-            if (position3 == 0)
-              betMessage = betMessage+" O("+overtimeMarketTrade.marketsData[0].combinedPositions[2].line/100+")";
-            else {
-              betMessage = betMessage+" U("+overtimeMarketTrade.marketsData[0].combinedPositions[2].line/100+")";
-            }
-
-          } else {
-
-            let points = "";
-            if (overtimeMarketTrade.marketsData[0].line && overtimeMarketTrade.marketsData[0].line >0 ){
-              points = " @ " + overtimeMarketTrade.marketsData[0].line/100;
-            }
-
-            if (position==0)
-              betMessage = "YES"+points;
-            else  {
-              betMessage = "NO"+points;
-            }
-          }
+          let {marketType, marketMessage, betMessage} = await getV2MessageContent(overtimeMarketTrade,typeMap);
 
           let linkTransaction;
           linkTransaction = "https://optimistic.etherscan.io/address/"
@@ -7756,9 +7212,14 @@ async function getOvertimeV2Trades(){
               .setColor("#0037ff");
 
 
-          if(Math.round(formatV2Amount(overtimeMarketTrade.buyInAmount , overtimeMarketTrade.collateral))<500){
-
-            if(overtimeMarketTrade.isLive){
+          let amountInCurrency = formatV2Amount(overtimeMarketTrade.buyInAmount , overtimeMarketTrade.collateral);
+          let payoutInCurrency = formatV2Amount(roundTo2Decimals(buyIn * odds) , overtimeMarketTrade.collateral);
+          if(Number(multiplier*amountInCurrency)<500){
+            if(payoutInCurrency>=1000){
+              let overtimeTradesChannel = await clientNewListings.channels
+                  .fetch("1272945193016098849");
+              overtimeTradesChannel.send(message);
+            } else if(overtimeMarketTrade.isLive){
               let overtimeTradesChannel = await clientNewListings.channels
                   .fetch("1250500936120406177");
               overtimeTradesChannel.send(message);
@@ -7780,206 +7241,8 @@ async function getOvertimeV2Trades(){
           redisClient.lpush(overtimeV2TradesKey, overtimeMarketTrade.id);
 
         } else {
-          let parlayMessage = ""  ;
-          for (const marketsData of overtimeMarketTrade.marketsData) {
-            let specificGame = await axios.get('https://api.thalesmarket.io/overtime-v2/games-info/' + marketsData.gameId);
-            specificGame = specificGame.data;
-            let position = marketsData.position;
-            let marketType = typeMap.get(marketsData.typeId).name;
-            let homeTeam;
-            let awayTeam;
-            let marketId = typeMap.get(marketsData.typeId).id;
-            if (marketsData.playerId && marketsData.playerId>0){
-              let specificPlayer = await axios.get('https://api.thalesmarket.io/overtime-v2/players-info/'  + marketsData.playerId);
-              specificPlayer = specificPlayer.data.playerName;
-              let betMessage="";
-              if (TOTAL.includes(marketId)){
-                if (position==0)
-                  betMessage = "O("+marketsData.line / 100+")";
-                else {
-                  betMessage = "U(" + marketsData.line / 100 + ")";
-
-                }} else {
-              if(position==0){
-                betMessage = "YES"
-              } else
-                betMessage = "NO"
-                } parlayMessage =  parlayMessage +  specificPlayer+" : " + marketType + " @ "+betMessage +"\n";
-            } else {
-              if (specificGame.teams[0].isHome) {
-                homeTeam = specificGame.teams[0].name;
-                awayTeam = specificGame.teams[1].name;
-              } else {
-                awayTeam = specificGame.teams[0].name;
-                homeTeam = specificGame.teams[1].name
-              }
-              let betMessage;
-              if (WINNER.includes(marketId)){
-                if (position==0)
-                  betMessage = homeTeam;
-                else if(position ==1){
-                  betMessage = awayTeam;
-                } else {
-                  betMessage = "Draw";
-                }
-              } else if (HANDICAP.includes(marketId)){
-                if(isTenisV2(marketsData.sportId)){
-                  if (position==0){
-                    if(marketsData.typeId == "10001") {
-                      betMessage = "H1(" + marketsData.line / 100 + ") games"
-                    } else {
-                      betMessage = "H1(" + marketsData.line / 100 + ") sets"
-                    }
-                  }
-                  else {
-                    if(marketsData.typeId == "10001") {
-                      betMessage = "H2(" + marketsData.line / 100 + ") games"
-                    } else {
-                      betMessage = "H2(" + marketsData.line / 100 + ") sets"
-                    }
-                  }
-                } else {
-                  if (position==0){
-                    betMessage = "H1("+marketsData.line / 100+")";
-                  }
-                  else {
-                    betMessage = "H2("+marketsData.line / 100+")";
-                  }}
-              } else if (TOTAL.includes(marketId)){
-                if(isTenisV2(marketsData.sportId)) {
-                  if (position == 0)
-                    if (marketsData.typeId == "10014") {
-                      betMessage = "O(" + marketsData.line / 100 + ") sets";
-                    } else {
-                      betMessage = "O(" + marketsData.line / 100 + ") games"
-                    }
-                  else {
-                    if (marketsData.typeId == "10014") {
-                      betMessage = "U(" + marketsData.line / 100 + ") sets";
-                    } else {
-                      betMessage = "U(" + marketsData.line / 100 + ") games";
-                    }
-                  }
-
-                } else {
-                  if (position == 0)
-                    betMessage = "O(" + marketsData.line / 100 + ")";
-                  else {
-                    betMessage = "U(" + marketsData.line / 100 + ")";
-                  }
-                }
-
-              } else if (DRAW_NO_BET.includes(marketId)){
-                if (position==0)
-                  betMessage = homeTeam;
-                else {
-                  betMessage = awayTeam;
-                }
-              } else if (TOTAL_HOME_FIRST.includes(marketId)){
-                if (position==0)
-                  betMessage = homeTeam +" O("+marketsData.line / 100+")";
-                else {
-                  betMessage = homeTeam+ " U("+marketsData.line / 100+")";
-                }
-              } else if (TOTAL_HOME_SECOND.includes(marketId)){
-                if (position==0)
-                  betMessage = homeTeam+" O("+marketsData.line / 100+")";
-                else {
-                  betMessage = homeTeam+" U("+marketsData.line / 100+")";
-                }
-              } else if (TOTAL_AWAY_SECOND.includes(marketId)){
-                if (position==0)
-                  betMessage = awayTeam+" O("+marketsData.line / 100+")";
-                else {
-                  betMessage = awayTeam+" U("+marketsData.line / 100+")";
-                }
-              }
-              else if (TOTAL_AWAY_FIRST.includes(marketId)){
-                if (position==0)
-                  betMessage = awayTeam+" O("+marketsData.line / 100+")";
-                else {
-                  betMessage = awayTeam+" U("+marketsData.line / 100+")";
-                }
-              } else if (DOUBLE_CHANCE.includes(marketId)){
-                if (position==0)
-                  betMessage = "1X";
-                else if(position ==1){
-                  betMessage = "X2";
-                } else {
-                  betMessage = "1 or 2";
-                }
-              } else if (HALF_END.includes(marketId)){
-                let position1 = marketsData.combinedPositions[0].position;
-                let position2 = marketsData.combinedPositions[1].position;
-
-                if (position1 == 0)
-                  betMessage = homeTeam;
-                else if(position1 ==1){
-                  betMessage = awayTeam;
-                } else {
-                  betMessage = "Draw";
-                }
-                if (position2 == 0)
-                  betMessage = betMessage+"/"+homeTeam;
-                else if(position2 ==1){
-                  betMessage = betMessage+"/"+awayTeam;
-                } else {
-                  betMessage = betMessage+"/"+"Draw";
-                }
-              } else if (W_TOTAL.includes(marketId)){
-
-                let position1 = marketsData.combinedPositions[0].position;
-                let position2 = marketsData.combinedPositions[1].position;
-
-                if (position1 == 0)
-                  betMessage = homeTeam;
-                else if(position1 ==1){
-                  betMessage = awayTeam;
-                } else {
-                  betMessage = "Draw";
-                }
-                if (position2 == 0)
-                  betMessage = betMessage+" O("+marketsData.combinedPositions[1].line/100+")";
-                else {
-                  betMessage = betMessage+" U("+marketsData.combinedPositions[1].line/100+")";
-                }
-              } else if (HT_TOTAL.includes(marketId)){
-
-                let position1 = marketsData.combinedPositions[0].position;
-                let position2 = marketsData.combinedPositions[1].position;
-                let position3 = marketsData.combinedPositions[2].position;
-
-                if (position1 == 0)
-                  betMessage = homeTeam;
-                else if(position1 ==1){
-                  betMessage = awayTeam;
-                } else {
-                  betMessage = "Draw";
-                }
-                if (position2 == 0)
-                  betMessage = betMessage+"/"+homeTeam;
-                else if(position2 ==1){
-                  betMessage = betMessage+"/"+awayTeam;
-                } else {
-                  betMessage = betMessage+"/"+"Draw";
-                }
-                if (position3 == 0)
-                  betMessage = betMessage+" O("+marketsData.combinedPositions[2].line/100+")";
-                else {
-                  betMessage = betMessage+" U("+marketsData.combinedPositions[2].line/100+")";
-                }
-
-              } else {
-                if (position==0)
-                  betMessage = "YES";
-                else  {
-                  betMessage = "NO";
-                }
-              }
-
-              parlayMessage =  parlayMessage +  homeTeam + " - " + awayTeam+" : " + marketType +" @ "+betMessage +"\n";
-            }
-          }
+          let parlayMessage = "";
+          parlayMessage = await getV2ParlayMessage(overtimeMarketTrade, parlayMessage,typeMap);
           let linkTransaction;
           linkTransaction = "https://optimistic.etherscan.io/address/"
 
@@ -8033,8 +7296,15 @@ async function getOvertimeV2Trades(){
                   }
               )
               .setColor("#0037ff");
-          if(Math.round(formatV2Amount(overtimeMarketTrade.buyInAmount , overtimeMarketTrade.collateral))<500){
-            if(overtimeMarketTrade.isLive){
+
+          let amountInCurrency = formatV2Amount(overtimeMarketTrade.buyInAmount , overtimeMarketTrade.collateral)
+          let payoutInCurrency = formatV2Amount(roundTo2Decimals(buyIn * odds) , overtimeMarketTrade.collateral);
+          if(Number(multiplier*amountInCurrency)<500){
+            if(payoutInCurrency>=1000){
+              let overtimeTradesChannel = await clientNewListings.channels
+                  .fetch("1272945193016098849");
+              overtimeTradesChannel.send(message);
+            } else if(overtimeMarketTrade.isLive){
               let overtimeTradesChannel = await clientNewListings.channels
                   .fetch("1250500936120406177");
               overtimeTradesChannel.send(message);
@@ -8144,4 +7414,239 @@ async function getLiqV2(address, divider, text, clientV2LQ, symbol){
       "TVL= "+getNumberLabelDecimals(TVL)+symbol,
       { type: "WATCHING" }
   );
+}
+
+
+let thalesPrice = 0.22;
+let ethPrice = 3000;
+
+async function updateTokenPrice() {
+
+  let dataThales = await CoinGeckoClient.coins.fetch("thales");
+  if(dataThales.data && dataThales.data.market_data) {
+    thalesPrice =   dataThales.data.market_data.current_price.usd;
+  }
+
+  let dataETH = await CoinGeckoClient.coins.fetch("ethereum");
+  if(dataETH.data && dataETH.data.market_data) {
+    ethPrice =   dataETH.data.market_data.current_price.usd;
+  }
+}
+
+
+async function getOvertimeV2ARBTrades(){
+
+  let activeTickets = await v2ARBContract.methods.getActiveTickets(0,10000).call();
+  let overtimeTrades = await v2ARBTicketContract.methods.getTicketsData(activeTickets).call();
+  let typeInfoMap = await axios.get('https://api.thalesmarket.io/overtime-v2/market-types');//api.thalesmarket.io/overtime-v2/market-types;
+  let sportsInfoMap = await axios.get('https://api.thalesmarket.io/overtime-v2/sports');
+  typeInfoMap = typeInfoMap.data;
+  sportsInfoMap = sportsInfoMap.data;
+  const sportMap = new Map(Object.entries(JSON.parse(JSON.stringify(sportsInfoMap))));
+  const typeMap = new Map(Object.entries(JSON.parse(JSON.stringify(typeInfoMap))));
+  var startdate = new Date();
+  var durationInMinutes = 1440;
+  startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
+  let startDateUnixTime = Math.floor(startdate.getTime());
+  for (const overtimeMarketTrade of overtimeTrades) {
+    if (startDateUnixTime < Number(overtimeMarketTrade.createdAt * 1000) && !writenOvertimeV2Trades.includes(overtimeMarketTrade.id)) {
+      try {
+        let moneySymbol;
+        let multiplier = 1;
+        if (overtimeMarketTrade.collateral=="0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"){
+          moneySymbol = "weth";
+          multiplier = ethPrice;
+        } else if (overtimeMarketTrade.collateral=="0xE85B662Fe97e8562f4099d8A1d5A92D4B453bF30"){
+          moneySymbol = "THALES";
+          multiplier = thalesPrice;
+        } else {
+          moneySymbol = "USDC";
+        }
+        let buyIn = roundTo2Decimals(formatV2ARBAmount(overtimeMarketTrade.buyInAmount , overtimeMarketTrade.collateral));
+        let odds = oddslib.from('impliedProbability', overtimeMarketTrade.totalQuote / 1e18).decimalValue.toFixed(3)
+        if (overtimeMarketTrade.marketsData.length==1) {
+          let {marketType, marketMessage, betMessage} = await getV2MessageContent(overtimeMarketTrade,typeMap);
+
+          let linkTransaction;
+          linkTransaction = "https://arbiscan.io/address/"
+          var message = new Discord.MessageEmbed()
+              .addFields(
+                  {
+                    name: "Overtime V2 Market Trade",
+                    value: "\u200b",
+                  },
+                  {
+                    name: ":classical_building: Overtime market:",
+                    value:
+                        "[" +
+                        marketMessage +
+                        "](https://v2.overtimemarkets.xyz/markets/" +
+                        overtimeMarketTrade.marketsData[0].gameId +
+                        ")",
+                  },
+                  {
+                    name: ":coin: Bet type:",
+                    value: marketType,
+                  },
+                  {
+                    name: ":coin: Position:",
+                    value: betMessage,
+                  },
+                  {
+                    name: ":link: Ticket address:",
+                    value:
+                        "[" +
+                        overtimeMarketTrade.id +
+                        "](" + linkTransaction +
+                        overtimeMarketTrade.id +
+                        ")",
+                  },
+                  {
+                    name: ":coin: Buy in Amount:",
+                    value: buyIn + " " + moneySymbol
+                  },
+                  {
+                    name: ":coin: Payout:",
+                    value: roundTo2Decimals(buyIn * odds) + " "+ moneySymbol ,
+                  },
+                  {
+                    name: ":coin: Fees:",
+                    value: formatV2ARBAmount(overtimeMarketTrade.fees , overtimeMarketTrade.collateral).toFixed(2) + " " + moneySymbol ,
+                  },
+                  {
+                    name: ":coin: Odds:",
+                    value: odds,
+                  },
+                  {
+                    name: ":alarm_clock: Game time:",
+                    value: new Date(overtimeMarketTrade.marketsData[0].maturity * 1000),
+                  },
+                  {
+                    name: ":alarm_clock: Timestamp:",
+                    value: new Date(overtimeMarketTrade.createdAt * 1000),
+                  }
+              )
+              .setColor("#0037ff");
+
+
+          let amountInCurrency = formatV2ARBAmount(overtimeMarketTrade.buyInAmount , overtimeMarketTrade.collateral);
+          let payoutInCurrency = formatV2ARBAmount(roundTo2Decimals(buyIn * odds) , overtimeMarketTrade.collateral);
+
+          if(Number(multiplier*amountInCurrency)<500){
+            if(payoutInCurrency>=1000){
+              let overtimeTradesChannel = await clientNewListings.channels
+                  .fetch("1272950140637806705");
+              overtimeTradesChannel.send(message);
+            } else if(overtimeMarketTrade.isLive){
+              let overtimeTradesChannel = await clientNewListings.channels
+                  .fetch("1272539526274744390");
+              overtimeTradesChannel.send(message);
+            } else {
+              let overtimeTradesChannel = await clientNewListings.channels
+                  .fetch("1272539024464281622");
+              overtimeTradesChannel.send(message);}
+          } else{
+            if(overtimeMarketTrade.isLive){
+              let overtimeTradesChannel = await clientNewListings.channels
+                  .fetch("1272539696672804907");
+              overtimeTradesChannel.send(message);
+            } else {
+              let overtimeTradesChannel = await clientNewListings.channels
+                  .fetch("1272539294258561045");
+              overtimeTradesChannel.send(message); }
+          }
+          writenOvertimeV2Trades.push(overtimeMarketTrade.id);
+          redisClient.lpush(overtimeV2TradesKey, overtimeMarketTrade.id);
+
+        } else {
+          let parlayMessage = "";
+          parlayMessage = await getV2ParlayMessage(overtimeMarketTrade, parlayMessage,typeMap);
+          let linkTransaction;
+          linkTransaction = "https://arbiscan.io/address/"
+
+          var message = new Discord.MessageEmbed()
+              .addFields(
+                  {
+                    name: "Overtime V2 Market Trade",
+                    value: "\u200b",
+                  },
+                  {
+                    name: ":classical_building: Overtime market:",
+                    value:
+                        "[" +
+                        parlayMessage +
+                        "](https://v2.overtimemarkets.xyz/markets/" +
+                        overtimeMarketTrade.marketsData[0].gameId +
+                        ")",
+                  },
+                  {
+                    name: ":link: Ticket address:",
+                    value:
+                        "[" +
+                        overtimeMarketTrade.id +
+                        "](" + linkTransaction +
+                        overtimeMarketTrade.id +
+                        ")",
+                  },
+                  {
+                    name: ":coin: Buy in Amount:",
+                    value: buyIn + " " + moneySymbol
+                  },
+                  {
+                    name: ":coin: Payout:",
+                    value: roundTo2Decimals(buyIn * odds) + " "+ moneySymbol ,
+                  },
+                  {
+                    name: ":coin: Fees:",
+                    value: formatV2ARBAmount(overtimeMarketTrade.fees , overtimeMarketTrade.collateral).toFixed(2) + " " + moneySymbol,
+                  },
+                  {
+                    name: ":coin: Total Quote:",
+                    value: odds,
+                  },
+                  {
+                    name: ":alarm_clock: End time:",
+                    value: new Date(overtimeMarketTrade.expiry * 1000),
+                  },
+                  {
+                    name: ":alarm_clock: Timestamp:",
+                    value: new Date(overtimeMarketTrade.createdAt * 1000),
+                  }
+              )
+              .setColor("#0037ff");
+
+          let amountInCurrency = formatV2ARBAmount(overtimeMarketTrade.buyInAmount , overtimeMarketTrade.collateral)
+          let payoutInCurrency = formatV2ARBAmount(roundTo2Decimals(buyIn * odds) , overtimeMarketTrade.collateral);
+          if(Number(multiplier*amountInCurrency)<500){
+            if(payoutInCurrency>=1000){
+              let overtimeTradesChannel = await clientNewListings.channels
+                  .fetch("1272950140637806705");
+              overtimeTradesChannel.send(message);
+            } else if(overtimeMarketTrade.isLive){
+              let overtimeTradesChannel = await clientNewListings.channels
+                  .fetch("1272539526274744390");
+              overtimeTradesChannel.send(message);
+            } else {
+              let overtimeTradesChannel = await clientNewListings.channels
+                  .fetch("1272539024464281622");
+              overtimeTradesChannel.send(message);}
+          } else{
+            if(overtimeMarketTrade.isLive){
+              let overtimeTradesChannel = await clientNewListings.channels
+                  .fetch("1272539696672804907");
+              overtimeTradesChannel.send(message);
+            } else {
+              let overtimeTradesChannel = await clientNewListings.channels
+                  .fetch("1272539294258561045");
+              overtimeTradesChannel.send(message); }}
+          writenOvertimeV2Trades.push(overtimeMarketTrade.id);
+          redisClient.lpush(overtimeV2TradesKey, overtimeMarketTrade.id);
+        }
+
+
+      } catch (e) {
+        console.log("There was a problem while getting overtime V2 trades",e);
+      }
+    }
+  }
 }
