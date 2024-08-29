@@ -53,6 +53,15 @@ clientLiqV2THALES.login(process.env.BOT_TOKEN_LQ_V2_THALES);
 const clientLiqV2WETH = new Discord.Client();
 clientLiqV2WETH.login(process.env.BOT_TOKEN_LQ_V2_WETH);
 
+const clientLiqV2USDCARB = new Discord.Client();
+clientLiqV2USDCARB.login(process.env.BOT_TOKEN_LQ_V2_USDC_ARB);
+
+const clientLiqV2THALESARB = new Discord.Client();
+clientLiqV2THALESARB.login(process.env.BOT_TOKEN_LQ_V2_THALES_ARB);
+
+const clientLiqV2WETHARB = new Discord.Client();
+clientLiqV2WETHARB.login(process.env.BOT_TOKEN_LQ_V2_WETH_ARB);
+
 
 
 const clientTPV = new Discord.Client();
@@ -101,6 +110,9 @@ let burnedRaw = fs.readFileSync('contracts/burned.json');
 let contractBurned = JSON.parse(burnedRaw);
 const web3Polygon = new Web3(new Web3.providers.HttpProvider("https://polygon-mainnet.infura.io/v3/71f890a2441d49088e4e145b2bc23bc7"));
 const web3Arbitrum = new Web3(new Web3.providers.HttpProvider("https://arbitrum-mainnet.infura.io/v3/71f890a2441d49088e4e145b2bc23bc7"));
+
+const web3ArbitrumV2 = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_ARB_URL));
+
 const web3ZKSYNC = new Web3(new Web3.providers.HttpProvider("https://mainnet.era.zksync.io"));
 const web3BSC = new Web3(new Web3.providers.HttpProvider("https://winter-spring-frost.bsc.discover.quiknode.pro/360e06c724df630e0a6aa4417dedfb41142a3184/"));
 let bscRaw = fs.readFileSync('contracts/bsc.json');
@@ -159,9 +171,9 @@ let contractV2TicketRaw = fs.readFileSync('contracts/v2overtimeTicket.json');
 let v2ContractTicketRaw = JSON.parse(contractV2TicketRaw);
 let v2TicketContract = new web3L2.eth.Contract(v2ContractTicketRaw,"0x71CE219942FFD9C1d8B67d6C35C39Ae04C4F647B");
 
-let v2ARBContract = new web3Arbitrum.eth.Contract(v2ContractRaw,"0xB155685132eEd3cD848d220e25a9607DD8871D38");
+let v2ARBContract = new web3ArbitrumV2.eth.Contract(v2ContractRaw,"0xB155685132eEd3cD848d220e25a9607DD8871D38");
 
-let v2ARBTicketContract = new web3Arbitrum.eth.Contract(v2ContractTicketRaw,"0x04386f9b2b4f713984Fe0425E46a376201641649");
+let v2ARBTicketContract = new web3ArbitrumV2.eth.Contract(v2ContractTicketRaw,"0x04386f9b2b4f713984Fe0425E46a376201641649");
 
 let liqV2Raw = fs.readFileSync('contracts/liqV2THALES.json');
 let liqV2Contract = JSON.parse(liqV2Raw);
@@ -304,9 +316,9 @@ clientThalesBot.once("ready", () => {
   setPriceBot(clientETHPriceBot,"ethereum","ETH");
 });*/
 
-clientILVBot.once("ready", () => {
+/*clientILVBot.once("ready", () => {
   setPriceBot(clientILVBot,"illuvium","ILV");
-});
+});*/
 
 /*clientBTC.on("ready", () => {
   setPriceBot(clientBTC,"bitcoin","BTC");
@@ -324,9 +336,9 @@ clientILVBot.once("ready", () => {
   setPriceBot(clientMATICBot,"matic-network","MATIC");
 });*/
 
-clientKWENTABot.once("ready", () => {
+/*clientKWENTABot.once("ready", () => {
   setPriceBot(clientKWENTABot,"kwenta","KWENTA");
-});
+});*/
 
 /*clientARBPriceBot.once("ready", () => {
   setPriceBot(clientARBPriceBot,"arbitrum","ARB");
@@ -341,10 +353,11 @@ clientKWENTABot.once("ready", () => {
 
 setInterval(function () {
   console.log("updating price bots");
+  setPriceBot(clientThalesBot,"thales","Thales");
    /* setPriceBot(clientBTC,"bitcoin","BTC");
     setPriceBot(clientThalesBot,"thales","Thales");
     setPriceBot(clientETHPriceBot,"ethereum","ETH");*/
-    setPriceBot(clientILVBot,"illuvium","ILV");
+   // setPriceBot(clientILVBot,"illuvium","ILV");
    // setPriceBot(clientLink,"chainlink","LINK");
 }, 30 * 60 * 1000);
 
@@ -353,7 +366,7 @@ setInterval(function () {
 
  /* setPriceBot(clientOP,"optimism","OP");
   setPriceBot(clientMATICBot,"matic-network","MATIC");*/
-  setPriceBot(clientKWENTABot,"kwenta","KWENTA");
+//  setPriceBot(clientKWENTABot,"kwenta","KWENTA");
 /*  setPriceBot(clientARBPriceBot,"arbitrum","ARB");
   setPriceBot(clientGMXBot,"gmx","GMX");
   setPriceBot(clientMagicBot,"magic","Magic");*/
@@ -3189,6 +3202,53 @@ const getL2TotalVolume = async () => {
   }
 };
 
+
+const getArbAndOPTotalVolumeAndTrades = async () => {
+  try {
+    let response = await axios.get('https://api.dune.com/api/v1/query/4028056/results?api_key=Uw9psUEEkk00Gzg8zoavadoqUXEGaIos');
+
+    response.data.result.rows.forEach(function(value){
+      console.log(value);
+      if(value["chain"]=="Optimism"){
+        let totalVolumeOP =  Math.trunc((value["volume"]));
+        let totalUsersOP =  Math.trunc((value["user"]));
+        clientOvertimeTrades.guilds.cache.forEach(function (value, key) {
+          try {
+            value.members.cache
+                .get(clientOvertimeTrades.user.id)
+                .setNickname("OT Op="+getNumberLabelDecimals(totalVolumeOP)+"$");
+          } catch (e) {
+            console.log('error while updating amount of trades OT'+e);
+          }
+        });
+        clientOvertimeTrades.user.setActivity(
+            "Users ="+numberWithCommas(totalUsersOP),
+            { type: "WATCHING" }
+        );
+      } else if(value["chain"]=="Arbitrum"){
+        let totalVolumeOP =  Math.trunc((value["volume"]));
+        let totalUsersOP =  Math.trunc((value["user"]));
+        clientOverTimeArbTotal.guilds.cache.forEach(function (value, key) {
+          try {
+            value.members.cache
+                .get(clientOverTimeArbTotal.user.id)
+                .setNickname("OT Arb="+getNumberLabelDecimals(totalVolumeOP)+"$");
+          } catch (e) {
+            console.log('error while updating amount of trades OT'+e);
+          }
+        });
+        clientOverTimeArbTotal.user.setActivity(
+            "Users ="+numberWithCommas(totalUsersOP),
+            { type: "WATCHING" }
+        );
+      }
+
+
+    });
+  }catch (e) {
+    console.log("error while updating dune "+e);
+  }
+};
 async function updateTotalL2Trades() {
   try {
     clientTotalL2Trades.guilds.cache.forEach(function (value, key) {
@@ -3250,7 +3310,7 @@ setInterval(function () {
 
 setInterval(function () {
   console.log("get total l2 volume");
-  getL2TotalVolume();
+  getArbAndOPTotalVolumeAndTrades();
 }, 360 * 2 * 1000);
 
 
@@ -3288,6 +3348,13 @@ setInterval(function () {
   getLiqV2("0x0fe1044Fc8C05482102Db14368fE88791E9B8698",1e6,"OP V2 PNL ",clientLiqV2USDC,"$");
   getLiqV2("0x4f2822D4e60af7f9F70E7e45BC1941fe3461231e",1e18,"OP V2 PNL ", clientLiqV2WETH," WETH");
   getLiqV2("0xE59206b08cC96Da0818522C75eE3Fd4EBB7c0A47",1e18,"OP V2 PNL ",clientLiqV2THALES," THALES");
+
+  getLiqArbV2("0x22D180F39A0eB66098cf839AF5e3C6b009383B6A",1e6,"ARB V2 PNL ",clientLiqV2USDCARB,"$");
+  getLiqArbV2("0xcB4728a1789B87E05c813B68DBc5E6A98a4856bA",1e18,"ARB V2 PNL ", clientLiqV2WETHARB," WETH");
+  getLiqArbV2("0x9733AB157f5A89f0AD7460d08F869956aE2018dA",1e18,"ARB V2 PNL ",clientLiqV2THALESARB," THALES");
+
+
+
 }, 200 * 1000);
 
 async function calculateThalesL2APR() {
@@ -4276,47 +4343,7 @@ async function syncOvertimeMarkets() {
 }
 
 
-async function updateTotalOvertimeTrades() {
-  try {
-    clientOvertimeTrades.guilds.cache.forEach(function (value, key) {
-      try {
-        console.log("for guild "+value+" value is "+totalAmountOfTradesOT);
-        value.members.cache
-            .get(clientOvertimeTrades.user.id)
-            .setNickname("OT Op="+getNumberLabelDecimals(totalAmountOfTradesOT)+"$");
-      } catch (e) {
-        console.log('error while updating amount of trades OT'+e);
-      }
-    });
-    clientOvertimeTrades.user.setActivity(
-        "Trades OT="+numberWithCommas(numberOfTradesOT),
-        { type: "WATCHING" }
-    );
-  }catch (e) {
-    console.log("there was an error while updating total OT");
-  }
-}
 
-async function updateTotalOvertimeARBTrades() {
-  try {
-    clientOverTimeArbTotal.guilds.cache.forEach(function (value, key) {
-      try {
-        console.log("for guild "+value+" value is "+totalAmountOvertimeARB);
-        value.members.cache
-            .get(clientOverTimeArbTotal.user.id)
-            .setNickname("OT Arb="+getNumberLabelDecimals(totalAmountOvertimeARB)+"$");
-      } catch (e) {
-        console.log('error while updating amount of trades OT'+e);
-      }
-    });
-    clientOverTimeArbTotal.user.setActivity(
-        "ARB OT Total Vol",
-        { type: "WATCHING" }
-    );
-  }catch (e) {
-    console.log("there was an error while updating total OT");
-  }
-}
 
 async function getArbitrumTrades() {
 
@@ -7213,7 +7240,7 @@ async function getOvertimeV2Trades(){
 
 
           let amountInCurrency = formatV2Amount(overtimeMarketTrade.buyInAmount , overtimeMarketTrade.collateral);
-          let payoutInCurrency = formatV2Amount(roundTo2Decimals(buyIn * odds) , overtimeMarketTrade.collateral);
+          let payoutInCurrency =  multiplier * roundTo2Decimals(buyIn * odds);
           if(Number(multiplier*amountInCurrency)<500){
             if(payoutInCurrency>=1000){
               let overtimeTradesChannel = await clientNewListings.channels
@@ -7298,7 +7325,7 @@ async function getOvertimeV2Trades(){
               .setColor("#0037ff");
 
           let amountInCurrency = formatV2Amount(overtimeMarketTrade.buyInAmount , overtimeMarketTrade.collateral)
-          let payoutInCurrency = formatV2Amount(roundTo2Decimals(buyIn * odds) , overtimeMarketTrade.collateral);
+          let payoutInCurrency = multiplier * roundTo2Decimals(buyIn * odds);
           if(Number(multiplier*amountInCurrency)<500){
             if(payoutInCurrency>=1000){
               let overtimeTradesChannel = await clientNewListings.channels
@@ -7381,21 +7408,19 @@ async function updateTotalUsers() {
 }
 
 
-async function getLiqV2(address, divider, text, clientV2LQ, symbol){
-
-  const liqContract = new web3L2.eth.Contract(liqV2Contract, address);
+async function setLIQV2Values(liqContract, divider, clientV2LQ, text, symbol) {
   const round = await liqContract.methods.round().call();
   let cumulativeProfitAndLoss = 0;
-  if(round>1)
-    cumulativeProfitAndLoss = await liqContract.methods.cumulativeProfitAndLoss(round-1).call();
+  if (round > 1)
+    cumulativeProfitAndLoss = await liqContract.methods.cumulativeProfitAndLoss(round - 1).call();
   else
     cumulativeProfitAndLoss = await liqContract.methods.cumulativeProfitAndLoss(round).call();
-  cumulativeProfitAndLoss = Number(cumulativeProfitAndLoss/1e18) - 1;
+  cumulativeProfitAndLoss = Number(cumulativeProfitAndLoss / 1e18) - 1;
   let positive = "+";
-  if(cumulativeProfitAndLoss<0){
-    positive="-";
+  if (cumulativeProfitAndLoss < 0) {
+    positive = "-";
   }
-  cumulativeProfitAndLoss = (cumulativeProfitAndLoss*100).toFixed(2);
+  cumulativeProfitAndLoss = (cumulativeProfitAndLoss * 100).toFixed(2);
   let allocationPerRound = await liqContract.methods.allocationPerRound(round).call();
   allocationPerRound = Math.round(allocationPerRound / divider);
   let TVL = await liqContract.methods.totalDeposited().call();
@@ -7405,15 +7430,27 @@ async function getLiqV2(address, divider, text, clientV2LQ, symbol){
     try {
       value.members.cache
           .get(clientV2LQ.user.id)
-          .setNickname(text+positive+getNumberLabelDecimals(cumulativeProfitAndLoss)+"%");
+          .setNickname(text + positive + getNumberLabelDecimals(cumulativeProfitAndLoss) + "%");
     } catch (e) {
-      console.log('error while clientLiqARBThales '+e);
+      console.log('error while clientLiqARBThales ' + e);
     }
   });
   clientV2LQ.user.setActivity(
-      "TVL= "+getNumberLabelDecimals(TVL)+symbol,
-      { type: "WATCHING" }
+      "TVL= " + getNumberLabelDecimals(TVL) + symbol,
+      {type: "WATCHING"}
   );
+}
+
+async function getLiqV2(address, divider, text, clientV2LQ, symbol){
+
+  const liqContract = new web3L2.eth.Contract(liqV2Contract, address);
+  await setLIQV2Values(liqContract, divider, clientV2LQ, text, symbol);
+}
+
+async function getLiqArbV2(address, divider, text, clientV2LQ, symbol){
+
+  const liqContract = new web3Arbitrum.eth.Contract(liqV2Contract, address);
+  await setLIQV2Values(liqContract, divider, clientV2LQ, text, symbol);
 }
 
 
@@ -7530,34 +7567,33 @@ async function getOvertimeV2ARBTrades(){
 
 
           let amountInCurrency = formatV2ARBAmount(overtimeMarketTrade.buyInAmount , overtimeMarketTrade.collateral);
-          let payoutInCurrency = formatV2ARBAmount(roundTo2Decimals(buyIn * odds) , overtimeMarketTrade.collateral);
-
+          let payoutInCurrency = multiplier * roundTo2Decimals(buyIn * odds);
+          let overtimeTradesChannel;
           if(Number(multiplier*amountInCurrency)<500){
             if(payoutInCurrency>=1000){
-              let overtimeTradesChannel = await clientNewListings.channels
+               overtimeTradesChannel = await clientNewListings.channels
                   .fetch("1272950140637806705");
-              overtimeTradesChannel.send(message);
             } else if(overtimeMarketTrade.isLive){
-              let overtimeTradesChannel = await clientNewListings.channels
+               overtimeTradesChannel = await clientNewListings.channels
                   .fetch("1272539526274744390");
-              overtimeTradesChannel.send(message);
+
             } else {
-              let overtimeTradesChannel = await clientNewListings.channels
+               overtimeTradesChannel = await clientNewListings.channels
                   .fetch("1272539024464281622");
-              overtimeTradesChannel.send(message);}
+             }
           } else{
             if(overtimeMarketTrade.isLive){
-              let overtimeTradesChannel = await clientNewListings.channels
+               overtimeTradesChannel = await clientNewListings.channels
                   .fetch("1272539696672804907");
-              overtimeTradesChannel.send(message);
+
             } else {
-              let overtimeTradesChannel = await clientNewListings.channels
+               overtimeTradesChannel = await clientNewListings.channels
                   .fetch("1272539294258561045");
-              overtimeTradesChannel.send(message); }
+               }
           }
           writenOvertimeV2Trades.push(overtimeMarketTrade.id);
           redisClient.lpush(overtimeV2TradesKey, overtimeMarketTrade.id);
-
+          overtimeTradesChannel.send(message);
         } else {
           let parlayMessage = "";
           parlayMessage = await getV2ParlayMessage(overtimeMarketTrade, parlayMessage,typeMap);
@@ -7616,36 +7652,35 @@ async function getOvertimeV2ARBTrades(){
               .setColor("#0037ff");
 
           let amountInCurrency = formatV2ARBAmount(overtimeMarketTrade.buyInAmount , overtimeMarketTrade.collateral)
-          let payoutInCurrency = formatV2ARBAmount(roundTo2Decimals(buyIn * odds) , overtimeMarketTrade.collateral);
+          let payoutInCurrency = multiplier * roundTo2Decimals(buyIn * odds);
+          let overtimeTradesChannel;
           if(Number(multiplier*amountInCurrency)<500){
             if(payoutInCurrency>=1000){
-              let overtimeTradesChannel = await clientNewListings.channels
+               overtimeTradesChannel = await clientNewListings.channels
                   .fetch("1272950140637806705");
-              overtimeTradesChannel.send(message);
             } else if(overtimeMarketTrade.isLive){
-              let overtimeTradesChannel = await clientNewListings.channels
+               overtimeTradesChannel = await clientNewListings.channels
                   .fetch("1272539526274744390");
-              overtimeTradesChannel.send(message);
             } else {
-              let overtimeTradesChannel = await clientNewListings.channels
+               overtimeTradesChannel = await clientNewListings.channels
                   .fetch("1272539024464281622");
-              overtimeTradesChannel.send(message);}
+            }
           } else{
             if(overtimeMarketTrade.isLive){
-              let overtimeTradesChannel = await clientNewListings.channels
+               overtimeTradesChannel = await clientNewListings.channels
                   .fetch("1272539696672804907");
-              overtimeTradesChannel.send(message);
             } else {
-              let overtimeTradesChannel = await clientNewListings.channels
+               overtimeTradesChannel = await clientNewListings.channels
                   .fetch("1272539294258561045");
-              overtimeTradesChannel.send(message); }}
+               }}
           writenOvertimeV2Trades.push(overtimeMarketTrade.id);
           redisClient.lpush(overtimeV2TradesKey, overtimeMarketTrade.id);
+          overtimeTradesChannel.send(message);
         }
 
 
       } catch (e) {
-        console.log("There was a problem while getting overtime V2 trades",e);
+        console.log("There was a problem while getting overtime V2 trades arb #@#@#@@#@",e);
       }
     }
   }
