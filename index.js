@@ -2797,7 +2797,7 @@ async function getL2Trades() {
                 },
                 {
                   name: ":dollar: Total:",
-                  value: parseFloat((amountUSD).toFixed(3)) + " sUSD",
+                  value: parseFloat((amountUSD).toFixed(3)) + " $",
                 },
                 {
                   name: ":alarm_clock: Timestamp:",
@@ -2838,8 +2838,8 @@ async function getL2Trades() {
           let paidAMM = parseFloat((amountUSD).toFixed(3));
           let potentialProfit = (amountAMM-paidAMM)>0.51? Math.round(amountAMM-paidAMM): amountAMM-paidAMM;
           newAMMTradeMessage = newAMMTradeMessage + 'Amount: '+parseFloat((amountShortLong).toFixed(3))+' '+downOrUP+' tokens\n';
-          newAMMTradeMessage = newAMMTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' sUSD\n';
-          newAMMTradeMessage = newAMMTradeMessage + 'Potential profit: '+potentialProfit+' sUSD ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
+          newAMMTradeMessage = newAMMTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' $\n';
+          newAMMTradeMessage = newAMMTradeMessage + 'Potential profit: '+potentialProfit+' $ ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
           //let tweetV2PostTweetResult = await twitterClientAMMMarket.v2.tweet(newAMMTradeMessage);
 
         }else {
@@ -2896,7 +2896,7 @@ async function getL2Trades() {
                   },
                   {
                     name: ":dollar: Total:",
-                    value: parseFloat((amountUSD).toFixed(3)) + " sUSD",
+                    value: parseFloat((amountUSD).toFixed(3)) + " $",
                   },
                   {
                     name: ":alarm_clock: Timestamp:",
@@ -2917,8 +2917,8 @@ async function getL2Trades() {
           let potentialProfit = (amountAMM-paidAMM)>0.51? Math.round(amountAMM-paidAMM): amountAMM-paidAMM;
           newRangeTradeMessage = newRangeTradeMessage + 'Maturity date: '+new Date(rangedMarket.maturityDate*1000).toISOString().slice(0, 10)+'\n';
           newRangeTradeMessage = newRangeTradeMessage + 'Amount: '+parseFloat((amountShortLong).toFixed(3))+' '+tradeL2.optionSide.toUpperCase()+' tokens\n';
-          newRangeTradeMessage = newRangeTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' sUSD\n';
-          newRangeTradeMessage = newRangeTradeMessage + 'Potential profit: '+potentialProfit+' sUSD ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
+          newRangeTradeMessage = newRangeTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' $\n';
+          newRangeTradeMessage = newRangeTradeMessage + 'Potential profit: '+potentialProfit+' $ ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
 
 
 
@@ -3064,7 +3064,7 @@ async function getPolygonTrades() {
                   },
                   {
                     name: ":dollar: Total:",
-                    value: parseFloat((amountUSD).toFixed(3)) + " sUSD",
+                    value: parseFloat((amountUSD).toFixed(3)) + " $",
                   },
                   {
                     name: ":alarm_clock: Timestamp:",
@@ -3081,8 +3081,8 @@ async function getPolygonTrades() {
           let potentialProfit = (amountAMM-paidAMM)>0.51? Math.round(amountAMM-paidAMM): amountAMM-paidAMM;
           newRangeTradeMessage = newRangeTradeMessage + 'Maturity date: '+new Date(rangedMarket.maturityDate*1000).toISOString().slice(0, 10)+'\n';
           newRangeTradeMessage = newRangeTradeMessage + 'Amount: '+parseFloat((amountShortLong).toFixed(3))+' '+polygonTrade.optionSide.toUpperCase()+' tokens\n';
-          newRangeTradeMessage = newRangeTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' sUSD\n';
-          newRangeTradeMessage = newRangeTradeMessage + 'Potential profit: '+potentialProfit+' sUSD ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
+          newRangeTradeMessage = newRangeTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' $\n';
+          newRangeTradeMessage = newRangeTradeMessage + 'Potential profit: '+potentialProfit+' $ ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
 
 
           //let tweetV2PostTweetResult = await twitterClientAMMMarket.v2.tweet(newRangeTradeMessage);
@@ -3648,8 +3648,8 @@ function isOpenBidPosition(array){
 
 setInterval(function () {
   console.log("get L2 trades");
-  getOvertimeV2ARBTrades();
-  getOvertimeV2Trades();
+  //getOvertimeV2ARBTrades();
+  //getOvertimeV2Trades();
   /* getOvertimeMarkets(10);
    getOvertimeMarkets(42161);
    getOvertimeMarkets(8453);
@@ -4335,9 +4335,9 @@ async function getOvertimeTrades(networkId){
          let potentialProfit = (overtimeMarketTrade.amount-overtimeMarketTrade.paid.toFixed(3))>0.51? Math.round(overtimeMarketTrade.amount-overtimeMarketTrade.paid.toFixed(3)): overtimeMarketTrade.amount-overtimeMarketTrade.paid.toFixed(3);
         newOvertimeAMMMessage = newOvertimeAMMMessage + marketMessage+'\n';
         newOvertimeAMMMessage = newOvertimeAMMMessage + 'Amount: '+ overtimeMarketTrade.amount+"\n";
-        newOvertimeAMMMessage = newOvertimeAMMMessage + 'Paid: '+ overtimeMarketTrade.paid.toFixed(3)+' sUSD\n';
+        newOvertimeAMMMessage = newOvertimeAMMMessage + 'Paid: '+ overtimeMarketTrade.paid.toFixed(3)+' $\n';
         newOvertimeAMMMessage = newOvertimeAMMMessage + 'Position: '+ position+'\n';
-        newOvertimeAMMMessage = newOvertimeAMMMessage + 'Potential profit: '+potentialProfit+' sUSD ('+calculatePercentageProfit(overtimeMarketTrade.amount,Number(overtimeMarketTrade.paid.toFixed(3)))+'%)\n';
+        newOvertimeAMMMessage = newOvertimeAMMMessage + 'Potential profit: '+potentialProfit+' $ ('+calculatePercentageProfit(overtimeMarketTrade.amount,Number(overtimeMarketTrade.paid.toFixed(3)))+'%)\n';
 
         let tweetV2PostTweetResult = await twitterClientOvertimeAMMMarket.v2.tweet(newOvertimeAMMMessage);
 
@@ -4498,7 +4498,7 @@ async function getArbitrumTrades() {
                 },
                 {
                   name: ":dollar: Total:",
-                  value: parseFloat((amountUSD).toFixed(3)) + " sUSD",
+                  value: parseFloat((amountUSD).toFixed(3)) + " $",
                 },
                 {
                   name: ":alarm_clock: Timestamp:",
@@ -4515,8 +4515,8 @@ async function getArbitrumTrades() {
         let potentialProfit = (amountAMM-paidAMM)>0.51? Math.round(amountAMM-paidAMM): amountAMM-paidAMM;
         newRangeTradeMessage = newRangeTradeMessage + 'Maturity date: '+new Date(rangedMarket.maturityDate).toISOString().slice(0, 10)+'\n';
         newRangeTradeMessage = newRangeTradeMessage + 'Amount: '+parseFloat((amountShortLong).toFixed(3))+' '+arbitrumTrade.optionSide.toUpperCase()+' tokens\n';
-        newRangeTradeMessage = newRangeTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' sUSD\n';
-        newRangeTradeMessage = newRangeTradeMessage + 'Potential profit: '+potentialProfit+' sUSD ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
+        newRangeTradeMessage = newRangeTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' $\n';
+        newRangeTradeMessage = newRangeTradeMessage + 'Potential profit: '+potentialProfit+' $ ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
 
        // let tweetV2PostTweetResult = await twitterClientAMMMarket.v2.tweet(newRangeTradeMessage);
 
@@ -4815,7 +4815,7 @@ async function getBSCTrades() {
                 },
                 {
                   name: ":dollar: Total:",
-                  value: parseFloat((amountUSD).toFixed(3)) + " sUSD",
+                  value: parseFloat((amountUSD).toFixed(3)) + " $",
                 },
                 {
                   name: ":alarm_clock: Timestamp:",
@@ -4832,8 +4832,8 @@ async function getBSCTrades() {
         let potentialProfit = (amountAMM-paidAMM)>0.51? Math.round(amountAMM-paidAMM): amountAMM-paidAMM;
         newRangeTradeMessage = newRangeTradeMessage + 'Maturity date: '+new Date(rangedMarket.maturityDate*1000).toISOString().slice(0, 10)+'\n';
         newRangeTradeMessage = newRangeTradeMessage + 'Amount: '+parseFloat((amountShortLong).toFixed(3))+' '+bscTrade.optionSide.toUpperCase()+' tokens\n';
-        newRangeTradeMessage = newRangeTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' sUSD\n';
-        newRangeTradeMessage = newRangeTradeMessage + 'Potential profit: '+potentialProfit+' sUSD ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
+        newRangeTradeMessage = newRangeTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' $\n';
+        newRangeTradeMessage = newRangeTradeMessage + 'Potential profit: '+potentialProfit+' $ ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
 
         //let tweetV2PostTweetResult = await twitterClientAMMMarket.v2.tweet(newRangeTradeMessage);
 
@@ -6273,7 +6273,7 @@ async function getBASETrades() {
                 },
                 {
                   name: ":dollar: Total:",
-                  value: parseFloat((amountUSD).toFixed(3)) + " sUSD",
+                  value: parseFloat((amountUSD).toFixed(3)) + " $",
                 },
                 {
                   name: ":alarm_clock: Timestamp:",
@@ -6314,8 +6314,8 @@ async function getBASETrades() {
           let paidAMM = parseFloat((amountUSD).toFixed(3));
           let potentialProfit = (amountAMM-paidAMM)>0.51? Math.round(amountAMM-paidAMM): amountAMM-paidAMM;
           newAMMTradeMessage = newAMMTradeMessage + 'Amount: '+parseFloat((amountShortLong).toFixed(3))+' '+downOrUP+' tokens\n';
-          newAMMTradeMessage = newAMMTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' sUSD\n';
-          newAMMTradeMessage = newAMMTradeMessage + 'Potential profit: '+potentialProfit+' sUSD ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
+          newAMMTradeMessage = newAMMTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' $\n';
+          newAMMTradeMessage = newAMMTradeMessage + 'Potential profit: '+potentialProfit+' $ ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
           //let tweetV2PostTweetResult = await twitterClientAMMMarket.v2.tweet(newAMMTradeMessage);
 
         }
@@ -6366,7 +6366,7 @@ async function getBASETrades() {
                   },
                   {
                     name: ":dollar: Total:",
-                    value: parseFloat((amountUSD).toFixed(3)) + " sUSD",
+                    value: parseFloat((amountUSD).toFixed(3)) + " $",
                   },
                   {
                     name: ":alarm_clock: Timestamp:",
@@ -6387,8 +6387,8 @@ async function getBASETrades() {
           let potentialProfit = (amountAMM-paidAMM)>0.51? Math.round(amountAMM-paidAMM): amountAMM-paidAMM;
           newRangeTradeMessage = newRangeTradeMessage + 'Maturity date: '+new Date(rangedMarket.maturityDate*1000).toISOString().slice(0, 10)+'\n';
           newRangeTradeMessage = newRangeTradeMessage + 'Amount: '+parseFloat((amountShortLong).toFixed(3))+' '+tradeBASE.optionSide.toUpperCase()+' tokens\n';
-          newRangeTradeMessage = newRangeTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' sUSD\n';
-          newRangeTradeMessage = newRangeTradeMessage + 'Potential profit: '+potentialProfit+' sUSD ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
+          newRangeTradeMessage = newRangeTradeMessage + 'Paid: '+parseFloat((amountUSD).toFixed(3))+' $\n';
+          newRangeTradeMessage = newRangeTradeMessage + 'Potential profit: '+potentialProfit+' $ ('+calculateProfitPercentageTotal(paidAMM,amountAMM)+'%)\n';
 
 
 
@@ -6639,7 +6639,10 @@ WINNER.push(0, 10011, 10012,
     10056,
     10057,
     10058,
-    10059
+    10059,
+    10019,
+    10020,
+    10130
 );
 
 let HANDICAP = new Array;
@@ -6654,6 +6657,7 @@ HANDICAP.push(10001,
     10047,
     10048,
     10049,
+    10071,
     10072,
     10073,
     10074,
@@ -6663,6 +6667,15 @@ HANDICAP.push(10001,
     10078,
     10079
 );
+
+
+let WINNING_ROUND = new Array;
+WINNING_ROUND.push(10151);
+
+let ENDING_METHOD = new Array;
+ENDING_METHOD.push(10157);
+let METHOD_OF_VICTORY = new Array;
+METHOD_OF_VICTORY.push(10158);
 
 let TOTAL_HOME_FIRST = new Array;
 TOTAL_HOME_FIRST.push(10111)
@@ -6717,7 +6730,39 @@ TOTAL.push(10002,
     11060,
     11086,
     11097,
-    11098);
+    11098,
+    11011,
+    11200,
+    11011,
+    11200,
+    11201,
+    11202,
+    11204,
+    11205,
+    11206,
+    11207,
+    11208,
+    11209,
+    11210,
+    11211,
+    11212,
+    11213,
+    11214,
+    11215,
+    11216,
+    11217,
+    11218,
+    11219,
+    11220,
+    11221,
+    11222,
+    11223,
+    11225,
+    11226,
+    11227,
+    11228,
+    11229,
+    11230);
 
 let W_TOTAL = new Array;
 W_TOTAL.push(10004);
@@ -6839,7 +6884,52 @@ async function getV2MessageContent(overtimeMarketTrade,typeMap) {
     } else {
       betMessage = "Draw";
     }
-  } else if(CORRECT_SCORE_LIST.includes(marketId)){
+  } else if(WINNING_ROUND.includes(marketId)){
+    switch (position) {
+      case 0:
+        betMessage = "Draw";
+      case 1:
+        betMessage = "By decision";
+      default: {
+        let round = position -1;
+        betMessage = "Round: "+round;
+      }
+    }
+  }
+  else if(ENDING_METHOD.includes(position)){
+    switch (position) {
+      case 0:
+        betMessage = "Draw";
+      case 1:
+        betMessage = "By decision";
+      case 2:
+        betMessage = "KO/TKO/DQ";
+      case 3:
+        betMessage = "Submission";
+      default: betMessage = "";
+    }
+  }
+  else if(METHOD_OF_VICTORY.includes(marketId)){
+    switch (position) {
+      case 0:
+        return 'Draw';
+      case 1:
+        return homeTeam+" (Decision)";
+      case 2:
+        return homeTeam+" (KO/TKO/DQ)";
+      case 3:
+        return homeTeam+" (Submission)";
+      case 4:
+        return awayTeam+" (Decision)";
+      case 5:
+        return awayTeam+" (KO/TKO/DQ)";
+      case 6:
+        return awayTeam+" (Submission)";
+      default:
+        return '';
+    }
+  }
+  else if(CORRECT_SCORE_LIST.includes(marketId)){
     betMessage =  CORRECT_SCORE_MAP.get(position);
   }
   else if (HANDICAP.includes(marketId)) {
@@ -7054,6 +7144,51 @@ async function getV2ParlayMessage(overtimeMarketTrade, parlayMessage,typeMap) {
       }  else if(CORRECT_SCORE_LIST.includes(marketId)){
         betMessage =  CORRECT_SCORE_MAP.get(position);
       }
+      else if(WINNING_ROUND.includes(marketId)){
+        switch (position) {
+          case 0:
+            betMessage = "Draw";
+          case 1:
+            betMessage = "By decision";
+          default: {
+            let round = position -1;
+            betMessage = "Round: "+round;
+          }
+        }
+      }
+      else if(ENDING_METHOD.includes(position)){
+        switch (position) {
+          case 0:
+            betMessage = "Draw";
+          case 1:
+            betMessage = "By decision";
+          case 2:
+            betMessage = "KO/TKO/DQ";
+          case 3:
+            betMessage = "Submission";
+          default: betMessage = "";
+        }
+      }
+      else if(METHOD_OF_VICTORY.includes(marketId)){
+        switch (position) {
+          case 0:
+            return 'Draw';
+          case 1:
+            return homeTeam+" (Decision)";
+          case 2:
+            return homeTeam+" (KO/TKO/DQ)";
+          case 3:
+            return homeTeam+" (Submission)";
+          case 4:
+            return awayTeam+" (Decision)";
+          case 5:
+            return awayTeam+" (KO/TKO/DQ)";
+          case 6:
+            return awayTeam+" (Submission)";
+          default:
+            return '';
+        }
+      }
       else if (HANDICAP.includes(marketId)) {
         if (isTenisV2(marketsData.sportId)) {
           if (position == 0) {
@@ -7233,7 +7368,7 @@ async function getOvertimeV2Trades(){
   startdate.setMinutes(startdate.getMinutes() - durationInMinutes);
   let startDateUnixTime = Math.floor(startdate.getTime());
   console.log("##### length before is "+overtimeTrades.length);
-  overtimeTrades = await overtimeTrades.filter(item => !writenOvertimeV2ARBTrades.includes(item.id) && startDateUnixTime < Number(item.createdAt * 1000));
+  overtimeTrades = await overtimeTrades.filter(item => !writenOvertimeV2Trades.includes(item.id) && startDateUnixTime < Number(item.createdAt * 1000));
   console.log("##### length is "+overtimeTrades.length);
   let overtimeTradesUQ = await overtimeTrades.filter((value, index, self) =>
           index === self.findIndex((t) => (
