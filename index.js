@@ -62,6 +62,21 @@ clientLiqV2THALESARB.login(process.env.BOT_TOKEN_LQ_V2_THALES_ARB);
 const clientLiqV2WETHARB = new Discord.Client();
 clientLiqV2WETHARB.login(process.env.BOT_TOKEN_LQ_V2_WETH_ARB);
 
+const clientLiqV2USDCBASE = new Discord.Client();
+clientLiqV2USDCBASE.login(process.env.BOT_TOKEN_LQ_V2_USDC_BASE);
+
+const clientLiqV2THALESBASE = new Discord.Client();
+clientLiqV2THALESBASE.login(process.env.BOT_TOKEN_LQ_V2_THALES_BASE);
+
+const clientLiqV2BTCBASE = new Discord.Client();
+clientLiqV2BTCBASE.login(process.env.BOT_TOKEN_LQ_V2_BTC_BASE);
+
+const clientLiqV2WETHBASE = new Discord.Client();
+clientLiqV2WETHBASE.login(process.env.BOT_TOKEN_LQ_V2_WETH_BASE);
+
+const clientLiqV2BTCARB = new Discord.Client();
+clientLiqV2BTCARB.login(process.env.BOT_TOKEN_LQ_V2_BTC_ARB);
+
 
 
 const clientTPV = new Discord.Client();
@@ -289,7 +304,7 @@ answersContent.forEach((a) => {
 
 
 clientTotalBurnedThales.once("ready", () => {
-  console.log("updating Burned Thales on ready");
+  console.log("updating Burned OVER on ready");
   getBurnedThalesBalance();
 });
 
@@ -324,7 +339,7 @@ client.on("ready", () => {
 });*/
 
 clientThalesBot.once("ready", () => {
-  //setPriceBot(clientThalesBot,"thales","Thales");
+  //setPriceBot(clientThalesBot,"thales","OVER");
 });
 
 /*clientThalesBot.once("ready", () => {
@@ -368,9 +383,9 @@ clientThalesBot.once("ready", () => {
 
 setInterval(function () {
   console.log("updating price bots");
-  //setPriceBot(clientThalesBot,"thales","Thales");
+  //setPriceBot(clientThalesBot,"thales","OVER");
    /* setPriceBot(clientBTC,"bitcoin","BTC");
-    setPriceBot(clientThalesBot,"thales","Thales");
+    setPriceBot(clientThalesBot,"thales","OVER");
     setPriceBot(clientETHPriceBot,"ethereum","ETH");*/
    // setPriceBot(clientILVBot,"illuvium","ILV");
    // setPriceBot(clientLink,"chainlink","LINK");
@@ -455,7 +470,7 @@ const updateGameCountdown = async () => {
       try {
         value.members.cache
             .get(clientGameCountdown.user.id)
-            .setNickname("Tale of Thales");
+            .setNickname("Tale of OVER");
       } catch (e) {
         console.log(e);
       }
@@ -474,7 +489,7 @@ const updateThalesRoyaleMainnetCountdown = async () => {
       try {
         value.members.cache
             .get(clientRoyaleMainnetCountdown.user.id)
-            .setNickname("Thales Royale Optimism");
+            .setNickname("OVER Royale Optimism");
       } catch (e) {
         console.log(e);
       }
@@ -553,11 +568,11 @@ client.on("guildMemberAdd", function (member) {
     .setColor("#0099ff")
     .setTitle("Welcome");
   exampleEmbed.addField(
-    "Hi, I am Thales FAQ bot. Welcome to the official Thales Discord channel!"
+    "Hi, I am OVER FAQ bot. Welcome to the official OVER Discord channel!"
   );
   exampleEmbed.addField(
-    "About Thales",
-    "Thales platform is bringing binary options to Ethereum for users to hedge and speculate on the prices of crypto assets, commodities," +
+    "About OVER",
+    "OVER platform is bringing binary options to Ethereum for users to hedge and speculate on the prices of crypto assets, commodities," +
       " equities, equity indices, and proprietary crypto indices."
   );
   exampleEmbed.addField(
@@ -565,7 +580,7 @@ client.on("guildMemberAdd", function (member) {
     "For any questions, please feel free to ask me and I will look through the list of FAQs I have. We get can get started if you send me a message with content ***help***" +
       "\n" +
       "Best, \n" +
-      "Thales Team"
+      "OVER Team"
   );
 
   member.send(exampleEmbed);
@@ -647,7 +662,7 @@ client.on("message", (msg) => {
 
       if (msg.content.toLowerCase().trim() == "!faq") {
         msg.reply(
-          "Hi "+discordUserFAQ +", I am Thales FAQ bot. I will be very happy to assist you, just ask me for **help** in DM."
+          "Hi "+discordUserFAQ +", I am OVER FAQ bot. I will be very happy to assist you, just ask me for **help** in DM."
         );
       } else if (msg.content.toLowerCase().trim() == "!faq help") {
         msg.reply(
@@ -932,7 +947,7 @@ client.on("message", (msg) => {
   function doFaqHelp() {
     const exampleEmbed = new Discord.MessageEmbed()
       .setColor("#0099ff")
-      .setTitle("Thales Frequently Asked Questions")
+      .setTitle("OVER Frequently Asked Questions")
       .setURL("https://docs.thales.market/getting-started/faqs");
     exampleEmbed.setDescription("Hello, here is list of commands I know:");
     exampleEmbed.addField("list", "Lists all known questions");
@@ -955,7 +970,7 @@ client.on("message", (msg) => {
     exampleEmbed.addField("aliases", "List all known aliases");
     exampleEmbed.addField(
       "\u200b",
-      "*Or just ask me a question and I will do my best to find a match for you, e.g. **What order books is Thales using?***"
+      "*Or just ask me a question and I will do my best to find a match for you, e.g. **What order books is OVER using?***"
     );
 
     msg.reply(exampleEmbed);
@@ -1231,7 +1246,7 @@ function sendMarketMessage(market) {
         var message = new Discord.MessageEmbed()
           .addFields(
             {
-              name: ":lock: New Thales Market created :lock:",
+              name: ":lock: New OVER Market created :lock:",
               value: "\u200b",
             },
             {
@@ -1374,7 +1389,7 @@ async function sendNewTradeMessage(trade, market) {
     var message = new Discord.MessageEmbed()
       .addFields(
         {
-          name: ":lock: New Thales Trade :lock:",
+          name: ":lock: New OVER Trade :lock:",
           value: "\u200b",
         },
         {
@@ -1688,7 +1703,7 @@ async function getThalesNewTrades(market, startDateUnixTime) {
           var message = new Discord.MessageEmbed()
             .addFields(
               {
-                name: ":lock: New Thales Buy order :lock:",
+                name: ":lock: New OVER Buy order :lock:",
                 value: "\u200b",
               },
               {
@@ -1795,7 +1810,7 @@ async function getThalesNewTrades(market, startDateUnixTime) {
           var message = new Discord.MessageEmbed()
             .addFields(
               {
-                name: ":lock: New Thales Sell order :lock:",
+                name: ":lock: New OVER Sell order :lock:",
                 value: "\u200b",
               },
               {
@@ -2028,7 +2043,7 @@ async function getMintData() {
             var message = new Discord.MessageEmbed()
               .addFields(
                 {
-                  name: ":lock: New Thales Mint :lock:",
+                  name: ":lock: New OVER Mint :lock:",
                   value: "\u200b",
                 },
                 {
@@ -2633,7 +2648,13 @@ async function updateCountdownChannel() {
   }
 }
 
-let ammTradeAddress="0x278B5A44397c9D8E52743fEdec263c4760dc1A1A";
+const ammTradeAddresses = [
+  "0x278b5a44397c9d8e52743fedec263c4760dc1a1a",
+  "0x9ce94cdf8ecd57cec0835767528dc88628891dd9",
+  "0xed59dca9c272fbc0ca4637f32ab32cbdb62e856b",
+  "0x7f9e03e40d8b95419c7bdf30d256d08f2ec11dba"
+];
+
 
 async function  getPolygonMarket(tradeL2) {
 
@@ -2697,16 +2718,22 @@ async function getL2Trades() {
         var isLong = false;
         var isBuy = false;
         var isRanged = false;
-
+        let currency = "USDC"
         if (
-            makerTokenName.toLowerCase().includes("in") ||
+            makerTokenName.toLowerCase().includes("susd") ||
+            takerTokenName.toLowerCase().includes("susd")
+        ) {
+          currency = "sUSD"
+        }
+        if (
+            !makerTokenName.toLowerCase().includes("coin") && (makerTokenName.toLowerCase().includes("in") ||
             makerTokenName.toLowerCase().includes("out")
-        ){
+        )){
           amountShortLong = tradeL2.makerAmount;
           amountUSD = tradeL2.takerAmount;
           isRanged = true;
-        }else if(takerTokenName.toLowerCase().includes("in") ||
-            takerTokenName.toLowerCase().includes("out")){
+        }else if( !takerTokenName.toLowerCase().includes("coin") && (takerTokenName.toLowerCase().includes("in") ||
+            takerTokenName.toLowerCase().includes("out"))){
           isRanged = true;
           amountUSD =tradeL2.makerAmount;
           amountShortLong = tradeL2.takerAmount;
@@ -2753,13 +2780,13 @@ async function getL2Trades() {
         let isAmmTrade = false;
         let messageTitle;
         if (
-            ammTradeAddress.toLowerCase() == tradeL2.maker.toLowerCase() ||
-            ammTradeAddress.toLowerCase() == tradeL2.taker.toLowerCase()
+            ammTradeAddresses.includes(tradeL2.maker.toLowerCase()) ||
+            ammTradeAddresses.includes(tradeL2.taker.toLowerCase())
         ) {
           isAmmTrade = true;
-          messageTitle = ":lock: New Amm Thales Trade :lock:"
+          messageTitle = ":lock: New Amm OVER Trade :lock:"
         } else{
-          messageTitle = ":lock: New Orderbook Thales Trade :lock:"
+          messageTitle = ":lock: New Orderbook OVER Trade :lock:"
         }
 
 
@@ -2797,7 +2824,7 @@ async function getL2Trades() {
                 },
                 {
                   name: ":dollar: Total:",
-                  value: parseFloat((amountUSD).toFixed(3)) + " $",
+                  value: parseFloat((amountUSD).toFixed(3)) + " "+currency,
                 },
                 {
                   name: ":alarm_clock: Timestamp:",
@@ -2865,7 +2892,7 @@ async function getL2Trades() {
           var message = new Discord.MessageEmbed()
               .addFields(
                   {
-                    name: ":lock: New Ranged Market Thales Trade :lock:",
+                    name: ":lock: New Ranged Market OVER Trade :lock:",
                     value: "\u200b",
                   },
                   {
@@ -2896,7 +2923,7 @@ async function getL2Trades() {
                   },
                   {
                     name: ":dollar: Total:",
-                    value: parseFloat((amountUSD).toFixed(3)) + " $",
+                    value: parseFloat((amountUSD).toFixed(3)) + " "+currency,
                   },
                   {
                     name: ":alarm_clock: Timestamp:",
@@ -2974,17 +3001,23 @@ async function getPolygonTrades() {
         const lowerTakerTokenNamesArray = takerTokenNamesArray.map(element => {
           return element.toLowerCase();
         });
-
+        let currency = "USDC"
+        if (
+            makerTokenName.toLowerCase().includes("susd") ||
+            takerTokenName.toLowerCase().includes("susd")
+        ) {
+          currency = "sUSD"
+        }
 
         if (
-            lowerMakerTokenNamesArray.includes("in") ||
+            !makerTokenName.toLowerCase().includes("coin") && (lowerMakerTokenNamesArray.includes("in") ||
             lowerMakerTokenNamesArray.includes("out")
-        ){
+        )){
           amountShortLong = polygonTrade.makerAmount;
           amountUSD = polygonTrade.takerAmount;
           isRanged = true;
-        }else if(lowerTakerTokenNamesArray.includes("in") ||
-            lowerTakerTokenNamesArray.includes("out")){
+        }else if( !takerTokenName.toLowerCase().includes("coin") && (lowerTakerTokenNamesArray.includes("in") ||
+            lowerTakerTokenNamesArray.includes("out"))){
           isRanged = true;
           amountUSD =polygonTrade.makerAmount;
           amountShortLong = polygonTrade.takerAmount;
@@ -3033,7 +3066,7 @@ async function getPolygonTrades() {
           var message = new Discord.MessageEmbed()
               .addFields(
                   {
-                    name: ":lock: New Polygon Ranged Market Thales Trade :lock:",
+                    name: ":lock: New Polygon Ranged Market OVER Trade :lock:",
                     value: "\u200b",
                   },
                   {
@@ -3064,7 +3097,7 @@ async function getPolygonTrades() {
                   },
                   {
                     name: ":dollar: Total:",
-                    value: parseFloat((amountUSD).toFixed(3)) + " $",
+                    value: parseFloat((amountUSD).toFixed(3)) + " "+currency,
                   },
                   {
                     name: ":alarm_clock: Timestamp:",
@@ -3107,7 +3140,7 @@ async function getPolygonTrades() {
               new Date(market.maturityDate).toISOString().slice(0, 10);
 
           let messageTitle;
-          messageTitle = ":lock: New Polygon Amm Thales Trade :lock:"
+          messageTitle = ":lock: New Polygon Amm OVER Trade :lock:"
 
 
           var message = new Discord.MessageEmbed()
@@ -3371,8 +3404,12 @@ setInterval(function () {
   getLiqArbV2("0x22D180F39A0eB66098cf839AF5e3C6b009383B6A",1e6,"ARB V2 PNL ",clientLiqV2USDCARB,"$");
   getLiqArbV2("0xcB4728a1789B87E05c813B68DBc5E6A98a4856bA",1e18,"ARB V2 PNL ", clientLiqV2WETHARB," WETH");
   getLiqArbV2("0x9733AB157f5A89f0AD7460d08F869956aE2018dA",1e18,"ARB V2 PNL ",clientLiqV2THALESARB," THALES");
+  getLiqArbV2("0xbD08D8F8c17C22fb0a12Fe490F38f40c59B60d2A",1e8,"ARB V2 PNL ",clientLiqV2BTCARB," BTC");
 
-
+  getLiqBaseV2("0xf86e90412F52fDad8aD8D1aa2dA5B2C9a7e5f018",1e6,"BASE V2 PNL ",clientLiqV2USDCBASE,"$");
+  getLiqBaseV2("0xcc4ED8cD7101B512B134360ED3cCB759caB33f17",1e18,"BASE V2 PNL ", clientLiqV2WETHBASE," WETH");
+  getLiqBaseV2("0xB4199DC163F3206643649E117A816ad0DECb6C3B",1e18,"BASE V2 PNL ",clientLiqV2THALESBASE," OVER");
+  getLiqBaseV2("0x8d4f838327DedFc735e202731358AcFc260c207a",1e8,"BASE V2 PNL ",clientLiqV2BTCBASE," BTC");
 
 }, 200 * 1000);
 
@@ -3513,7 +3550,7 @@ if(seasonNumber!=3){
     let currentTimestamp = Math.floor(Date.now() / 1000);
     const timeDifference=Number(seasonCreationTime) - currentTimestamp;
     if((currentTimestamp>Number(seasonCreationTime)) && Math.abs(timeDifference)<=750){
-      sendThalesRoyaleMessage("Hey Thales Royale enthusiasts, the registration phase (lasting 72 hours) has just started! You can register here: <https://thalesmarket.io/royale?page=scoreboard>")
+      sendThalesRoyaleMessage("Hey OVER Royale enthusiasts, the registration phase (lasting 72 hours) has just started! You can register here: <https://thalesmarket.io/royale?page=scoreboard>")
       await redisClient.set(seasonRegistrationStarts,true);
       mapRoyaleCounterBot.set(seasonRegistrationStarts,true)
     }
@@ -3527,7 +3564,7 @@ if(seasonNumber!=3){
     let currentTimestamp = Math.floor(Date.now() / 1000);
     const timeDifference=Number(registration24Close) - currentTimestamp;
     if((currentTimestamp > registration24Close) && Math.abs(timeDifference)<=750){
-      sendThalesRoyaleMessage("Only one more day (24 hours) to go for Thales Royale, don't miss it! If you still haven't registered you can do so here: <https://thalesmarket.io/royale?page=scoreboard>")
+      sendThalesRoyaleMessage("Only one more day (24 hours) to go for OVER Royale, don't miss it! If you still haven't registered you can do so here: <https://thalesmarket.io/royale?page=scoreboard>")
       await redisClient.set(seasonRegistration24hCloseKey,true);
       mapRoyaleCounterBot.set(seasonRegistration24hCloseKey,true);
     }
@@ -3540,7 +3577,7 @@ if(seasonNumber!=3){
     let currentTimestamp = Math.floor(Date.now() / 1000);
     const timeDifference=Number(registration2hClose) - currentTimestamp;
     if((currentTimestamp > registration2hClose) && Math.abs(timeDifference)<=750){
-      sendThalesRoyaleMessage("Two more hours to register in Thales Royale. Last call. Register here: <https://thalesmarket.io/royale?page=scoreboard>");
+      sendThalesRoyaleMessage("Two more hours to register in OVER Royale. Last call. Register here: <https://thalesmarket.io/royale?page=scoreboard>");
       await redisClient.set(seasonRegistration2hCloseKey,true);
       mapRoyaleCounterBot.set(seasonRegistration2hCloseKey,true);
     }
@@ -3572,12 +3609,12 @@ async function checkPositioning() {
         const roundResult = await royaleContract.methods.roundResultPerSeason(seasonNumber,currentRoundNumber-1).call();
         console.log('round result is '+roundResult);
         if(roundResult==1){
-          sendThalesRoyaleMessage("Aaaaand we are live! Thales Royale round " + currentRoundNumber + " has started. Last round went DOWN. You have 8 hours to choose a position. Remember that you can change your position at any time before this period ends. See you in the arena, good luck!")
+          sendThalesRoyaleMessage("Aaaaand we are live! OVER Royale round " + currentRoundNumber + " has started. Last round went DOWN. You have 8 hours to choose a position. Remember that you can change your position at any time before this period ends. See you in the arena, good luck!")
         }else {
-          sendThalesRoyaleMessage("Aaaaand we are live! Thales Royale round " + currentRoundNumber + " has started. Last round went UP. You have 8 hours to choose a position. Remember that you can change your position at any time before this period ends. See you in the arena, good luck!")
+          sendThalesRoyaleMessage("Aaaaand we are live! OVER Royale round " + currentRoundNumber + " has started. Last round went UP. You have 8 hours to choose a position. Remember that you can change your position at any time before this period ends. See you in the arena, good luck!")
         }
         }else{
-        sendThalesRoyaleMessage("Aaaaand we are live! Thales Royale round " + currentRoundNumber + " has started. You have 8 hours to choose a position. Remember that you can change your position at any time before this period ends. See you in the arena, good luck!")
+        sendThalesRoyaleMessage("Aaaaand we are live! OVER Royale round " + currentRoundNumber + " has started. You have 8 hours to choose a position. Remember that you can change your position at any time before this period ends. See you in the arena, good luck!")
         }
         await redisClient.set(positionStartsKey, true);
         mapRoyaleCounterBot.set(positionStartsKey, true);
@@ -3594,7 +3631,7 @@ async function checkPositioning() {
       const timeDifference = Number(positioning2hoursToClose) - currentTimestamp;
       if (positioningStarted && (currentTimestamp > positioning2hoursToClose) && (Math.abs(timeDifference) <= 550)) {
         console.log("check passed sending message 2 hours left");
-        sendThalesRoyaleMessage("Only 2 hours left to choose a position for Thales Royale round " + currentRoundNumber + ". After the positioning period ends you won't be able to change your position and the resolution phase will start, lasting 16 hours. After resolution phase ends, if you chose the correct side, you'll advance to the next round, if not... better luck next time!")
+        sendThalesRoyaleMessage("Only 2 hours left to choose a position for OVER Royale round " + currentRoundNumber + ". After the positioning period ends you won't be able to change your position and the resolution phase will start, lasting 16 hours. After resolution phase ends, if you chose the correct side, you'll advance to the next round, if not... better luck next time!")
         await redisClient.set(position2hCloseKey, true);
         mapRoyaleCounterBot.set(position2hCloseKey, true);
       }
@@ -3676,29 +3713,21 @@ setInterval(function () {
 
 async  function getBurnedThalesBalance (){
 
-  const tokenBalance = await burnedContract.methods.balanceOf("0x679C0174f6c288C4bcd5C95C9Ec99D50357C59E7").call();
-  let amountOfThales = tokenBalance / 1e18;
-  const deadTokenBalance = await deadburnedContract.methods.balanceOf("0x000000000000000000000000000000000000dEaD").call();
-  let amountOfDeadTokens = deadTokenBalance / 1e18;
-  const deadArbTokenBalance = await deadARBburnedContract.methods.balanceOf("0xE9F5E7579931a46e4beaC08Ca9ab52961AD66203").call();
-  let amountOfArbDeadTokens = deadArbTokenBalance / 1e18;
-  const baseBurnedTokens = await baseburnedContract.methods.balanceOf("0x860C4DD827DdDd98755e0843b89d909f5A0347Ff").call();
-  let amountOfbaseBurnedTokens = baseBurnedTokens / 1e18;
-  let sumOfAllBurnedThales = amountOfThales+amountOfDeadTokens + amountOfArbDeadTokens + amountOfbaseBurnedTokens;
-
+  const response = await axios.get('https://overtimemarketsv2.xyz/over-token/burned');
+  const burnedAmount = response.data; // assuming the response is just the number
 
   try {
     clientTotalBurnedThales.guilds.cache.forEach(function (value, key) {
       try {
         value.members.cache
             .get(clientTotalBurnedThales.user.id)
-            .setNickname(getNumberLabelDecimalsMil(sumOfAllBurnedThales));
+            .setNickname(getNumberLabelDecimalsMil(burnedAmount));
       } catch (e) {
-        console.log('error while updating amount of thales'+e);
+        console.log('error while updating amount of OVER'+e);
       }
     });
     clientTotalBurnedThales.user.setActivity(
-        "THALES burned",
+        "OVER burned",
         { type: "WATCHING" }
     );
   }catch (e) {
@@ -4408,17 +4437,23 @@ async function getArbitrumTrades() {
       const lowerTakerTokenNamesArray = takerTokenNamesArray.map(element => {
         return element.toLowerCase();
       });
-
+      let currency = "USDC"
+      if (
+          makerTokenName.toLowerCase().includes("susd") ||
+          takerTokenName.toLowerCase().includes("susd")
+      ) {
+        currency = "sUSD"
+      }
 
       if (
-          lowerMakerTokenNamesArray.includes("in") ||
-          lowerMakerTokenNamesArray.includes("out")
+          !makerTokenName.toLowerCase().includes("coin") && (lowerMakerTokenNamesArray.includes("in") ||
+          lowerMakerTokenNamesArray.includes("out"))
       ){
         amountShortLong = arbitrumTrade.makerAmount;
         amountUSD = arbitrumTrade.takerAmount;
         isRanged = true;
-      }else if(lowerTakerTokenNamesArray.includes("in") ||
-          lowerTakerTokenNamesArray.includes("out")){
+      }else if( !takerTokenName.toLowerCase().includes("coin") && (lowerTakerTokenNamesArray.includes("in") ||
+          lowerTakerTokenNamesArray.includes("out"))){
         isRanged = true;
         amountUSD =arbitrumTrade.makerAmount;
         amountShortLong = arbitrumTrade.takerAmount;
@@ -4467,7 +4502,7 @@ async function getArbitrumTrades() {
         var message = new Discord.MessageEmbed()
             .addFields(
                 {
-                  name: ":lock: New Arbitrum Ranged Market Thales Trade :lock:",
+                  name: ":lock: New Arbitrum Ranged Market OVER Trade :lock:",
                   value: "\u200b",
                 },
                 {
@@ -4498,7 +4533,7 @@ async function getArbitrumTrades() {
                 },
                 {
                   name: ":dollar: Total:",
-                  value: parseFloat((amountUSD).toFixed(3)) + " $",
+                  value: parseFloat((amountUSD).toFixed(3)) + " "+currency,
                 },
                 {
                   name: ":alarm_clock: Timestamp:",
@@ -4540,7 +4575,7 @@ async function getArbitrumTrades() {
             new Date(market.maturityDate ).toISOString().slice(0, 10);
 
         let messageTitle;
-        messageTitle = ":lock: New Arbitrum Amm Thales Trade :lock:"
+        messageTitle = ":lock: New Arbitrum Amm OVER Trade :lock:"
 
 
         var message = new Discord.MessageEmbed()
@@ -4577,7 +4612,7 @@ async function getArbitrumTrades() {
                 },
                 {
                   name: ":dollar: Total:",
-                  value: parseFloat((amountUSD).toFixed(3)) + " USDC",
+                  value: parseFloat((amountUSD).toFixed(3)) + " "+currency,
                 },
                 {
                   name: ":alarm_clock: Timestamp:",
@@ -4725,17 +4760,23 @@ async function getBSCTrades() {
       const lowerTakerTokenNamesArray = takerTokenNamesArray.map(element => {
         return element.toLowerCase();
       });
-
+      let currency = "USDC"
+      if (
+          makerTokenName.toLowerCase().includes("susd") ||
+          takerTokenName.toLowerCase().includes("susd")
+      ) {
+        currency = "sUSD"
+      }
 
       if (
-          lowerMakerTokenNamesArray.includes("in") ||
+          !makerTokenName.toLowerCase().includes("coin") && (lowerMakerTokenNamesArray.includes("in") ||
           lowerMakerTokenNamesArray.includes("out")
-      ){
+      )){
         amountShortLong = bscTrade.makerAmount/1e18;
         amountUSD = bscTrade.takerAmount / 1e18;
         isRanged = true;
-      }else if(lowerTakerTokenNamesArray.includes("in") ||
-          lowerTakerTokenNamesArray.includes("out")){
+      }else if( !takerTokenName.toLowerCase().includes("coin") && (lowerTakerTokenNamesArray.includes("in") ||
+          lowerTakerTokenNamesArray.includes("out"))){
         isRanged = true;
         amountUSD =bscTrade.makerAmount / 1e18;
         amountShortLong = bscTrade.takerAmount / 1e18;
@@ -4784,7 +4825,7 @@ async function getBSCTrades() {
         var message = new Discord.MessageEmbed()
             .addFields(
                 {
-                  name: ":lock: New BSC Ranged Market Thales Trade :lock:",
+                  name: ":lock: New BSC Ranged Market OVER Trade :lock:",
                   value: "\u200b",
                 },
                 {
@@ -4815,7 +4856,7 @@ async function getBSCTrades() {
                 },
                 {
                   name: ":dollar: Total:",
-                  value: parseFloat((amountUSD).toFixed(3)) + " $",
+                  value: parseFloat((amountUSD).toFixed(3)) + " "+currency,
                 },
                 {
                   name: ":alarm_clock: Timestamp:",
@@ -4857,7 +4898,7 @@ async function getBSCTrades() {
             new Date(market.maturityDate * 1000).toISOString().slice(0, 10);
 
         let messageTitle;
-        messageTitle = ":lock: New BSC Amm Thales Trade :lock:"
+        messageTitle = ":lock: New BSC Amm OVER Trade :lock:"
 
 
         var message = new Discord.MessageEmbed()
@@ -5613,7 +5654,7 @@ async function getStakingAPY(clientForStaking){
 
     const stakingData = getGlobalStakingData();
 
-    // Thales staked - Base
+    // OVER staked - Base
     const baseAnkrProvider = new ethers.providers.JsonRpcProvider(
         BASE_APY_INF,
         8453
@@ -5764,7 +5805,7 @@ async function getLiqOPThales(){
     try {
       value.members.cache
           .get(clientLiqOPTHLS.user.id)
-          .setNickname("Thales PNL +"+getNumberLabelDecimals(cumulativeProfitAndLoss)+"%");
+          .setNickname("OVER PNL +"+getNumberLabelDecimals(cumulativeProfitAndLoss)+"%");
     } catch (e) {
       console.log('error while clientLiqARBThales '+e);
     }
@@ -5827,7 +5868,7 @@ async function getLiqARBThales(){
     try {
       value.members.cache
           .get(clientLiqARBThales.user.id)
-          .setNickname("Thales PNL +"+getNumberLabelDecimals(cumulativeProfitAndLoss)+"%");
+          .setNickname("OVER PNL +"+getNumberLabelDecimals(cumulativeProfitAndLoss)+"%");
     } catch (e) {
       console.log('error while clientLiqARBThales '+e);
     }
@@ -6174,6 +6215,14 @@ async function getBASETrades() {
         var isBuy = false;
         var isRanged = false;
 
+        let currency = "USDC"
+        if (
+            makerTokenName.toLowerCase().includes("susd") ||
+            takerTokenName.toLowerCase().includes("susd")
+        ) {
+          currency = "sUSD"
+        }
+
        if (
             (makerTokenName.toLowerCase().includes("in") ||
             makerTokenName.toLowerCase().includes("out")) && !makerTokenName.toLowerCase().includes("coin")
@@ -6233,9 +6282,9 @@ async function getBASETrades() {
             baseAMMAddress.toLowerCase() == tradeBASE.taker.toLowerCase()
         ) {
           isAmmTrade = true;
-          messageTitle = ":lock: New Amm Thales Trade :lock:"
+          messageTitle = ":lock: New Amm OVER Trade :lock:"
         } else{
-          messageTitle = ":lock: New Orderbook Thales Trade :lock:"
+          messageTitle = ":lock: New Orderbook OVER Trade :lock:"
         }
 
 
@@ -6273,7 +6322,7 @@ async function getBASETrades() {
                 },
                 {
                   name: ":dollar: Total:",
-                  value: parseFloat((amountUSD).toFixed(3)) + " $",
+                  value: parseFloat((amountUSD).toFixed(3)) + " "+currency,
                 },
                 {
                   name: ":alarm_clock: Timestamp:",
@@ -6335,7 +6384,7 @@ async function getBASETrades() {
           var message = new Discord.MessageEmbed()
               .addFields(
                   {
-                    name: ":lock: New Ranged Market Thales Trade :lock:",
+                    name: ":lock: New Ranged Market OVER Trade :lock:",
                     value: "\u200b",
                   },
                   {
@@ -7395,7 +7444,7 @@ async function getOvertimeV2Trades(){
           moneySymbol = "weth";
           multiplier = ethPrice;
         } else if (overtimeMarketTrade.collateral=="0x217D47011b23BB961eB6D93cA9945B7501a5BB11"){
-          moneySymbol = "THALES";
+          moneySymbol = "OVER";
           multiplier = thalesPrice;
         } else {
           moneySymbol = "USDC"
@@ -7698,13 +7747,19 @@ async function getLiqArbV2(address, divider, text, clientV2LQ, symbol){
   await setLIQV2Values(liqContract, divider, clientV2LQ, text, symbol);
 }
 
+async function getLiqBaseV2(address, divider, text, clientV2LQ, symbol){
+
+  const liqContract = new web3Base.eth.Contract(liqV2Contract, address);
+  await setLIQV2Values(liqContract, divider, clientV2LQ, text, symbol);
+}
+
 
 let thalesPrice = 0.22;
 let ethPrice = 3000;
 
 async function updateTokenPrice() {
 
-  let dataThales = await CoinGeckoClient.coins.fetch("thales");
+  let dataThales = await CoinGeckoClient.coins.fetch("overtime");
   if(dataThales.data && dataThales.data.market_data) {
     thalesPrice =   dataThales.data.market_data.current_price.usd;
   }
@@ -7749,7 +7804,7 @@ async function getOvertimeV2ARBTrades(){
           moneySymbol = "weth";
           multiplier = ethPrice;
         } else if (overtimeMarketTrade.collateral=="0xE85B662Fe97e8562f4099d8A1d5A92D4B453bF30"){
-          moneySymbol = "THALES";
+          moneySymbol = "OVER";
           multiplier = thalesPrice;
         } else {
           moneySymbol = "USDC";
