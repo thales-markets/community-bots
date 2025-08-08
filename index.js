@@ -6000,6 +6000,173 @@ setInterval(function () {
 
 }, 3 * 60 * 1000);
 
+function formatV2BASEAmount(numberForFormating, collateralAddress) {
+  if (
+      collateralAddress === WETH_ADDRESS_BASE ||
+      collateralAddress === THALES_ADDRESS_BASE ||
+      collateralAddress?.toLowerCase() === OVER_ADDRESS_BASE.toLowerCase()
+  ) {
+    return numberForFormating / 1e18;
+  }
+  if (collateralAddress === BITCOIN_ADDRESS_BASE) {
+    // cbBTC
+    return numberForFormating / 1e8;
+  }
+  return numberForFormating / 1e6; // USDC/USDbC
+}
+
+function formatV2Amount(numberForFormating, collateralAddress) {
+  // OP
+  if (
+      collateralAddress === WETH_ADDRESS_BASE ||
+      collateralAddress === THALES_ADDRESS_OP ||
+      collateralAddress?.toLowerCase() === OVER_ADDRESS_OP.toLowerCase()
+  ) {
+    return numberForFormating / 1e18;
+  }
+
+  // USDC/USDT/USDbC
+  return numberForFormating / 1e6;
+}
+function formatV2ARBAmount(numberForFormating, collateralAddress) {
+  if (collateralAddress === "0xaf88d065e77c8cC2239327C5EDb3A432268e5831") {
+    // USDC
+    return numberForFormating / 1e6;
+  }
+  if (collateralAddress === BITCOIN_ADDRESS_ARB) {
+    // wBTC
+    return numberForFormating / 1e8;
+  }
+  // WETH/THALES/OVER -> 18
+  return numberForFormating / 1e18;
+}
+
+
+
+
+
+
+
+
+
+
+let bitcoinPrice = 89000;
+const WETH_ADDRESS_ARB = "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1";
+const THALES_ADDRESS_ARB = "0xE85B662Fe97e8562f4099d8A1d5A92D4B453bF30";
+const OVER_ADDRESS_ARB = "0x5829d6fe7528bc8e92c4e81cc8f20a528820b51a";
+const BITCOIN_ADDRESS_ARB = "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f";
+const BITCOIN_ADDRESS_BASE = "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf";
+const THALES_ADDRESS_BASE = "0x1527d463cC46686f815551314BD0E5Af253d58C0";
+const OVER_ADDRESS_OP = "0xedf38688b27036816a50185caa430d5479e1c63e";
+const WETH_ADDRESS_BASE = "0x4200000000000000000000000000000000000006";
+const THALES_ADDRESS_OP = "0x217D47011b23BB961eB6D93cA9945B7501a5BB11";
+const OVER_ADDRESS_BASE = '0x7750c092e284e2c7366f50c8306f43c7eb2e82a2';
+
+
+    async function updateTokenPrice() {
+
+  let dataThales = await CoinGeckoClient.coins.fetch("overtime");
+  if(dataThales.data && dataThales.data.market_data) {
+    thalesPrice =   dataThales.data.market_data.current_price.usd;
+  }
+
+  let dataETH = await CoinGeckoClient.coins.fetch("ethereum");
+  if(dataETH.data && dataETH.data.market_data) {
+    ethPrice =   dataETH.data.market_data.current_price.usd;
+  }
+  let dataBTC = await CoinGeckoClient.coins.fetch("bitcoin");
+  if(dataBTC.data && dataBTC.data.market_data) {
+    bitcoinPrice  =  dataBTC.data.market_data.current_price.usd;
+  }
+}
+
+async function getNetworkMoneySymbolAndMultiplier(givenSpeedMarketType, collateral) {
+  let moneySymbol;
+  let multiplier = 1;
+
+  switch (givenSpeedMarketType) {
+    case speedMarketType.ARB: {
+      if (collateral === WETH_ADDRESS_ARB) {
+        moneySymbol = "weth";
+        multiplier = ethPrice;
+      } else if (collateral === THALES_ADDRESS_ARB) {
+        moneySymbol = "OVER";
+        multiplier = thalesPrice;
+      } else if (collateral?.toLowerCase() === OVER_ADDRESS_ARB.toLowerCase()) {
+        moneySymbol = "OVER";
+        multiplier = thalesPrice;
+      } else if (collateral === BITCOIN_ADDRESS_ARB) {
+        moneySymbol = "wBTC";
+        multiplier = bitcoinPrice;
+      } else {
+        moneySymbol = "USDC";
+      }
+      break;
+    }
+
+    case speedMarketType.OP: {
+      if (collateral === WETH_ADDRESS_BASE) {
+        moneySymbol = "weth";
+        multiplier = ethPrice;
+      } else if (collateral === THALES_ADDRESS_OP) {
+        moneySymbol = "OVER";
+        multiplier = thalesPrice;
+      } else if (collateral?.toLowerCase() === OVER_ADDRESS_OP.toLowerCase()) {
+        moneySymbol = "OVER";
+        multiplier = thalesPrice;
+      } else {
+        moneySymbol = "USDC";
+      }
+      break;
+    }
+
+    case speedMarketType.BASE: {
+      if (collateral === WETH_ADDRESS_BASE) {
+        moneySymbol = "weth";
+        multiplier = ethPrice;
+      } else if (collateral === THALES_ADDRESS_OP) {
+        moneySymbol = "OVER";
+        multiplier = thalesPrice;
+      } else if (collateral?.toLowerCase() === OVER_ADDRESS_BASE.toLowerCase()) {
+        moneySymbol = "OVER";
+        multiplier = thalesPrice;
+      } else if (collateral === BITCOIN_ADDRESS_BASE) {
+        moneySymbol = "cbBTC";
+        multiplier = bitcoinPrice;
+      } else {
+        moneySymbol = "USDC";
+      }
+      break;
+    }
+
+    case speedMarketType.POLYGON: {
+      moneySymbol = "USDCe";
+      multiplier = 1;
+      break;
+    }
+
+    default: {
+      moneySymbol = "USDC";
+      multiplier = 1;
+    }
+  }
+
+  return { moneySymbol, multiplier };
+}
+
+function roundTo2Decimals(number){
+  if(1-Math.floor(Math.log(number)/Math.log(10)>0))
+    return  number.toFixed(1-Math.floor(Math.log(number)/Math.log(10)))
+  else return number.toFixed(2);
+}
+
+
+
+function calcPaid(buyinAmount,lpFee,safeBoxImpact) {
+  return buyinAmount * (1 + lpFee + safeBoxImpact);
+}
+
+
 async function speedMarkets(speedMarketsContract,givenSpeedMarketType,speedDataMarketContract){
 
   const ammParams = await speedDataMarketContract.methods.getSpeedMarketsAMMParameters('0x0000000000000000000000000000000000000000').call();
@@ -6014,11 +6181,40 @@ async function speedMarkets(speedMarketsContract,givenSpeedMarketType,speedDataM
       speedMarketsContract.methods.lpFee().call(),
       speedMarketsContract.methods.safeBoxImpact().call()
     ]);
-    const fees = (lpFee/1e18) + (safeBoxImpact/1e18);
-    let SPEED_MARKETS_QUOTE = 2;
-    let payout = (speedMarket.buyinAmount / getDefaultDecimalsForNetwork (givenSpeedMarketType)) * SPEED_MARKETS_QUOTE;
 
-    let size = (speedMarket.buyinAmount / getDefaultDecimalsForNetwork (givenSpeedMarketType)) * (1 + fees);
+      let collateral = speedMarket.collateral;
+      let { moneySymbol, multiplier } = await getNetworkMoneySymbolAndMultiplier(givenSpeedMarketType, collateral);
+      let buyInAmmountFormated;
+      switch (givenSpeedMarketType) {
+        case speedMarketType.ARB:
+          buyInAmmountFormated = formatV2ARBAmount(speedMarket.buyinAmount, collateral);
+          break;
+        case speedMarketType.BASE:
+          buyInAmmountFormated = formatV2BASEAmount(speedMarket.buyinAmount, collateral);
+          break;
+        case speedMarketType.OP:
+          buyInAmmountFormated = formatV2Amount(speedMarket.buyinAmount, collateral);
+          break;
+        default:
+          buyInAmmountFormated = speedMarket.buyinAmount / 1e6;
+      }
+      let buyIn = roundTo2Decimals(buyInAmmountFormated);
+
+      const fees = (lpFee/1e18) + (safeBoxImpact/1e18);
+    let SPEED_MARKETS_QUOTE = 2;
+    let payout = buyIn * SPEED_MARKETS_QUOTE;
+
+    let size = calcPaid(buyIn, lpFee/1e18, safeBoxImpact/1e18);
+
+      let amountInCurrency = buyIn;
+      let buyInAmountUSD = "";
+      let payoutInUSD = "";
+      let sizeInUSD = "";
+      if (multiplier !== 1) {
+        buyInAmountUSD = " ("+roundTo2Decimals(amountInCurrency * multiplier) + " $)";
+        payoutInUSD = " ("+roundTo2Decimals(payout * multiplier) + " $)";
+        sizeInUSD = " ("+roundTo2Decimals(size * multiplier) + " $)";
+      }
 
     var message = new Discord.MessageEmbed()
         .addFields(
@@ -6036,10 +6232,10 @@ async function speedMarkets(speedMarketsContract,givenSpeedMarketType,speedDataM
             },
             {
               name: ":coin: Size:",
-              value: payout + " "+side,
+              value: payout + " "+ moneySymbol + payoutInUSD + " "+side,
             },{
               name: ":coin: Paid:",
-              value: size,
+              value: size + " "+ moneySymbol + sizeInUSD,
             },{
               name: ":alarm_clock: End time:",
               value: timeConverter(speedMarket.strikeTime)
@@ -6095,11 +6291,41 @@ async function speedResolvedMarkets(speedMarketsContract,givenSpeedMarketType,sp
         speedMarketsContract.methods.lpFee().call(),
         speedMarketsContract.methods.safeBoxImpact().call()
       ]);
+
+      let collateral = speedMarket.collateral;
+      let { moneySymbol, multiplier } = await getNetworkMoneySymbolAndMultiplier(givenSpeedMarketType, collateral);
+      let buyInAmmountFormated;
+      switch (givenSpeedMarketType) {
+        case speedMarketType.ARB:
+          buyInAmmountFormated = formatV2ARBAmount(speedMarket.buyinAmount, collateral);
+          break;
+        case speedMarketType.BASE:
+          buyInAmmountFormated = formatV2BASEAmount(speedMarket.buyinAmount, collateral);
+          break;
+        case speedMarketType.OP:
+          buyInAmmountFormated = formatV2Amount(speedMarket.buyinAmount, collateral);
+          break;
+        default:
+          buyInAmmountFormated = speedMarket.buyinAmount / 1e6;
+      }
+      let buyIn = roundTo2Decimals(buyInAmmountFormated);
+
       const fees = (lpFee/1e18) + (safeBoxImpact/1e18);
       let SPEED_MARKETS_QUOTE = 2;
-      let payout = (speedMarket.buyinAmount / getDefaultDecimalsForNetwork (givenSpeedMarketType)) * SPEED_MARKETS_QUOTE;
+      let payout = buyIn * SPEED_MARKETS_QUOTE;
 
-      let size = (speedMarket.buyinAmount / getDefaultDecimalsForNetwork (givenSpeedMarketType)) * (1 + fees);
+      let size = calcPaid(buyIn, lpFee/1e18, safeBoxImpact/1e18);
+
+      let amountInCurrency = buyIn;
+      let buyInAmountUSD = "";
+      let payoutInUSD = "";
+      let sizeInUSD = "";
+      if (multiplier !== 1) {
+        buyInAmountUSD = " ("+roundTo2Decimals(amountInCurrency * multiplier) + " $)";
+        payoutInUSD = " ("+roundTo2Decimals(payout * multiplier) + " $)";
+        sizeInUSD = " ("+roundTo2Decimals(size * multiplier) + " $)";
+      }
+
 
       var message = new Discord.MessageEmbed()
           .addFields(
@@ -6117,10 +6343,10 @@ async function speedResolvedMarkets(speedMarketsContract,givenSpeedMarketType,sp
               },
               {
                 name: ":coin: Size:",
-                value: payout + " "+side,
+                value: payout + " "+ moneySymbol + payoutInUSD + " "+side,
               },{
                 name: ":coin: Paid:",
-                value: size,
+                value: size + " "+ moneySymbol + sizeInUSD,
               },{
                 name: ":coin: Final price:",
                 value: " $"+Math.round(speedMarket.finalPrice / 1e8),
@@ -6498,9 +6724,40 @@ async function chainedSpeedMarkets(speedMarketsContract,givenSpeedMarketType,spe
         }
     }
     let SPEED_MARKETS_QUOTE = 1.9;
-    const payout = (speedMarket.buyinAmount / getDefaultDecimalsForNetwork (givenSpeedMarketType)) * SPEED_MARKETS_QUOTE ** speedMarket.directions.length;
 
-    let size = (speedMarket.buyinAmount / getDefaultDecimalsForNetwork (givenSpeedMarketType));
+      let collateral = speedMarket.collateral;
+      let { moneySymbol, multiplier } = await getNetworkMoneySymbolAndMultiplier(givenSpeedMarketType, collateral);
+      let buyInAmmountFormated;
+      switch (givenSpeedMarketType) {
+        case speedMarketType.ARB:
+          buyInAmmountFormated = formatV2ARBAmount(speedMarket.buyinAmount, collateral);
+          break;
+        case speedMarketType.BASE:
+          buyInAmmountFormated = formatV2BASEAmount(speedMarket.buyinAmount, collateral);
+          break;
+        case speedMarketType.OP:
+          buyInAmmountFormated = formatV2Amount(speedMarket.buyinAmount, collateral);
+          break;
+        default:
+          buyInAmmountFormated = speedMarket.buyinAmount / 1e6;
+      }
+      let buyIn = roundTo2Decimals(buyInAmmountFormated);
+
+      const payout = buyIn * SPEED_MARKETS_QUOTE ** speedMarket.directions.length;
+
+      let size = buyIn;
+
+
+      let amountInCurrency = buyIn;
+      let buyInAmountUSD = "";
+      let payoutInUSD = "";
+      let sizeInUSD = "";
+      if (multiplier !== 1) {
+        buyInAmountUSD = " ("+roundTo2Decimals(amountInCurrency * multiplier) + " $)";
+        payoutInUSD = " ("+roundTo2Decimals(payout * multiplier) + " $)";
+        sizeInUSD = " ("+roundTo2Decimals(size * multiplier) + " $)";
+      }
+
 
     var message = new Discord.MessageEmbed()
         .addFields(
@@ -6518,10 +6775,10 @@ async function chainedSpeedMarkets(speedMarketsContract,givenSpeedMarketType,spe
             },
             {
               name: ":coin: Size:",
-              value: Math.round(payout) + " "+directionNames,
+              value: payout + " "+ moneySymbol + payoutInUSD + " "+directionNames,
             },{
               name: ":coin: Paid:",
-              value: Math.round(size),
+              value: size + " "+ moneySymbol + sizeInUSD,
             },{
               name: ":alarm_clock: End time:",
               value: timeConverter(speedMarket.strikeTime)
@@ -6575,10 +6832,28 @@ async function chainedSpeedResolvedMarkets(speedMarketsContract,givenSpeedMarket
           directionNames = currentDirection;
         }
       }
-      let SPEED_MARKETS_QUOTE = 1.9;
-      const payout = (speedMarket.buyinAmount / getDefaultDecimalsForNetwork (givenSpeedMarketType)) * SPEED_MARKETS_QUOTE ** speedMarket.directions.length;
+      let collateral = speedMarket.collateral;
+      let { moneySymbol, multiplier } = await getNetworkMoneySymbolAndMultiplier(givenSpeedMarketType, collateral);
+      let buyInAmmountFormated;
+      switch (givenSpeedMarketType) {
+        case speedMarketType.ARB:
+          buyInAmmountFormated = formatV2ARBAmount(speedMarket.buyinAmount, collateral);
+          break;
+        case speedMarketType.BASE:
+          buyInAmmountFormated = formatV2BASEAmount(speedMarket.buyinAmount, collateral);
+          break;
+        case speedMarketType.OP:
+          buyInAmmountFormated = formatV2Amount(speedMarket.buyinAmount, collateral);
+          break;
+        default:
+          buyInAmmountFormated = speedMarket.buyinAmount / 1e6;
+      }
+      let buyIn = roundTo2Decimals(buyInAmmountFormated);
+      let SPEED_MARKETS_QUOTE = 2;
 
-      let size = (speedMarket.buyinAmount / getDefaultDecimalsForNetwork (givenSpeedMarketType));
+      const payout = buyIn * SPEED_MARKETS_QUOTE ** speedMarket.directions.length;
+
+      let size = buyIn;
 
       var message = new Discord.MessageEmbed()
           .addFields(
@@ -6592,10 +6867,10 @@ async function chainedSpeedResolvedMarkets(speedMarketsContract,givenSpeedMarket
               },
               {
                 name: ":coin: Size:",
-                value: payout + " "+directionNames,
+                value: payout + " "+ moneySymbol + payoutInUSD + " "+directionNames,
               },{
                 name: ":coin: Paid:",
-                value: size,
+                value: size + " "+ moneySymbol + sizeInUSD,
               },{
                 name: ":coin: Asset and final strike price :",
                 value: web3.utils.toAscii(speedMarket.asset).replace(/\0/g, '') + " $"+  Math.round(speedMarket.strikePrices[speedMarket.strikePrices.length -1] / 1e8)
@@ -6642,23 +6917,7 @@ async function chainedSpeedResolvedMarkets(speedMarketsContract,givenSpeedMarket
   }
 }
 
-function  formatV2Amount(numberForFormating, collateralAddress) {
 
-  if(collateralAddress == "0x4200000000000000000000000000000000000006" || collateralAddress == "0x217D47011b23BB961eB6D93cA9945B7501a5BB11") {
-    return numberForFormating / 1e18;
-  } else {
-    return numberForFormating / 1e6
-  }
-}
-
-function  formatV2ARBAmount(numberForFormating, collateralAddress) {
-
-  if(collateralAddress == "0xaf88d065e77c8cC2239327C5EDb3A432268e5831") {
-    return numberForFormating / 1e6;
-  } else {
-    return numberForFormating / 1e18
-  }
-}
 
 
 
@@ -7757,18 +8016,6 @@ async function getLiqBaseV2(address, divider, text, clientV2LQ, symbol){
 let thalesPrice = 0.22;
 let ethPrice = 3000;
 
-async function updateTokenPrice() {
-
-  let dataThales = await CoinGeckoClient.coins.fetch("overtime");
-  if(dataThales.data && dataThales.data.market_data) {
-    thalesPrice =   dataThales.data.market_data.current_price.usd;
-  }
-
-  let dataETH = await CoinGeckoClient.coins.fetch("ethereum");
-  if(dataETH.data && dataETH.data.market_data) {
-    ethPrice =   dataETH.data.market_data.current_price.usd;
-  }
-}
 
 
 async function getOvertimeV2ARBTrades(){
