@@ -169,6 +169,11 @@ const clientTotalBurnedThales = new Discord.Client();
 clientTotalBurnedThales.login(process.env.BOT_TOKEN_TOTAL_BURNED_THALES);
 const clientOverTimeArbTotal = new Discord.Client();
 clientOverTimeArbTotal.login(process.env.BOT_TOKEN_OVERTIME_ARB);
+const clientOverTimeBaseTotal = new Discord.Client();
+clientOverTimeBaseTotal.login(process.env.BOT_TOKEN_OVERTIME_BASE);
+
+const clientOverTimeBaseV2Total = new Discord.Client();
+clientOverTimeBaseV2Total.login(process.env.BOT_TOKEN_OVERTIME_V2_TRADES_BASE);
 
 const clientOPSTAKE = new Discord.Client();
 clientOPSTAKE.login(process.env.BOT_OP_STAKE);
@@ -3242,21 +3247,6 @@ async function  getRangedMarketPolygon(tradeL2) {
 
   return markets[0];
 }
-
-const getL2TotalVolume = async () => {
-  try {
-    let response = await axios.get('https://api.dune.com/api/v1/query/323926/results?api_key=3Qen5RZeSwOpwE3616qSNIqYVTJ7j9dj');
-    if(!isNaN(response.data.result.rows[0]["Total Volume"])){
-      totalAmountOfTradesL2 =  Math.trunc((response.data.result.rows[0]["Total Volume"]));
-      console.log("OP amount is "+totalAmountOfTradesL2);
-      await redisClient.set(totalAmountL2Key,totalAmountOfTradesL2);
-    }
-  }catch (e) {
-    console.log("error while updating dune "+e);
-  }
-};
-
-
 const getArbAndOPTotalVolumeAndTrades = async () => {
   try {
     let response = await axios.get('https://api.dune.com/api/v1/query/4028056/results?api_key=Uw9psUEEkk00Gzg8zoavadoqUXEGaIos');
@@ -3295,34 +3285,91 @@ const getArbAndOPTotalVolumeAndTrades = async () => {
             "Users ="+numberWithCommas(totalUsersOP),
             { type: "WATCHING" }
         );
+      } else if(value["chain"]=="Base"){
+        let totalVolumeOP =  Math.trunc((value["volume"]));
+        let totalUsersOP =  Math.trunc((value["user"]));
+        clientOverTimeBaseTotal.guilds.cache.forEach(function (value, key) {
+          try {
+            value.members.cache
+                .get(clientOverTimeBaseTotal.user.id)
+                .setNickname("OT Base="+getNumberLabelDecimals(totalVolumeOP)+"$");
+          } catch (e) {
+            console.log('error while updating amount of trades OT'+e);
+          }
+        });
+        clientOverTimeBaseTotal.user.setActivity(
+            "Users ="+numberWithCommas(totalUsersOP),
+            { type: "WATCHING" }
+        );
       }
-
-
     });
   }catch (e) {
     console.log("error while updating dune "+e);
   }
 };
-async function updateTotalL2Trades() {
+
+
+const getArbAndOPAndBASEV2VolumeAndTrades = async () => {
   try {
-    clientTotalL2Trades.guilds.cache.forEach(function (value, key) {
-      try {
-        console.log("for guild "+value+" value is "+totalAmountOfTradesL2);
-        value.members.cache
-            .get(clientTotalL2Trades.user.id)
-            .setNickname("Optimism="+getNumberLabelDecimals(totalAmountOfTradesL2)+"$");
-      } catch (e) {
-        console.log('error while updating amount of trades '+e);
+    let response = await axios.get('https://api.dune.com/api/v1/query/5602699/results?api_key=Uw9psUEEkk00Gzg8zoavadoqUXEGaIos');
+
+    response.data.result.rows.forEach(function(value){
+      console.log(value);
+      if(value["chain"]=="optimism"){
+        let totalVolumeOP =  Math.trunc((value["Total Notional Volume"]));
+        let totalBetsOP =  Math.trunc((value["Total Bets"]));
+        clientTotalL2Trades.guilds.cache.forEach(function (value, key) {
+          try {
+            value.members.cache
+                .get(clientTotalL2Trades.user.id)
+                .setNickname("Optimism="+getNumberLabelDecimals(totalVolumeOP)+"$");
+          } catch (e) {
+            console.log('error while updating amount of trades '+e);
+          }
+        });
+        clientTotalL2Trades.user.setActivity(
+            "Trades OP="+numberWithCommas(totalBetsOP),
+            { type: "WATCHING" }
+        );
+      } else if(value["chain"]=="arbitrum"){
+        let totalVolumeOP =  Math.trunc((value["Total Notional Volume"]));
+        let totalBetsOP =  Math.trunc((value["Total Bets"]));
+        clientARBTrades.guilds.cache.forEach(function (value, key) {
+          try {
+            value.members.cache
+                .get(clientARBTrades.user.id)
+                .setNickname("Arbitrum="+getNumberLabelDecimals(totalVolumeOP)+"$");
+          } catch (e) {
+            console.log('error while updating amount of trades '+e);
+          }
+        });
+        clientARBTrades.user.setActivity(
+            "Trades ARB="+numberWithCommas(totalBetsOP),
+            { type: "WATCHING" }
+        );
+      } else if(value["chain"]=="base"){
+        let totalVolumeOP =  Math.trunc((value["Total Notional Volume"]));
+        let totalBetsOP =  Math.trunc((value["Total Bets"]));
+        clientOverTimeBaseV2Total.guilds.cache.forEach(function (value, key) {
+          try {
+            value.members.cache
+                .get(clientOverTimeBaseV2Total.user.id)
+                .setNickname("Base="+getNumberLabelDecimals(totalVolumeOP)+"$");
+          } catch (e) {
+            console.log('error while updating amount of trades '+e);
+          }
+        });
+        clientOverTimeBaseV2Total.user.setActivity(
+            "Trades Base="+numberWithCommas(totalBetsOP),
+            { type: "WATCHING" }
+        );
       }
     });
-    clientTotalL2Trades.user.setActivity(
-        "Trades OP="+numberWithCommas(numberOfTradesL2),
-        { type: "WATCHING" }
-    );
   }catch (e) {
-    console.log("there was an error while updating total l2");
+    console.log("error while updating dune "+e);
   }
-}
+};
+
 
 async function updateTotalPolygonTrades() {
   try {
@@ -3346,23 +3393,22 @@ async function updateTotalPolygonTrades() {
 }
 
 setTimeout(function () {
-  updateTotalL2Trades();
   getArbAndOPTotalVolumeAndTrades();
-  updateTotalARBTrades();
+  getArbAndOPAndBASEV2VolumeAndTrades();
   updateTotalBSCTrades();
 }, 1000 * 30 * 1);
 
 setInterval(function () {
   console.log("update l2 trades");
-  updateTotalL2Trades();
   getArbAndOPTotalVolumeAndTrades();
-  updateTotalARBTrades();
+  getArbAndOPAndBASEV2VolumeAndTrades();
   updateTotalBSCTrades();
 }, 360 * 1000);
 
 setInterval(function () {
   console.log("get total l2 volume");
   getArbAndOPTotalVolumeAndTrades();
+  getArbAndOPAndBASEV2VolumeAndTrades();
 }, 360 * 2 * 1000);
 
 
@@ -5064,26 +5110,6 @@ async function  getRangedMarketBSC(tradeL2) {
   return markets[0];
 }
 
-async function updateTotalARBTrades() {
-  try {
-    clientARBTrades.guilds.cache.forEach(function (value, key) {
-      try {
-        console.log("for guild "+value+" value is "+totalAmountOfTradesARB);
-        value.members.cache
-            .get(clientARBTrades.user.id)
-            .setNickname("Arbitrum="+getNumberLabelDecimals(totalAmountOfTradesARB)+"$");
-      } catch (e) {
-        console.log('error while updating amount of trades ARB'+e);
-      }
-    });
-    clientARBTrades.user.setActivity(
-        "Trades ARB="+numberWithCommas(numberOfTradesARB),
-        { type: "WATCHING" }
-    );
-  }catch (e) {
-    console.log("there was an error while updating total ARB");
-  }
-}
 
 async function updateTotalBSCTrades() {
   try {
@@ -6854,6 +6880,15 @@ async function chainedSpeedResolvedMarkets(speedMarketsContract,givenSpeedMarket
       const payout = buyIn * SPEED_MARKETS_QUOTE ** speedMarket.directions.length;
 
       let size = buyIn;
+
+      let buyInAmountUSD = "";
+      let payoutInUSD = "";
+      let sizeInUSD = "";
+      if (multiplier !== 1) {
+        buyInAmountUSD = " ("+roundTo2Decimals(buyIn * multiplier) + " $)";
+        payoutInUSD = " ("+roundTo2Decimals(payout * multiplier) + " $)";
+        sizeInUSD = " ("+roundTo2Decimals(size * multiplier) + " $)";
+      }
 
       var message = new Discord.MessageEmbed()
           .addFields(
