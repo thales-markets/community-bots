@@ -123,8 +123,8 @@ let contract = JSON.parse(contractRaw);
 let polygonContract = JSON.parse(polygonRaw);
 let burnedRaw = fs.readFileSync('contracts/burned.json');
 let contractBurned = JSON.parse(burnedRaw);
-const web3Polygon = new Web3(new Web3.providers.HttpProvider("https://polygon-mainnet.blastapi.io/f3871178-c3e9-43ec-82b5-212ded38c280"));
-const web3Arbitrum = new Web3(new Web3.providers.HttpProvider("https://arbitrum-one.blastapi.io/f3871178-c3e9-43ec-82b5-212ded38c280"));
+const web3Polygon = new Web3(new Web3.providers.HttpProvider("https://polygon-mainnet.infura.io/v3/71f890a2441d49088e4e145b2bc23bc7"));
+const web3Arbitrum = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_ARB_URL));
 
 const web3ArbitrumV2 = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_ARB_URL));
 
@@ -3759,7 +3759,7 @@ setInterval(function () {
 
 async  function getBurnedThalesBalance (){
 
-  const response = await axios.get('https://overtimemarketsv2.xyz/over-token/burned');
+  const response = await axios.get('https://api.overtime.io/over-token/burned');
   const burnedAmount = response.data; // assuming the response is just the number
 
   try {
@@ -6263,8 +6263,8 @@ async function speedMarkets(speedMarketsContract,givenSpeedMarketType,speedDataM
               name: ":coin: Paid:",
               value: size + " "+ moneySymbol + sizeInUSD,
             },{
-              name: ":alarm_clock: End time:",
-              value: timeConverter(speedMarket.strikeTime)
+              name: ":alarm_clock: Delta time:",
+              value: (speedMarket.strikeTime - speedMarket.createdAt) / 60
             },
         )
         .setColor("#0037ff");
@@ -6380,8 +6380,8 @@ async function speedResolvedMarkets(speedMarketsContract,givenSpeedMarketType,sp
                 name: ":coin: User won:",
                 value: speedMarket.isUserWinner,
               },{
-                name: ":alarm_clock: End time:",
-                value: timeConverter(speedMarket.strikeTime)
+                name: ":alarm_clock: Delta time:",
+                value: (speedMarket.strikeTime - speedMarket.createdAt) / 60
               },
           )
           .setColor("#0037ff");
@@ -6806,8 +6806,8 @@ async function chainedSpeedMarkets(speedMarketsContract,givenSpeedMarketType,spe
               name: ":coin: Paid:",
               value: size + " "+ moneySymbol + sizeInUSD,
             },{
-              name: ":alarm_clock: End time:",
-              value: timeConverter(speedMarket.strikeTime)
+              name: ":alarm_clock: Delta time:",
+              value: (speedMarket.strikeTime - speedMarket.createdAt) / 60
             },
         )
         .setColor("#0037ff");
@@ -6917,8 +6917,8 @@ async function chainedSpeedResolvedMarkets(speedMarketsContract,givenSpeedMarket
                 name: ":coin: User won:",
                 value: speedMarket.isUserWinner,
               },{
-                name: ":alarm_clock: End time:",
-                value: timeConverter(speedMarket.strikeTime)
+                name: ":alarm_clock: Delta time:",
+                value: (speedMarket.strikeTime - speedMarket.createdAt) / 60
               },
           )
           .setColor("#0037ff");
