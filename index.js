@@ -3253,7 +3253,8 @@ const getArbAndOPTotalVolumeAndTrades = async () => {
 
     response.data.result.rows.forEach(function(value){
       console.log(value);
-      if(value["chain"]=="Optimism"){
+      const chain = String(value["chain"] || "").toLowerCase();
+      if(chain == "optimism"){
         let totalVolumeOP =  Math.trunc((value["volume"]));
         let totalUsersOP =  Math.trunc((value["user"]));
         clientOvertimeTrades.guilds.cache.forEach(function (value, key) {
@@ -3269,7 +3270,7 @@ const getArbAndOPTotalVolumeAndTrades = async () => {
             "Users ="+numberWithCommas(totalUsersOP),
             { type: "WATCHING" }
         );
-      } else if(value["chain"]=="Arbitrum"){
+      } else if(chain == "arbitrum"){
         let totalVolumeOP =  Math.trunc((value["volume"]));
         let totalUsersOP =  Math.trunc((value["user"]));
         clientOverTimeArbTotal.guilds.cache.forEach(function (value, key) {
@@ -3285,7 +3286,7 @@ const getArbAndOPTotalVolumeAndTrades = async () => {
             "Users ="+numberWithCommas(totalUsersOP),
             { type: "WATCHING" }
         );
-      } else if(value["chain"]=="Base"){
+      } else if(chain == "base"){
         let totalVolumeOP =  Math.trunc((value["volume"]));
         let totalUsersOP =  Math.trunc((value["user"]));
         clientOverTimeBaseTotal.guilds.cache.forEach(function (value, key) {
@@ -3311,13 +3312,18 @@ const getArbAndOPTotalVolumeAndTrades = async () => {
 
 const getArbAndOPAndBASEV2VolumeAndTrades = async () => {
   try {
-    let response = await axios.get('https://api.dune.com/api/v1/query/5602699/results?api_key=Uw9psUEEkk00Gzg8zoavadoqUXEGaIos');
+    let response = await axios.get('https://api.dune.com/api/v1/query/6549189/results?api_key=Uw9psUEEkk00Gzg8zoavadoqUXEGaIos');
 
     response.data.result.rows.forEach(function(value){
       console.log(value);
-      if(value["chain"]=="optimism"){
-        let totalVolumeOP =  Math.trunc((value["Total Notional Volume"]));
-        let totalBetsOP =  Math.trunc((value["Total Bets"]));
+      const chain = String(value["chain"] || "").toLowerCase();
+      // API returns "volume" and "bet" fields, not "Total Notional Volume" and "Total Bets"
+      const totalVolume = value["volume"] || value["Total Notional Volume"] || 0;
+      const totalBets = value["bet"] || value["Total Bets"] || 0;
+      
+      if(chain == "optimism"){
+        let totalVolumeOP =  Math.trunc(totalVolume);
+        let totalBetsOP =  Math.trunc(totalBets);
         clientTotalL2Trades.guilds.cache.forEach(function (value, key) {
           try {
             value.members.cache
@@ -3331,9 +3337,9 @@ const getArbAndOPAndBASEV2VolumeAndTrades = async () => {
             "Trades OP="+numberWithCommas(totalBetsOP),
             { type: "WATCHING" }
         );
-      } else if(value["chain"]=="arbitrum"){
-        let totalVolumeOP =  Math.trunc((value["Total Notional Volume"]));
-        let totalBetsOP =  Math.trunc((value["Total Bets"]));
+      } else if(chain == "arbitrum"){
+        let totalVolumeOP =  Math.trunc(totalVolume);
+        let totalBetsOP =  Math.trunc(totalBets);
         clientARBTrades.guilds.cache.forEach(function (value, key) {
           try {
             value.members.cache
@@ -3347,9 +3353,9 @@ const getArbAndOPAndBASEV2VolumeAndTrades = async () => {
             "Trades ARB="+numberWithCommas(totalBetsOP),
             { type: "WATCHING" }
         );
-      } else if(value["chain"]=="base"){
-        let totalVolumeOP =  Math.trunc((value["Total Notional Volume"]));
-        let totalBetsOP =  Math.trunc((value["Total Bets"]));
+      } else if(chain == "base"){
+        let totalVolumeOP =  Math.trunc(totalVolume);
+        let totalBetsOP =  Math.trunc(totalBets);
         clientOverTimeBaseV2Total.guilds.cache.forEach(function (value, key) {
           try {
             value.members.cache
