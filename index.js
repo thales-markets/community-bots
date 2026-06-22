@@ -123,10 +123,10 @@ let contract = JSON.parse(contractRaw);
 let polygonContract = JSON.parse(polygonRaw);
 let burnedRaw = fs.readFileSync('contracts/burned.json');
 let contractBurned = JSON.parse(burnedRaw);
-const web3Polygon = new Web3(new Web3.providers.HttpProvider("https://polygon-mainnet.infura.io/v3/71f890a2441d49088e4e145b2bc23bc7"));
-const web3Arbitrum = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_ARB_URL));
+const web3Polygon = new Web3(new Web3.providers.HttpProvider(process.env.DRPC_POLYGON_URL || "https://polygon.drpc.org"));
+const web3Arbitrum = new Web3(new Web3.providers.HttpProvider(process.env.DRPC_ARB_URL));
 
-const web3ArbitrumV2 = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_ARB_URL));
+const web3ArbitrumV2 = new Web3(new Web3.providers.HttpProvider(process.env.DRPC_ARB_URL));
 
 const web3ZKSYNC = new Web3(new Web3.providers.HttpProvider("https://mainnet.era.zksync.io"));
 const web3BSC = new Web3(new Web3.providers.HttpProvider("https://winter-spring-frost.bsc.discover.quiknode.pro/360e06c724df630e0a6aa4417dedfb41142a3184/"));
@@ -134,8 +134,8 @@ let bscRaw = fs.readFileSync('contracts/bsc.json');
 let bscContract = JSON.parse(bscRaw);
 let arbitrumRaw = fs.readFileSync('contracts/arbitrum.json');
 let arbitrumContract = JSON.parse(arbitrumRaw);
-const web3 = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_URL));
-const web3L2 = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_L2_URL));
+const web3 = new Web3(new Web3.providers.HttpProvider(process.env.DRPC_ETH_URL));
+const web3L2 = new Web3(new Web3.providers.HttpProvider(process.env.DRPC_OP_URL));
 const web3Base = new Web3(new Web3.providers.HttpProvider(BASE_APY_INF));
 const CoinGecko = require('coingecko-api');
 const CoinGeckoClient = new CoinGecko();
@@ -559,13 +559,14 @@ setInterval(function () {
   getBurnedThalesBalance();
 }, 360 * 1000);
 
-setInterval(function () {
+// AMM trade polling disabled — thales-data subgraph queries failing
+/*setInterval(function () {
   console.log("get L2 trades");
   getL2Trades();
   getBASETrades();
   getPolygonTrades();
   getArbitrumTrades();
-}, 4 * 60 * 1000);
+}, 4 * 60 * 1000);*/
 
 
 client.on("guildMemberAdd", function (member) {
@@ -1691,7 +1692,7 @@ async function getThalesNewTrades(market, startDateUnixTime) {
       for (const bid of response.data.bids.records) {
         if (startDateUnixTime < new Date(bid.metaData.createdAt).getTime()) {
           console.log("web 3 " + web3);
-          console.log("infura " + process.env.INFURA_URL);
+          console.log("drpc " + process.env.DRPC_ETH_URL);
           const takerToken = new web3.eth.Contract(
             contract,
             bid.order.takerToken
@@ -2376,7 +2377,7 @@ app.get("/verified", function (req, res) {
 });
 
 var ENS = require("ethereum-ens");
-var ens = new ENS(new Web3.providers.HttpProvider(process.env.INFURA_URL));
+var ens = new ENS(new Web3.providers.HttpProvider(process.env.DRPC_ETH_URL));
 
 let allowedChannel = "915979901373395045";
 client.on("message", async (msg) => {
@@ -7957,8 +7958,7 @@ async function getOvertimeV2Trades(){
 
 async function updateTotalUsers() {
   try {
-
-    let stats =  await axios.get('https://api.thalesmarket.io/thales/thales-io/stats');
+    let stats = await axios.get('https://api.thalesmarket.io/thales/thales-io/stats');
     stats = stats.data;
 
     clientUsers.guilds.cache.forEach(function (value, key) {
@@ -7975,14 +7975,11 @@ async function updateTotalUsers() {
         { type: "WATCHING" }
     );
 
-
-    let TVL =  getNumberLabelDecimals(stats.speed_markets_tvl + stats.vault_tvl + stats.overtime_single_lp_tvl +
+    let TVL = getNumberLabelDecimals(stats.speed_markets_tvl + stats.vault_tvl + stats.overtime_single_lp_tvl +
         stats.digital_options_lp_tvl + stats.overtime_parlay_lp_tvl + stats.staking_thales_tvl);
     let TPV = getNumberLabelDecimals(stats.overtime_parlay+stats.overtime_single+stats.safebox+stats.speed_markets+stats.thales_amm);
 
-
-
-        clientTPV.guilds.cache.forEach(function (value, key) {
+    clientTPV.guilds.cache.forEach(function (value, key) {
       try {
         value.members.cache
             .get(clientTPV.user.id)
@@ -7995,12 +7992,10 @@ async function updateTotalUsers() {
         TPV+" total protocol volume",
         { type: "WATCHING" }
     );
-
-  }catch (e) {
+  } catch (e) {
     console.log("there was an error while dashboard bots");
   }
 }
-
 
 async function setLIQV2Values(liqContract, divider, clientV2LQ, text, symbol) {
   const round = await liqContract.methods.round().call();
